@@ -60,5 +60,10 @@ Coletadas em 2026-07-24 (12:43-14:48 BRT), por texto + 1 áudio. Fonte: WhatsApp
 - **19) Comissão do barbeiro sobre produto** — RESPONDIDO (parcial): produto tem **comissão própria e separada** da comissão de serviço, com **metas próprias** (a % de produto só sobe se bater metas de produto). A venda de produto conta apenas pra compor o **bruto de 12/15 mil** que define a faixa da comissão de **serviço**. ⚠️ **Faltam os números** (% de produto do barbeiro e as metas). → vira pergunta 21.
 - **20) Retenção de 60%** — CONFIRMADO: barbearia fica com 60% da receita de assinatura; 40% vira o pote dividido por pontos.
 
-## Gap aberto (a perguntar — 21)
-- **21) Comissão de produto do barbeiro**: qual a % base e as faixas/metas? (ex, análogo à recepcionista: 5% base, sobe pra 7% acima de X, 10% acima de Y). Ainda sem número.
+## Pergunta 21 — respondida (2026-07-25 10:34)
+- **21) Comissão de produto do barbeiro** — RESPONDIDO: *"é a mesma coisa que as recepcionistas"*. Ou seja **5% base, 7% se vender >R$2.500 em produtos, 10% se >R$4.000** (aplicado no mês seguinte), mesma estrutura da recepcionista.
+
+## Detalhe extra (cliente lembrou depois, 2026-07-25 10:35)
+- **Recepcionista ganha R$10 fixo por cada hidratação de cabelo** que ela fizer, como comissão (além do % dela sobre produtos+hidratações). Serviço "Hidratação de cabelo" = R$45,00.
+
+## Escopo: COMPLETO (21 perguntas + extras respondidos)

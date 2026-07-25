@@ -15,7 +15,10 @@ Next.js + Fastify + Supabase + Logto + Asaas + SimplesZap. Front Vercel, back Co
 Dono (acesso total), Recepcionista (agenda, caixa, estoque, cadastro), Barbeiro (só a própria agenda + números).
 
 ## Gaps abertos
-- Comissão de PRODUTO do barbeiro (% e metas), pergunta 21 enviada ao cliente, aguardando.
+- Nenhum. **Escopo 100% fechado** (2026-07-25). Comissão de produto do barbeiro = igual à recepcionista (5/7/10%); recepcionista ganha +R$10 por hidratação de cabelo.
+
+## Cronograma
+`docs/produto/CRONOGRAMA.md` (mira abertura outubro/2026; VP1 em ~10 semanas).
 
 ## Próximo
-Spec (Spec Kit) da Fase 1: cadastro de serviços/combos + agenda (com rodízio) + atendente IA de agendamento + comissão escalonada.
+Orçamento por parte (setup + mensalidade). Depois iniciar Spec Kit da Fase 1: serviços/combos + agenda (com rodízio) + atendente IA + comissão escalonada.

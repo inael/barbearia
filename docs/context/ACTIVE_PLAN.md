@@ -19,4 +19,4 @@ Spec-Driven Development (Spec Kit) nos módulos duráveis (agenda, comissão, as
 5. Montar cronograma + orçamento por parte (setup + mensalidade).
 
 ## Aguardando cliente
-- Pergunta 21 (comissão de produto do barbeiro).
+- Nada. Escopo fechado (2026-07-25). Cronograma em `docs/produto/CRONOGRAMA.md`; próximo é o orçamento por parte.
