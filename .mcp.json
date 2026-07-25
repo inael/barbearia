@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "_comentario": "MCP servers padrão IT Booster. Adicionar/remover conforme `.itbooster-meta.yaml`.mcps. Os MCP servers rodam na VPS (containers itb-mcp-*) e expõem via HTTP/SSE.",
+  "mcpServers": {
+    "plane": {
+      "type": "sse",
+      "url": "http://172.24.0.1:7421/sse",
+      "_descricao": "Gestão de tarefas Plane — listar/criar/comentar issues"
+    },
+    "github": {
+      "type": "sse",
+      "url": "http://172.24.0.1:7422/sse",
+      "_descricao": "GitHub — PRs, issues, releases"
+    },
+    "asaas": {
+      "type": "sse",
+      "url": "http://172.24.0.1:7423/sse",
+      "_descricao": "Asaas — customer, invoice, subscription, webhook"
+    },
+    "vercel": {
+      "type": "sse",
+      "url": "http://172.24.0.1:7424/sse",
+      "_descricao": "Vercel — deploys, build logs"
+    }
+  }
+}

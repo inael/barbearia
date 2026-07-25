@@ -1,0 +1,91 @@
+# .itbooster-meta.yaml — metadata do projeto pro catálogo IT Booster.
+# Schema: tools/catalog/schema-meta.json no monorepo ItBoosterEmpresa.
+
+# === OBRIGATÓRIOS ===
+slug: barbearia
+nome: Barbearia — Gestão + Atendente IA
+tipo: cliente
+status: dev
+
+# === RECOMENDADOS ===
+descricao: Gestão de barbearia (agenda, comissão, estoque, assinaturas) + atendente de IA no WhatsApp.
+tem_cobranca: true
+monorepo: true
+
+stack:
+  - nextjs
+  - fastify
+  - supabase
+  - typescript
+  - tailwindcss
+  - shadcn-ui
+
+auth:
+  provider: logto
+
+deploy:
+  backend: coolify
+  frontend: vercel
+  observacoes: Front na Vercel (CDN), API/regras no Coolify (VPS) pra segurar custo. Dados do cliente fora da infra IT Booster.
+
+# === TOOLING / CLAUDE CODE ===
+mcps:
+  - github
+  - asaas
+
+skills:
+  - review
+  - quick-fix
+  - simplify
+  - gerar-prd
+  - gerar-diagrama
+  - bootstrap-asaas
+  - atualiza-handoff
+
+# Processo de dev: Spec-Driven Development (GitHub Spec Kit) nos módulos duráveis.
+processo_dev:
+  metodologia: spec-driven          # spec-kit: constitution -> specify -> plan -> tasks -> implement
+  escopo_sdd: [agenda, comissao, assinaturas]
+  multi_agente: subagents           # subagents (Haiku p/ tarefa simples); Agent Teams só p/ paralelo real
+  ver: docs/produto/FUNDACAO-TECNICA.md
+
+# === UX / DESIGN ===
+ux_design:
+  libs:
+    - tailwindcss
+    - shadcn-ui
+    - lucide-react
+    - sonner
+    - framer-motion
+    - recharts
+  referencias:
+    - ui-ux-pro-max
+    - design-system
+
+docs:
+  diagramas:
+    formato: mermaid
+    pasta: docs/diagramas/
+    skill: gerar-diagrama
+
+# === IA STACK ===
+ia_stack:
+  gateway: litellm                  # "Hub de IA" (não expor provedores ao cliente)
+  atendente: sdr-ia-base            # reusa arquitetura do SDR-IA (n8n + LiteLLM) p/ agendamento
+
+# === INTEGRAÇÕES ===
+integracoes:
+  - alvo: asaas
+    tipo: consome
+    descricao: Cobrança recorrente de cartão nas assinaturas (PIX de reserva)
+  - alvo: logto
+    tipo: consome
+    descricao: Auth + RBAC (dono / recepcionista / barbeiro)
+  - alvo: simpleszap
+    tipo: consome
+    descricao: Canal WhatsApp (atendente IA + notificações do dono)
+
+# === OPCIONAIS ===
+cliente: Rodrigo Santos (Barbearia)
+responsavel: inael
+criado_em: 2026-07-25
