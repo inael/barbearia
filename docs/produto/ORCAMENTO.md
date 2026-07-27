@@ -16,7 +16,16 @@ Referências IT Booster aplicadas: vender stack próprio (Hub de IA, SimplesZap)
 | Painel do dono + Caixa | Indicadores (faturamento total e por profissional, metas) + fechamento de conta na recepção | R$ 700 |
 | **Total setup VP1** | | **R$ 5.500** |
 
-Condição sugerida: **50% na entrada + 50% no go-live**.
+### Permuta (abatimento)
+Fechado com o cliente: **1 ano do plano de corte de cabelo** (R$ 200/mês × 12) = **R$ 2.400**, abatido do valor do sistema (pagamento em serviço).
+
+| | Valor |
+|---|---:|
+| Setup VP1 | R$ 5.500 |
+| (-) Permuta: 1 ano de corte (R$ 200 × 12) | - R$ 2.400 |
+| **A pagar em dinheiro** | **R$ 3.100** |
+
+Condição sugerida do valor em dinheiro (R$ 3.100): **50% na entrada + 50% no go-live**.
 
 ## 2. Mensalidade (recorrente) — a partir do go-live
 Cobre a operação e o suporte contínuo:
@@ -47,7 +56,7 @@ Estoque com contagem diária + alerta, metas/premiação, indicadores de churn, 
 ---
 
 ## Resumo
-- **VP1 (abre a barbearia):** R$ 5.500 setup + R$ 250/mês. ✅ dentro da faixa de R$5-6k.
+- **VP1 (abre a barbearia):** R$ 5.500 setup, menos **R$ 2.400 de permuta** (1 ano de corte, R$ 200 × 12) = **R$ 3.100 em dinheiro** + R$ 250/mês.
 - **VP2 (assinaturas + NF):** + R$ 2.700, depois de abrir.
 - **VP3:** a orçar.
 
