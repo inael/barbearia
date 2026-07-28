@@ -24,7 +24,7 @@ Referências IT Booster: vender stack próprio (Hub de IA, SimplesZap), dados do
 | **Investimento do cliente pra construir** | **R$ 3.100** |
 | Restante da obra (~R$ 1.000) + manutenção contínua | financiado pelo **3%** |
 
-Condição do investimento (R$ 3.100): **50% na entrada + 50% no go-live**.
+Condição do investimento (R$ 3.100): **parcelável em até 10x no cartão via Asaas** (~R$ 310/parcela).
 
 ## 3. Recorrência: 3% sobre os recebimentos (sem mensalidade)
 - A IT Booster recebe **3% de cada pagamento processado no sistema** (cartão/PIX via Asaas split). **Não há mensalidade fixa.**
