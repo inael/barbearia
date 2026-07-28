@@ -7,10 +7,10 @@ Objetivo: cravar o custo real de manter o sistema no ar, pra justificar a mensal
 |---|---:|---:|---|
 | Hospedagem (VPS share + Vercel + Supabase) | ~R$ 40 | R$ 40 | infra compartilhada, alocada |
 | Tokens de IA (Hub/LiteLLM, atendente WhatsApp) | ~R$ 60 | R$ 60 | modelo eficiente; escala com volume de conversas |
-| Envio de mensagens (SimplesZap, 1 instância) | ~R$ 10 | R$ 60 | produto próprio; valor de plano ~R$59/mês |
-| Envio de email (JetSend, transacionais: NF/avisos) | ~R$ 1 | R$ 20 | baixo volume (SES por baixo) |
+| Envio de mensagens (SimplesZap Profissional, 1 instância) | R$ 59 | R$ 59 | 300 msgs/dia (sobra); +100/dia por R$15 se precisar |
+| Envio de email (JetSend) | ~R$ 0 | R$ 0 a 29 | Free cobre 3.000/mês; Starter R$29 traz NF automática |
 | Auth (Logto, self-host compartilhado) | ~R$ 0 | incluído | marginal ~zero |
-| **Subtotal serviços** | **~R$ 110** | **~R$ 180** | |
+| **Subtotal serviços** | **~R$ 160** | **~R$ 160 a 190** | com planos reais SimplesZap R$59 + JetSend |
 | Gateway (Asaas) | por transação | repassado | PIX ~R$0,99; cartão ~% (não é fixo) |
 
 ## 2. Manutenção (mão de obra)
