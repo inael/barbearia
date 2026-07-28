@@ -22,7 +22,7 @@ Referências IT Booster: vender stack próprio (Hub de IA, SimplesZap), dados do
 |---|---:|
 | Valor total do sistema | R$ 8.300 |
 | (-) Permuta: 1 ano de corte (R$ 200 × 12) | - R$ 2.400 |
-| (-) Parte financiada pela plataforma (diluída no 3%) | - R$ 2.800 |
+| (-) Investido pela IT Booster (contrapartida = 3% do faturamento) | - R$ 2.800 |
 | **Investimento do cliente** | **R$ 3.100** |
 
 Condição do investimento (R$ 3.100): **parcelável em até 10x no cartão via Asaas** (~R$ 310/parcela). Desconto visível: sistema de R$ 8.300 saindo por R$ 3.100.
