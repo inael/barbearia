@@ -6,7 +6,7 @@ Referências IT Booster: vender stack próprio (Hub de IA, SimplesZap), dados do
 
 ---
 
-## 1. Valor de tabela, Setup VP1 (entrega até a abertura, outubro)
+## 1. Valor de tabela, pacote do sistema (entrega até a abertura, outubro)
 | Parte | O que inclui | Valor |
 |---|---|---:|
 | Fundação | Login + RBAC (dono/recepção/barbeiro), deploy, cadastros base (serviços/combos com duração editável, profissionais, clientes) | R$ 1.000 |
@@ -14,17 +14,18 @@ Referências IT Booster: vender stack próprio (Hub de IA, SimplesZap), dados do
 | Atendente IA (WhatsApp) | Agendamento pela IA, lógica de horário, descrição de serviços, **escala pra humano**, pré-cadastro | R$ 2.000 |
 | Comissão | Escalonada (serviço + produto), vale 30%, recepcionista (5%/10% + R$5-10/hidratação), combos 40% fixo, relatórios por profissional | R$ 1.400 |
 | Painel do dono + Caixa | Indicadores + fechamento de conta na recepção **com pagamento integrado (cartão/PIX via Asaas)** | R$ 700 |
-| **Valor de tabela (VP1)** | | **R$ 6.500** |
+| Assinaturas | Planos Flex/Premium, cobrança no cartão recorrente, fila de espera, divisão do pote por pontos | R$ 1.800 |
+| **Valor total do sistema** | | **R$ 8.300** |
 
-## 2. Proposta ao cliente (modelo híbrido)
+## 2. Proposta ao cliente (modelo híbrido, mostra o desconto)
 | | Valor |
 |---|---:|
-| Valor de tabela VP1 | R$ 6.500 |
+| Valor total do sistema | R$ 8.300 |
 | (-) Permuta: 1 ano de corte (R$ 200 × 12) | - R$ 2.400 |
-| **Investimento do cliente pra construir** | **R$ 3.100** |
-| Restante da obra (~R$ 1.000) + manutenção contínua | financiado pelo **3%** |
+| (-) Parte financiada pela plataforma (diluída no 3%) | - R$ 2.800 |
+| **Investimento do cliente** | **R$ 3.100** |
 
-Condição do investimento (R$ 3.100): **parcelável em até 10x no cartão via Asaas** (~R$ 310/parcela).
+Condição do investimento (R$ 3.100): **parcelável em até 10x no cartão via Asaas** (~R$ 310/parcela). Desconto visível: sistema de R$ 8.300 saindo por R$ 3.100.
 
 ## 3. Recorrência: 3% sobre os recebimentos (sem mensalidade)
 - A IT Booster recebe **3% de cada pagamento processado no sistema** (cartão/PIX via Asaas split). **Não há mensalidade fixa.**
@@ -48,14 +49,12 @@ O 3% precisa ficar acima desse piso pra dar margem (já fica, ver simulação).
 - **Manutenção corretiva (bugs)** incluída no 3%.
 - **Novos módulos / evoluções fora do escopo** (ex: VP2, VP3) são orçados à parte.
 
-## 5. VP2 (fase seguinte) — após abrir
+## 5. Fase seguinte (à parte) — após abrir
 | Parte | Valor |
 |---|---:|
-| Assinaturas (Flex/Premium, Asaas cartão recorrente, fila de espera, pote por pontos) | R$ 1.800 |
 | Nota fiscal (NFS-e, MEI → Simples, envio por WhatsApp) | R$ 900 |
-| **Total VP2** | **R$ 2.700** |
 
-O 3% também passa a incidir sobre as assinaturas quando o módulo entrar.
+O 3% incide sobre todos os recebimentos no sistema, inclusive as assinaturas (já no pacote).
 
 ## 6. VP3 (futuro) — a orçar
 Estoque com contagem diária + alerta, metas/premiação, indicadores de churn, mídia indoor na TV.
@@ -63,9 +62,9 @@ Estoque com contagem diária + alerta, metas/premiação, indicadores de churn, 
 ---
 
 ## Resumo
-- **Construção (VP1):** R$ 6.500 de tabela, menos R$ 2.400 (permuta) = **R$ 3.100 de investimento** do cliente.
+- **Sistema completo:** R$ 8.300 de valor, menos R$ 2.400 (permuta) e R$ 2.800 (financiado pela plataforma) = **R$ 3.100 de investimento** (em até 10x).
 - **Recorrência:** **3% sobre os recebimentos processados no sistema**, sem mensalidade, **manutenção inclusa**.
-- **VP2:** + R$ 2.700 (assinaturas + NF) depois de abrir. **VP3:** a orçar.
+- **À parte:** Nota fiscal R$ 900. **VP3** (estoque/metas/TV): a orçar.
 
 ## Decisão em aberto
 - **Conta do Asaas:** processar os pagamentos das unidades na **nossa conta com split** (desconto automático do 3%) é o que viabiliza o modelo. Confirmar com o atendente do Asaas (ver `docs/produto/ASAAS-SPLIT-USECASE.md`).
