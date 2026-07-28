@@ -29,7 +29,7 @@ Condição do investimento (R$ 3.100): **parcelável em até 10x no cartão via 
 
 ## 3. Recorrência: 3% sobre os recebimentos (sem mensalidade)
 - A IT Booster recebe **3% de cada pagamento processado no sistema** (cartão/PIX via Asaas split). **Não há mensalidade fixa.**
-- Esse 3% **inclui a manutenção do sistema** e cobre o custo dos sistemas integrados.
+- Esse 3% posiciona a IT Booster como **parceira da plataforma** (só 3%): **inclui a manutenção** e o **monitoramento** do sistema, além do custo dos sistemas integrados. Compromisso de manter no ar e funcionando, sem mensalidade à parte.
 - Incide sobre os recebimentos que passam na plataforma (serviços, produtos e, quando existir, assinaturas). **Não incide sobre venda em dinheiro fora do sistema.**
 - Simulação de quanto isso rende: `docs/produto/SIMULACAO-REVSHARE.md` (ex: 2 barbeiros ~R$675/mês; 6 barbeiros ~R$2.025/mês).
 
