@@ -63,7 +63,14 @@ Coletadas em 2026-07-24 (12:43-14:48 BRT), por texto + 1 áudio. Fonte: WhatsApp
 ## Pergunta 21 — respondida (2026-07-25 10:34)
 - **21) Comissão de produto do barbeiro** — RESPONDIDO: *"é a mesma coisa que as recepcionistas"*. Ou seja **5% base, 7% se vender >R$2.500 em produtos, 10% se >R$4.000** (aplicado no mês seguinte), mesma estrutura da recepcionista.
 
-## Detalhe extra (cliente lembrou depois, 2026-07-25 10:35)
-- **Recepcionista ganha R$10 fixo por cada hidratação de cabelo** que ela fizer, como comissão (além do % dela sobre produtos+hidratações). Serviço "Hidratação de cabelo" = R$45,00.
+## Detalhe extra (cliente lembrou 2026-07-25; corrigido 2026-07-27)
+- **Recepcionista ganha comissão por hidratação:** **R$ 5 por hidratação**; se fizer **mais de 10 hidratações** (no mês), passa a **R$ 10 por cada**. (Correção do que ele havia dito antes: R$10 fixo.) Serviço "Hidratação de cabelo" = R$45,00.
 
-## Escopo: COMPLETO (21 perguntas + extras respondidos)
+## Refinamentos de comissão e assinatura (2026-07-27)
+- **Descontos para assinantes:**
+  - **Flex:** 10% de desconto em serviços extras + 5% em produtos.
+  - **Premium:** 20% de desconto em serviços extras + 10% em produtos.
+- **Combos:** comissão **fixa de 40%** (não escalona; diferente dos serviços avulsos, que vão 40/45/50%).
+- **Comissão de produto (recepcionista E barbeiro):** corrigida para **5% base e 10% se vender >R$ 2.500** em produtos. Supersede a faixa anterior (5% / 7% em 2.500 / 10% em 4.000); agora passar de R$2.500 já vai direto pra 10%.
+
+## Escopo: COMPLETO (21 perguntas + refinamentos respondidos)
