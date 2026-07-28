@@ -2,14 +2,14 @@
 
 Objetivo: usar o Asaas pra que, a cada pagamento recebido dentro da plataforma que a gente constrói, uma **porcentagem (fee de plataforma) seja repassada automaticamente pra IT Booster** (split), e o resto pro cliente (a barbearia). Isso viabiliza o modelo de rev-share do orçamento sem cobrança na confiança.
 
-## Escala do projeto
-A solução da barbearia vai rodar em **21 barbearias do mesmo cliente (uma rede)**. São **21 unidades**, cada uma recebendo os pagamentos dos clientes finais dela dentro da plataforma. Pro Asaas isso significa **21 subcontas** e volume relevante, o que ajuda a negociar taxa e condição de plataforma/marketplace.
+## Escala do projeto (a confirmar)
+Hoje o cliente concreto é **uma barbearia** (começa com 2 barbeiros, cresce até 6). Rodar em **várias unidades (rede)** ou **comercializar o sistema pra outras barbearias** é **potencial, ainda não confirmado com o cliente**. Independente disso, o modelo de **subcontas + split** é o que a gente quer habilitar na plataforma e ele escala naturalmente pra N unidades conforme a IT Booster crescer, o que já ajuda a negociar condição de plataforma com o Asaas.
 
 ## Explicação pronta (pode mandar/falar pro atendente)
 
 > Somos a IT Booster, uma software house que cria sistemas de gestão sob medida pra pequenos negócios. O projeto atual é um **sistema completo de gestão de barbearia**: agenda dos barbeiros, um **atendente de IA no WhatsApp** que agenda os clientes, controle de **comissão** dos profissionais e **planos de assinatura** (o cliente final paga um plano mensal de corte no **cartão recorrente**).
 >
-> Essa mesma solução vai rodar em **21 barbearias do mesmo cliente** (uma rede), ou seja, 21 unidades. Cada unidade é uma plataforma onde o negócio opera e **recebe os pagamentos dos clientes finais dele** (assinaturas no cartão recorrente e serviços avulsos).
+> A ideia é que a mesma plataforma rode em **várias unidades/barbearias** conforme a gente escala (hoje o primeiro cliente é uma barbearia). Cada unidade é uma plataforma onde o negócio opera e **recebe os pagamentos dos clientes finais dele** (assinaturas no cartão recorrente e serviços avulsos).
 >
 > O que a gente quer montar: a cada pagamento que entra na plataforma, uma **porcentagem vai automaticamente pra nossa conta (IT Booster)** como taxa de plataforma, e o restante pra conta do cliente (a barbearia). Ou seja, a gente quer ser a plataforma que processa e faz o **split** do pagamento.
 >
