@@ -31,11 +31,11 @@ Cliente pediu (não estava nos 6 módulos). **Versão mais simples possível (de
 - Escopo: painel pra o dono subir/ordenar/remover as mídias + a página-player (URL) que roda o loop na TV.
 - Requisito: a Smart TV precisa de internet e navegador. Se o navegador da TV for limitado, um aparelho baratinho (Fire TV Stick ~R$ 200-300, uma vez, custo dele) resolve.
 - Custo mensal extra: storage das mídias, desprezível.
-- **Cotação: R$ 900** (módulo opcional).
+- **Cotação: R$ 900 (valor cheio); cobrado R$ 600** pra arredondar o total em R$ 4.000 (cliente resistente a preço).
 
 Ativação (cliente escolhe):
-- **Agora:** entra junto, total R$ 3.400 + R$ 900 = **R$ 4.300**.
-- **Depois:** fica R$ 3.400 agora; ativa o módulo de TV por R$ 900 quando quiser.
+- **Agora:** entra junto, total R$ 3.400 + R$ 600 = **R$ 4.000** (redondo).
+- **Depois:** fica R$ 3.400 agora; ativa o módulo de TV por R$ 600 quando quiser.
 
 Mudanças de escopo (29/07, já no `RESPOSTAS`): "Reconstrução detox" -> "Limpeza Detox"; comissão de Limpeza Detox + Acidificação = 20% barbeiro + 20% recepcionista.
 
