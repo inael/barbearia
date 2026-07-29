@@ -27,16 +27,15 @@ Conta:
 - Alternativa se quiser ≥R$3.500: cortesia só do módulo 6 (Assinaturas) → cliente paga **R$ 4.100**.
 
 ## Módulo adicional pedido (2026-07-29): Mídia Indoor / Propaganda na TV
-Cliente pediu (não estava nos 6 módulos cotados): subir foto/vídeo e transmitir na Smart TV da barbearia (digital signage / menu board).
-- Escopo: gerenciador de mídias (upload / ordenar / remover), playlist (ordem, tempo por item, loop), player web fullscreen pra rodar na TV.
-- Hardware do cliente: a Smart TV abre o player no navegador, ou um dispositivo barato (Fire TV Stick / Chromecast ~R$ 200-300, uma vez, custo dele).
-- Custo mensal extra: storage dos vídeos, desprezível (dentro da hospedagem).
-- **Cotação sugerida: R$ 900.**
+Cliente pediu (não estava nos 6 módulos). **Versão mais simples possível (decisão Inael):** a TV (com internet) abre um **endereço/URL** no navegador, e essa página mostra as mídias em loop, fullscreen. Sem app nem dispositivo obrigatório.
+- Escopo: painel pra o dono subir/ordenar/remover as mídias + a página-player (URL) que roda o loop na TV.
+- Requisito: a Smart TV precisa de internet e navegador. Se o navegador da TV for limitado, um aparelho baratinho (Fire TV Stick ~R$ 200-300, uma vez, custo dele) resolve.
+- Custo mensal extra: storage das mídias, desprezível.
+- **Cotação: R$ 900** (módulo opcional).
 
-Opções de orçamento (decisão do Inael):
-- A) Cobrar o módulo: cliente paga R$ 3.400 + R$ 900 = **R$ 4.300**.
-- B) Meio termo: +R$ 500 → **R$ 3.900**.
-- C) Cortesia (mantém R$ 3.400), perde ~R$ 900 de margem.
+Ativação (cliente escolhe):
+- **Agora:** entra junto, total R$ 3.400 + R$ 900 = **R$ 4.300**.
+- **Depois:** fica R$ 3.400 agora; ativa o módulo de TV por R$ 900 quando quiser.
 
 Mudanças de escopo (29/07, já no `RESPOSTAS`): "Reconstrução detox" -> "Limpeza Detox"; comissão de Limpeza Detox + Acidificação = 20% barbeiro + 20% recepcionista.
 
