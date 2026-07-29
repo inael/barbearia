@@ -31,9 +31,11 @@ O cliente esperava R$ 60-100/mês; os ~R$ 360 iniciais mataram o negócio. Revis
 - **Sem taxa fixa de suporte.** Suporte e ajustes **por hora (R$ 120/h)**, só quando precisar.
 - **Fixo mensal = só hospedagem + banco: ~R$ 40/mês.**
 - **WhatsApp:** grátis pra começar (plano inicial), R$ 59/mês quando o volume crescer.
-- **IA (atendente):** **pré-pago no UseTokia** (créditos por uso), sem mensalidade fixa.
+- **IA (atendente):** pré-pago no UseTokia com **DeepSeek** (barato): ~R$ 50 de crédito duram ~3 meses (≈ R$ 17/mês).
 
-Ou seja, o fixo começa em ~R$ 40/mês + créditos de IA conforme o uso. A margem da IT Booster fica no **build (R$ 3.400)** + horas de evolução. Substitui o modelo anterior de mensalidade R$ 350-360.
+Manutenção total ~R$ 55-60/mês (hospedagem R$40 + IA ~R$17; WhatsApp grátis no início). Somando a parcela do build (**10x de R$ 340**), o cliente paga **~R$ 400/mês nos primeiros 10 meses**; depois de quitar, só **~R$ 55-60/mês**. A margem da IT Booster fica no build (R$ 3.400) + horas de evolução. Substitui o modelo anterior de mensalidade R$ 350-360.
+
+Lever se o cliente reagir ao ~R$ 400 dos 10 meses: parcelar o build em mais vezes (15x de R$ 227, 20x de R$ 170).
 
 ---
 
