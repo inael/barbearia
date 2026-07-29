@@ -26,6 +26,20 @@ Conta:
 - **Sem percentual**; sistema 100% do cliente.
 - Alternativa se quiser ≥R$3.500: cortesia só do módulo 6 (Assinaturas) → cliente paga **R$ 4.100**.
 
+## Módulo adicional pedido (2026-07-29): Mídia Indoor / Propaganda na TV
+Cliente pediu (não estava nos 6 módulos cotados): subir foto/vídeo e transmitir na Smart TV da barbearia (digital signage / menu board).
+- Escopo: gerenciador de mídias (upload / ordenar / remover), playlist (ordem, tempo por item, loop), player web fullscreen pra rodar na TV.
+- Hardware do cliente: a Smart TV abre o player no navegador, ou um dispositivo barato (Fire TV Stick / Chromecast ~R$ 200-300, uma vez, custo dele).
+- Custo mensal extra: storage dos vídeos, desprezível (dentro da hospedagem).
+- **Cotação sugerida: R$ 900.**
+
+Opções de orçamento (decisão do Inael):
+- A) Cobrar o módulo: cliente paga R$ 3.400 + R$ 900 = **R$ 4.300**.
+- B) Meio termo: +R$ 500 → **R$ 3.900**.
+- C) Cortesia (mantém R$ 3.400), perde ~R$ 900 de margem.
+
+Mudanças de escopo (29/07, já no `RESPOSTAS`): "Reconstrução detox" -> "Limpeza Detox"; comissão de Limpeza Detox + Acidificação = 20% barbeiro + 20% recepcionista.
+
 ## Custos mensais (REVISADO 2026-07-29, após objeção do cliente)
 O cliente esperava R$ 60-100/mês; os ~R$ 360 iniciais mataram o negócio. Revisado para caber:
 - **Sem taxa fixa de suporte.** Suporte e ajustes **por hora (R$ 120/h)**, só quando precisar.

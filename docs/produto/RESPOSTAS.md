@@ -73,4 +73,10 @@ Coletadas em 2026-07-24 (12:43-14:48 BRT), por texto + 1 áudio. Fonte: WhatsApp
 - **Combos:** comissão **fixa de 40%** (não escalona; diferente dos serviços avulsos, que vão 40/45/50%).
 - **Comissão de produto (recepcionista E barbeiro):** corrigida para **5% base e 10% se vender >R$ 2.500** em produtos. Supersede a faixa anterior (5% / 7% em 2.500 / 10% em 4.000); agora passar de R$2.500 já vai direto pra 10%.
 
-## Escopo: COMPLETO (21 perguntas + refinamentos respondidos)
+## Mudanças e acordo (2026-07-29)
+- **NEGÓCIO FECHADO** ("chegamos a um acordo" / "então fechou"). Pagamento a confirmar: pensa em **R$ 2.000 entrada + parcelar R$ 1.400** dos R$ 3.400.
+- **Renomeação:** serviço "Reconstrução detox" passa a se chamar **"Limpeza Detox"**.
+- **Comissão especial (2 serviços):** a comissão de **Limpeza Detox** e **Acidificação** é **dividida entre barbeiro e recepcionista: 20% para cada** (total 40%, metade pra cada). Difere da regra geral escalonada.
+- **Funcionalidade nova pedida:** módulo de **Mídia Indoor / Propaganda na TV** (subir foto/vídeo e transmitir na Smart TV da barbearia). Não estava nos 6 módulos cotados; entra como adição (orçar). Ver `barbearia/docs/produto/`.
+
+## Escopo: COMPLETO (21 perguntas + refinamentos + mudanças 29/07)
