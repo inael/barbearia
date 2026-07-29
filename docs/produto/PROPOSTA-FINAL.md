@@ -26,11 +26,14 @@ Conta:
 - **Sem percentual**; sistema 100% do cliente.
 - Alternativa se quiser ≥R$3.500: cortesia só do módulo 6 (Assinaturas) → cliente paga **R$ 4.100**.
 
-## Custos mensais (2 partes separadas)
-1. **Plataformas integradas (WhatsApp + IA + hospedagem):** ~R$ 160/mês. É o que roda por trás, integrado ao sistema (WhatsApp/SimplesZap R$59, IA, hospedagem). Custo de operar um sistema online.
-2. **Suporte e manutenção (IT Booster):** R$ 200/mês. Nossa equipe mantendo no ar, monitorando, corrigindo e dando suporte.
+## Custos mensais (REVISADO 2026-07-29, após objeção do cliente)
+O cliente esperava R$ 60-100/mês; os ~R$ 360 iniciais mataram o negócio. Revisado para caber:
+- **Sem taxa fixa de suporte.** Suporte e ajustes **por hora (R$ 120/h)**, só quando precisar.
+- **Fixo mensal = só hospedagem + banco: ~R$ 40/mês.**
+- **WhatsApp:** grátis pra começar (plano inicial), R$ 59/mês quando o volume crescer.
+- **IA (atendente):** **pré-pago no UseTokia** (créditos por uso), sem mensalidade fixa.
 
-Total mensal ~R$ 360. Evoluções/novos módulos: por hora (R$ 120/h) ou orçamento à parte.
+Ou seja, o fixo começa em ~R$ 40/mês + créditos de IA conforme o uso. A margem da IT Booster fica no **build (R$ 3.400)** + horas de evolução. Substitui o modelo anterior de mensalidade R$ 350-360.
 
 ---
 
@@ -57,18 +60,17 @@ Total mensal ~R$ 360. Evoluções/novos módulos: por hora (R$ 120/h) ou orçame
 >
 > Resumo: sistema de R$ 8.300 saindo por *R$ 3.400 em 10x* (2 módulos por minha conta), e ~R$ 360/mês pra manter rodando com suporte. O que acha? 👊
 
-## Mensagem 2 (enviar logo após a principal), detalhe dos ~R$ 360/mês
-> E sobre esses ~R$ 360/mês, pra você ver certinho como é dividido, sem nada escondido 👇
+## Mensagem 2, ENVIADA 2026-07-29 09:57 (revisão do custo mensal, após objeção)
+Contexto: cliente disse que ~R$360/mês inviabilizava (esperava R$60-100). Enviado (direto, sem emoji, por integração):
+> Rodrigo, mudei a forma pra ficar mais em conta.
 >
-> *Plataformas que rodam por trás (~R$ 160/mês):*
-> - WhatsApp (envio das mensagens do atendimento): ~R$ 59/mês
-> - IA (o atendente inteligente rodando): ~R$ 60/mês
-> - Hospedagem + banco de dados (o sistema no ar): ~R$ 40/mês
+> O suporte deixa de ser mensal fixo. Passa a ser por hora, só quando você precisar de algum ajuste (R$ 120/h).
 >
-> *Nossa equipe, suporte e manutenção (R$ 200/mês):*
-> - Monitoramento pra garantir que está sempre no ar
-> - Correção de bugs e pequenos ajustes
-> - Suporte pra você e sua equipe no dia a dia
-> - Atualizações de segurança
+> Assim o custo mensal fica só nas integrações que rodam por trás:
+> - Hospedagem + banco de dados: R$ 40/mês
+> - WhatsApp (envio das mensagens): grátis para começar, R$ 59/mês quando o volume crescer
+> - IA (o atendente): pré-pago no UseTokia, você paga só os créditos que usar, sem mensalidade fixa
 >
-> Ou seja: ~R$ 360/mês pra manter tudo rodando redondo, com a gente cuidando de perto. 👊
+> Começa em torno de R$ 40/mês (hospedagem), mais os créditos de IA conforme o uso. Sem taxa fixa de suporte.
+>
+> Fecha assim?
