@@ -56,3 +56,19 @@ Total mensal ~R$ 360. Evoluções/novos módulos: por hora (R$ 120/h) ou orçame
 > - *Suporte e manutenção (minha equipe)*: *R$ 200/mês*, pra manter tudo no ar, monitorar, corrigir e te atender.
 >
 > Resumo: sistema de R$ 8.300 saindo por *R$ 3.400 em 10x* (2 módulos por minha conta), e ~R$ 360/mês pra manter rodando com suporte. O que acha? 👊
+
+## Mensagem 2 (enviar logo após a principal), detalhe dos ~R$ 360/mês
+> E sobre esses ~R$ 360/mês, pra você ver certinho como é dividido, sem nada escondido 👇
+>
+> *Plataformas que rodam por trás (~R$ 160/mês):*
+> - WhatsApp (envio das mensagens do atendimento): ~R$ 59/mês
+> - IA (o atendente inteligente rodando): ~R$ 60/mês
+> - Hospedagem + banco de dados (o sistema no ar): ~R$ 40/mês
+>
+> *Nossa equipe, suporte e manutenção (R$ 200/mês):*
+> - Monitoramento pra garantir que está sempre no ar
+> - Correção de bugs e pequenos ajustes
+> - Suporte pra você e sua equipe no dia a dia
+> - Atualizações de segurança
+>
+> Ou seja: ~R$ 360/mês pra manter tudo rodando redondo, com a gente cuidando de perto. 👊
