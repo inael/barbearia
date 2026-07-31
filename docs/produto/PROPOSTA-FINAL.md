@@ -1,5 +1,13 @@
 # Proposta final, Barbearia
 
+## ACORDO FECHADO (2026-07-30)
+- Núcleo: **R$ 3.400** (6 módulos, 2 por nossa conta), pago em **10x** (ou com entrada pra diluir as parcelas).
+- **Módulo de TV incluído**, pago via **permuta: 12 colorações de barba (1 por mês)** ≈ R$ 600, em vez de dinheiro.
+- **Permuta total:** 1 ano de corte (R$ 2.400) + 12 colorações de barba (R$ 600) ≈ R$ 3.000 em serviços.
+- Manutenção: ~R$ 55-60/mês (hospedagem + IA DeepSeek; WhatsApp grátis no início). Suporte por hora (R$ 120/h).
+- Mudanças de escopo 29/07: "Reconstrução detox" -> "Limpeza Detox"; comissão Limpeza Detox + Acidificação = 20% barbeiro + 20% recepcionista.
+- Próximo: rascunhar contrato + iniciar construção (Spec Kit Fase 1).
+
 ## Decisão: modelo de 3% (rev-share) DESCARTADO
 Motivo (Inael, 2026-07-28): construção leva ~30 dias, 1º ano cai pra ~11 meses, barbearia nova demora pra gerar receita, então os 3% incidiriam sobre ~zero. Fica o tradicional, enquadrando o abatimento como **módulos incluídos sem custo** (não como "desconto").
 
