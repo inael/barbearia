@@ -1,0 +1,35 @@
+%% Arquitetura da Barbearia (para aula). Importar no Excalidraw: Insert -> Mermaid.
+flowchart TB
+  subgraph ATORES["Quem usa"]
+    direction LR
+    dono["Dono<br/>(painel de gestao)"]
+    recep["Recepcao<br/>(painel + caixa)"]
+    barb["Barbeiro<br/>(agenda)"]
+    cliente["Cliente final<br/>(via WhatsApp)"]
+    tv["Smart TV<br/>(propaganda em loop)"]
+  end
+
+  subgraph VPS["VPS dedicada do cliente - Hostinger KVM 1 (Coolify)"]
+    app["App Next.js<br/>FRONT + BACK (API)"]
+    db[("Postgres<br/>banco de dados")]
+    app --- db
+  end
+
+  subgraph INTEG["Integracoes (servicos externos por API)"]
+    direction LR
+    zap["SimplesZap<br/>WhatsApp"]
+    ia["UseTokia / DeepSeek<br/>IA do atendente"]
+    asaas["Asaas<br/>pagamentos e assinaturas"]
+    logto["Logto<br/>login e perfis (RBAC)"]
+  end
+
+  dono -->|navegador HTTPS| app
+  recep -->|navegador HTTPS| app
+  barb -->|navegador HTTPS| app
+  tv -->|abre URL do player| app
+  app -->|autentica| logto
+
+  cliente <-->|conversa| zap
+  zap <-->|webhook / envio| app
+  app <-->|gera resposta| ia
+  app <-->|cobranca / recorrencia| asaas
