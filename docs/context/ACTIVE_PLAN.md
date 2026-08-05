@@ -1,22 +1,30 @@
 # ACTIVE_PLAN
 
 ## Objetivo atual
-Fechar a fundação e preparar a Fase 1 (VP1) mirando abertura em outubro/2026.
+**Sprint 0, desenvolvimento local (sem VPS).** Construir a Fase 1 na máquina local; deploy na VPS do cliente só no fim.
 
-## Fases
-- **Fase 1 (VP1), coração:** serviços/combos + agenda (com rodízio) + atendente IA de agendamento no WhatsApp + comissão escalonada (serviço e produto) + painel do dono básico.
-- **Fase 2 (VP2):** assinaturas (Flex/Premium, cartão recorrente Asaas, fila de espera com aprovação por painel, pote por pontos) + nota fiscal (MEI → Simples) + notificações ao dono.
-- **Fase 3:** estoque (contagem diária), metas/premiação, indicadores de churn, mídia indoor na TV.
+## Stack (decidida)
+- Next.js (App Router, TypeScript) full-stack, Tailwind + shadcn/ui + Recharts.
+- **ORM:** Drizzle + PostgreSQL (local via Docker no dev; VPS em produção).
+- **Testes:** Vitest (foco nas regras de dinheiro).
+- **Auth:** Logto. **Integrações:** SimplesZap, UseTokia/DeepSeek, Asaas (sandbox).
+- Processo: spec-driven (Spec Kit), constitution + spec por módulo durável.
 
-## Processo
-Spec-Driven Development (Spec Kit) nos módulos duráveis (agenda, comissão, assinaturas). Vibe/quick-fix no resto. Subagents p/ multi-agente (Haiku em tarefa simples).
+## Sprint 0, passos (ordem)
+1. [ ] Spec Kit: `constitution` do projeto (princípios + regras de negócio invariantes).
+2. [ ] Scaffold Next.js + Tailwind + shadcn/ui + Drizzle + Vitest (local).
+3. [ ] `docker-compose.yml` com Postgres local pra dev.
+4. [ ] Schema inicial (Drizzle): profissionais, serviços, combos, clientes, agendamentos, comissao, assinaturas, pote.
+5. [ ] Seed do catálogo (19 serviços + 6 combos + preços/tempos das RESPOSTAS).
+6. [ ] **Regras de dinheiro (coração), com testes:** `comissao.ts` (escalonada, combos 40%, produto, vale, 20%/20%), `pote.ts` (pontos, 60/40), `rodizio.ts`.
+7. [ ] Auth Logto (RBAC dono/recepção/barbeiro) + shell do painel.
+8. [ ] Módulo Agenda (grade, agendamento, horários, preferência + rodízio).
+9. [ ] Atendente IA (lógica de horário + prompt, testável contra UseTokia; webhook via túnel).
+10. [ ] Módulo TV (reuso do player do midia-play, storage local).
 
-## Próximos passos concretos
-1. Rodar `specify` do Spec Kit e escrever a `constitution` do projeto.
-2. Spec do módulo **Agenda** (regras: preferência de barbeiro + rodízio, horários de funcionamento, duração editável por serviço/barbeiro).
-3. Spec do módulo **Comissão** (escalonada mensal por faixa de faturamento; produto separado; vale com 30% desconto).
-4. Spec do **Atendente IA** (lógica de horário, escala pra humano, pré-cadastro).
-5. Montar cronograma + orçamento por parte (setup + mensalidade).
+## Só precisa da VPS no fim
+Deploy (Coolify), domínio/HTTPS, webhook WhatsApp ao vivo, Postgres de produção, go-live.
 
-## Aguardando cliente
-- Nada. Escopo fechado (2026-07-25). Cronograma em `docs/produto/CRONOGRAMA.md`; próximo é o orçamento por parte.
+## Aguardando
+- Entrada/assinatura do contrato (gate comercial, decisão do Inael).
+- Rodrigo contratar a VPS (só pro deploy).
