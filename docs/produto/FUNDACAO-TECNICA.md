@@ -28,16 +28,16 @@ Documento de decisões que fundamenta o projeto. Baseado em pesquisa profunda (2
 - **Regra SSR (App Router):** preferir libs **SVG** (Recharts) que renderizam server-side. Libs Canvas (chart.js) só client-side (`'use client'` + dynamic import `ssr:false`).
 - Referências de heurística visual: `~/.claude/references/ui-ux-pro-max-skill` (SaaS/dashboard) e `design-system` (tokens + Tailwind).
 
-## 3. Arquitetura (aplicada à barbearia)
+## 3. Arquitetura (aplicada à barbearia), VPS única dedicada
 
-Padrão IT Booster, ajustado ao custo baixo:
+Infra **dedicada do cliente** numa VPS Hostinger KVM 1 (~R$33/mês, plano 12 meses), tudo numa caixa via Coolify. Sem Vercel, sem Fastify separado.
 
-- **Frontend:** Next.js (App Router) + Tailwind + shadcn/ui. Dois contextos: **painel logado** (dono, recepcionista, barbeiro, com RBAC) e telas operacionais.
-- **Backend:** Fastify (API) + **Supabase** (Postgres + storage). Regras de negócio pesadas (comissão, pote, rodízio de agenda) no backend, testáveis.
-- **Auth:** **Logto** (padrão IT Booster), com RBAC pros 3 papéis (dono / recepcionista / barbeiro). Domínio de auth próprio (fachada), sem trocar issuer ao migrar host.
-- **Atendente IA no WhatsApp:** reusar a base do **SDR-IA** (fluxo n8n + Hub de IA / LiteLLM), especializado pra **agendamento**: acesso à agenda, lógica de horário (oferece 1-2 antes/depois; sem preferência, oferece horário menos ocupado do mês), descrição simpática de serviços, e **escala pra humano** quando não sabe. Tom "formal mas simpático" (estilo GPT), que o cliente aprovou.
-- **Deploy:** frontend na **Vercel** (CDN, plano barato) + backend em **Coolify na VPS** (evita custo de seat/execução). Dados do cliente **fora da infra IT Booster** (storage/banco do próprio cliente quando exigido).
-- **Dados sensíveis do cliente:** backups e base no storage pago pelo cliente (regra IT Booster).
+- **App Next.js (App Router) full-stack:** front (painel logado dono / recepcionista / barbeiro, com RBAC) + back (rotas de API / server actions) juntos no mesmo app. As regras pesadas (comissão, pote por pontos, rodízio de agenda) ficam na camada de API, testáveis. Tailwind + shadcn/ui + Recharts.
+- **Banco:** Postgres na própria VPS (container Coolify, com backup).
+- **Auth:** **Logto** (RBAC dono / recepcionista / barbeiro).
+- **Integrações externas (consumidas por API pelo back):** **SimplesZap** (WhatsApp), **UseTokia/DeepSeek** (IA do atendente, pré-pago), **Asaas** (assinaturas cartão recorrente + PIX). A base do SDR-IA serve de referência pro fluxo do atendente (lógica de horário, escala pra humano, tom formal-mas-simpático).
+- **Deploy:** Coolify na VPS (git → build → HTTPS). Um domínio, um lugar pra cuidar.
+- **Dados do cliente:** na VPS dele, fora da infra IT Booster (regra IT Booster).
 
 ## 4. Pagamentos (Asaas)
 
