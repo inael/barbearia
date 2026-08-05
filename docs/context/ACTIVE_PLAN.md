@@ -11,12 +11,12 @@
 - Processo: spec-driven (Spec Kit), constitution + spec por módulo durável.
 
 ## Sprint 0, passos (ordem)
-1. [ ] Spec Kit: `constitution` do projeto (princípios + regras de negócio invariantes).
-2. [ ] Scaffold Next.js + Tailwind + shadcn/ui + Drizzle + Vitest (local).
+1. [x] Spec Kit: `constitution` do projeto (`docs/produto/CONSTITUTION.md`).
+2. [x] Scaffold Next.js 16 + Tailwind v4 + Drizzle + Vitest (local).
 3. [ ] `docker-compose.yml` com Postgres local pra dev.
 4. [ ] Schema inicial (Drizzle): profissionais, serviços, combos, clientes, agendamentos, comissao, assinaturas, pote.
 5. [ ] Seed do catálogo (19 serviços + 6 combos + preços/tempos das RESPOSTAS).
-6. [ ] **Regras de dinheiro (coração), com testes:** `comissao.ts` (escalonada, combos 40%, produto, vale, 20%/20%), `pote.ts` (pontos, 60/40), `rodizio.ts`.
+6. [x] **Regras de dinheiro (coração), com testes (26 verdes):** `lib/comissao.ts`, `lib/pote.ts`, `lib/rodizio.ts`.
 7. [ ] Auth Logto (RBAC dono/recepção/barbeiro) + shell do painel.
 8. [ ] Módulo Agenda (grade, agendamento, horários, preferência + rodízio).
 9. [ ] Atendente IA (lógica de horário + prompt, testável contra UseTokia; webhook via túnel).
