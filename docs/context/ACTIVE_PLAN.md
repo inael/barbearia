@@ -13,10 +13,11 @@
 ## Sprint 0, passos (ordem)
 1. [x] Spec Kit: `constitution` do projeto (`docs/produto/CONSTITUTION.md`).
 2. [x] Scaffold Next.js 16 + Tailwind v4 + Drizzle + Vitest (local).
-3. [ ] `docker-compose.yml` com Postgres local pra dev.
-4. [ ] Schema inicial (Drizzle): profissionais, serviços, combos, clientes, agendamentos, comissao, assinaturas, pote.
-5. [ ] Seed do catálogo (19 serviços + 6 combos + preços/tempos das RESPOSTAS).
+3. [x] **PostgreSQL no Coolify** (na VPS) + conectado ao app (rede `coolify` interna; público 5432 só p/ migrations).
+4. [x] Schema (Drizzle): `servicos`, `combos`, `profissionais`. (agendamentos/assinaturas/comissao vem depois)
+5. [x] Seed do catálogo (19 serviços + 6 combos + 4 profissionais) aplicado.
 6. [x] **Regras de dinheiro (coração), com testes (26 verdes):** `lib/comissao.ts`, `lib/pote.ts`, `lib/rodizio.ts`.
+6b. [x] **APLICAÇÃO FUNCIONANDO:** painel real lendo o catálogo do Postgres, deployado e verificado em http://179.198.113.115.sslip.io
 7. [ ] Auth Logto (RBAC dono/recepção/barbeiro) + shell do painel.
 8. [ ] Módulo Agenda (grade, agendamento, horários, preferência + rodízio).
 9. [ ] Atendente IA (lógica de horário + prompt, testável contra UseTokia; webhook via túnel).
