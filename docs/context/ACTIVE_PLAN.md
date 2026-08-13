@@ -18,7 +18,8 @@
 5. [x] Seed do catálogo (19 serviços + 6 combos + 4 profissionais) aplicado.
 6. [x] **Regras de dinheiro (coração), com testes (26 verdes):** `lib/comissao.ts`, `lib/pote.ts`, `lib/rodizio.ts`.
 6b. [x] **APLICAÇÃO FUNCIONANDO:** painel real lendo o catálogo do Postgres, deployado e verificado em http://179.198.113.115.sslip.io
-7. [ ] Auth Logto (RBAC dono/recepção/barbeiro) + shell do painel.
+6c. [x] Tela `/comissao` (Simulador de Comissão & Pote) usando o motor testado; nav Painel↔Comissao.
+7. [ ] Auth Logto (RBAC dono/recepção/barbeiro) + shell do painel. **PRÉ-REQUISITO:** registrar app `barbearia` no console Logto (não há `BARBEARIA_LOGTO_*` no vault; Management API precisa de M2M token que ainda não temos). Passos depois: `@logto/next`, middleware, callback/sign-in, roles + rotas protegidas.
 8. [ ] Módulo Agenda (grade, agendamento, horários, preferência + rodízio).
 9. [ ] Atendente IA (lógica de horário + prompt, testável contra UseTokia; webhook via túnel).
 10. [ ] Módulo TV (reuso do player do midia-play, storage local).

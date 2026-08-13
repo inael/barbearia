@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -23,7 +24,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <nav className="border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+          <div className="mx-auto flex max-w-5xl items-center gap-6 px-5 py-3">
+            <span className="text-sm font-bold tracking-tight">Faith Barbearia</span>
+            <div className="flex gap-4 text-sm text-neutral-500">
+              <Link href="/" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                Painel
+              </Link>
+              <Link href="/comissao" className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                Comissao
+              </Link>
+            </div>
+          </div>
+        </nav>
+        {children}
+      </body>
     </html>
   );
 }
