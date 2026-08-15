@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefatos gerados pelo harness (eslint flat nao le .gitignore):
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
+    "reports/**",
+    ".stryker-tmp/**",
   ]),
 ]);
 

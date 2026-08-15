@@ -1,10 +1,9 @@
-import { getDb } from "./index";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import * as schema from "./schema";
 import { servicos, combos, profissionais } from "./schema";
 
-const db = getDb();
-
 // Catalogo real da Faith Barbearia (docs/produto/RESPOSTAS.md).
-const SERVICOS = [
+export const SERVICOS = [
   { slug: "corte", nome: "Corte", precoCentavos: 6000, duracaoMin: 40, entraPote: true, pontosPote: 30 },
   { slug: "barba", nome: "Barba", precoCentavos: 5000, duracaoMin: 30, entraPote: true, pontosPote: 30 },
   { slug: "corte_barba", nome: "Corte + barba", precoCentavos: 10000, duracaoMin: 60, entraPote: false, pontosPote: 0 },
@@ -26,7 +25,7 @@ const SERVICOS = [
   { slug: "tonalizacao_cabelo", nome: "Tonalizacao cabelo", precoCentavos: 5000, duracaoMin: 30, entraPote: false, pontosPote: 0 },
 ];
 
-const COMBOS = [
+export const COMBOS = [
   { slug: "camuflagem", nome: "Camuflagem", precoCentavos: 17000, duracaoMin: 60, inclui: "Corte+barba, tonalizacao barba, tonalizacao corte" },
   { slug: "rilex", nome: "Rilex", precoCentavos: 15000, duracaoMin: 60, inclui: "Hidratacao corte+barba, limpeza de pele, cone hindu" },
   { slug: "ouro", nome: "Ouro", precoCentavos: 14000, duracaoMin: 60, inclui: "Corte, sobrancelha, hidratacao, limpeza de pele" },
@@ -35,29 +34,23 @@ const COMBOS = [
   { slug: "faith", nome: "Faith", precoCentavos: 28000, duracaoMin: 80, inclui: "Corte+barba, sobrancelha, limpeza de pele, (progressiva/selagem/realinhamento/tonalizacao)" },
 ];
 
-const PROFISSIONAIS = [
+export const PROFISSIONAIS = [
   { nome: "Rodrigo", papel: "dono" as const },
   { nome: "Pedro", papel: "barbeiro" as const },
   { nome: "Joao", papel: "barbeiro" as const },
   { nome: "Recepcao", papel: "recepcionista" as const },
 ];
 
-async function main() {
-  console.log("Limpando tabelas...");
+/**
+ * Semeia o catalogo de forma determinística e idempotente:
+ * limpa as tabelas e reinsere o catalogo canonico. Rodar 2x resulta no
+ * mesmo estado. Função pura de efeito (recebe o db) para ser testável.
+ */
+export async function seedCatalog(db: PostgresJsDatabase<typeof schema>): Promise<void> {
   await db.delete(servicos);
   await db.delete(combos);
   await db.delete(profissionais);
-
-  console.log(`Inserindo ${SERVICOS.length} servicos, ${COMBOS.length} combos, ${PROFISSIONAIS.length} profissionais...`);
   await db.insert(servicos).values(SERVICOS);
   await db.insert(combos).values(COMBOS);
   await db.insert(profissionais).values(PROFISSIONAIS);
-
-  console.log("Seed concluido com sucesso.");
-  process.exit(0);
 }
-
-main().catch((e) => {
-  console.error("Falha no seed:", e);
-  process.exit(1);
-});

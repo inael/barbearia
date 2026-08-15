@@ -13,3 +13,12 @@ coverage/
 __pycache__/
 *.pyc
 .venv/
+
+# harness artifacts
+/coverage
+/playwright-report
+/test-results
+/.stryker-tmp
+/reports
+e2e/.runtime.json
+*.tsbuildinfo
