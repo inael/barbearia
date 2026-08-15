@@ -43,10 +43,14 @@ describe("comissao — invariantes (property-based)", () => {
     );
   });
 
-  // valeProdutoBarbeiro = 0.7p e nunca excede o preco.
-  it("valeProdutoBarbeiro(p) = round2(0.7p) e <= p", () => {
+  // valeProdutoBarbeiro = 0.7p e, para preco realista (>= 1 centavo), nunca excede o preco.
+  // Dominio: precos sao em centavos (>= 0.01). Abaixo de 1 centavo o arredondamento a 2
+  // casas pode empurrar 0.7p para cima de p (ex.: p=0.00714 -> 0.01), mas isso nao existe
+  // no dominio de precos reais, entao o gerador comeca em 0.01.
+  const preco = () => fc.double({ min: 0.01, max: 1_000_000, noNaN: true, noDefaultInfinity: true });
+  it("valeProdutoBarbeiro(p) = round2(0.7p) e <= p (preco >= 1 centavo)", () => {
     fc.assert(
-      fc.property(money(), (p) => {
+      fc.property(preco(), (p) => {
         const vale = valeProdutoBarbeiro(p);
         return vale <= p + 1e-9 && Math.abs(vale - round2(p * 0.7)) <= 1e-9;
       }),

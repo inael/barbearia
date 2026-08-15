@@ -14,9 +14,9 @@ Fonte de verdade: `docs/produto/CONSTITUTION.md`, `RESPOSTAS.md` (Q6) e `lib/rod
 | ROD-003 | Se só `ultimoAtendeu` está disponível, escolhe ele | unit | lib/rodizio.test.ts | PASS | idem |
 | ROD-004 | Entre candidatos, escolhe o de menor `contagem` | unit | lib/rodizio.test.ts | PASS | idem |
 | ROD-005 | Empate de contagem mantém a ordem original de `disponiveis` | unit | lib/rodizio.test.ts | PASS | idem |
-| ROD-006 | INVARIANTE: resultado ∈ `disponiveis`, ou null ⟺ `disponiveis` vazio | property | lib/rodizio.property.test.ts | PENDING | falta |
-| ROD-007 | INVARIANTE: com ≥2 disponíveis e `ultimoAtendeu`∈disponiveis, resultado ≠ `ultimoAtendeu` | property | lib/rodizio.property.test.ts | PENDING | falta |
-| ROD-008 | Mutação (remover filtro de `ultimoAtendeu`; inverter comparação de contagem) é morta pela suíte | mutation | stryker (lib/rodizio.ts) | PENDING | falta |
+| ROD-006 | INVARIANTE: resultado ∈ `disponiveis`, ou null ⟺ `disponiveis` vazio | property | lib/rodizio.property.test.ts | PASS | property verde (seed fixa) |
+| ROD-007 | INVARIANTE: com ≥2 disponíveis e `ultimoAtendeu`∈disponiveis, resultado ≠ `ultimoAtendeu` | property | lib/rodizio.property.test.ts | PASS | property verde (seed fixa) |
+| ROD-008 | Mutação (remover filtro de `ultimoAtendeu`; inverter comparação de contagem) é morta pela suíte | mutation | stryker (lib/rodizio.ts) | PASS | mutation 100% |
 
 ## Invariants (property-based)
 1. `resultado ∈ disponiveis ∪ {null}`; `resultado == null ⟺ disponiveis.length == 0`.

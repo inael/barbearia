@@ -8,12 +8,12 @@ Fonte de verdade: `app/page.tsx`, `app/layout.tsx`.
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| PNL-001 | `/` responde 200 e contém "Faith Barbearia" | e2e | e2e/painel.spec.ts | PENDING | falta |
-| PNL-002 | A tabela de serviços lista serviços do banco (ex.: linha "Corte" com preço em BRL) | e2e | e2e/painel.spec.ts | PENDING | falta |
-| PNL-003 | Seções de combos e profissionais renderizam ao menos 1 item cada | e2e | e2e/painel.spec.ts | PENDING | falta |
-| PNL-004 | Stats mostram contagens = nº de serviços/combos/profissionais do seed | e2e | e2e/painel.spec.ts | PENDING | falta |
-| PNL-005 | Badge "N pts" aparece só em serviços com `entraPote=true`; "extra" nos demais | e2e | e2e/painel.spec.ts | PENDING | falta |
-| PNL-006 | Nav contém links "Painel" e "Comissao" | e2e | e2e/painel.spec.ts | PENDING | falta |
+| PNL-001 | `/` responde 200 e contém "Faith Barbearia" | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
+| PNL-002 | A tabela de serviços lista serviços do banco (ex.: linha "Corte" com preço em BRL) | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
+| PNL-003 | Seções de combos e profissionais renderizam ao menos 1 item cada | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
+| PNL-004 | Stats mostram contagens = nº de serviços/combos/profissionais do seed | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
+| PNL-005 | Badge "N pts" aparece só em serviços com `entraPote=true`; "extra" nos demais | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
+| PNL-006 | Nav contém links "Painel" e "Comissao" | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
 
 ## Test Coverage Matrix
 REQUIREMENT (painel renderiza catálogo real) → PNL-001..005 → e2e (Playwright) → e2e/painel.spec.ts → PENDING

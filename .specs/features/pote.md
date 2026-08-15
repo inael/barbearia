@@ -16,10 +16,10 @@ Fonte de verdade: `docs/produto/CONSTITUTION.md` e `lib/pote.ts`.
 | POTE-004 | `calcularPote(r)` = round2(0.40·r) | unit | lib/pote.test.ts | PASS | idem |
 | POTE-005 | `valorPorPonto(pote,total)` = pote/total; 0 quando total ≤ 0 | unit | lib/pote.test.ts | PASS | idem |
 | POTE-006 | `dividirPote(pote, {b:pts})` proporcional aos pontos | unit | lib/pote.test.ts | PASS | idem |
-| POTE-007 | INVARIANTE: soma das partes de `dividirPote` ≈ pote (tolerância de arredondamento) | property | lib/pote.property.test.ts | PENDING | falta |
-| POTE-008 | INVARIANTE: `calcularPote(r) ≥ 0` e `= 0.40·r` para r ≥ 0 | property | lib/pote.property.test.ts | PENDING | falta |
-| POTE-009 | Mutação em `RETENCAO_BARBEARIA` (0.6) e nos pontos é morta pela suíte | mutation | stryker (lib/pote.ts) | PENDING | falta |
-| POTE-010 | Consistência catálogo↔pote: todo serviço com `entraPote=true` no seed tem slug ∈ `PONTOS_SERVICO` e `pontosPote` = pontos do mapa | integration | lib/db/catalogo.integration.test.ts | PENDING | falta |
+| POTE-007 | INVARIANTE: soma das partes de `dividirPote` ≈ pote (tolerância de arredondamento) | property | lib/pote.property.test.ts | PASS | property verde (seed fixa) |
+| POTE-008 | INVARIANTE: `calcularPote(r) ≥ 0` e `= 0.40·r` para r ≥ 0 | property | lib/pote.property.test.ts | PASS | property verde (seed fixa) |
+| POTE-009 | Mutação em `RETENCAO_BARBEARIA` (0.6) e nos pontos é morta pela suíte | mutation | stryker (lib/pote.ts) | PASS | mutation 100% |
+| POTE-010 | Consistência catálogo↔pote: todo serviço com `entraPote=true` no seed tem slug ∈ `PONTOS_SERVICO` e `pontosPote` = pontos do mapa | integration | lib/db/catalogo.integration.test.ts | PASS | integration verde (CAT-007) |
 
 ## Invariants (property-based)
 1. `Σ dividirPote(pote, pontos).values() ≈ pote` (erro ≤ nº_barbeiros × 0.01).

@@ -7,28 +7,30 @@
 ## Índice de features (specs normalizadas)
 | Feature | Arquivo | #ACs | PASS | PENDING |
 |---------|---------|------|------|---------|
-| COM — Comissão | .specs/features/comissao.md | 15 | 11 | 4 |
-| POTE — Pote assinaturas | .specs/features/pote.md | 10 | 6 | 4 |
-| ROD — Rodízio | .specs/features/rodizio.md | 8 | 5 | 3 |
-| CAT — Catálogo/DB | .specs/features/catalogo-db.md | 7 | 0 | 7 |
-| PNL — Painel `/` | .specs/features/painel.md | 6 | 0 | 6 |
-| CUI — Simulador `/comissao` | .specs/features/comissao-ui.md | 6 | 0 | 6 |
-| **Total** | | **52** | **22** | **30** |
+| COM — Comissão | .specs/features/comissao.md | 15 | 15 | 0 |
+| POTE — Pote assinaturas | .specs/features/pote.md | 10 | 10 | 0 |
+| ROD — Rodízio | .specs/features/rodizio.md | 8 | 8 | 0 |
+| CAT — Catálogo/DB | .specs/features/catalogo-db.md | 7 | 7 | 0 |
+| PNL — Painel `/` | .specs/features/painel.md | 6 | 6 | 0 |
+| CUI — Simulador `/comissao` | .specs/features/comissao-ui.md | 6 | 6 | 0 |
+| **Total** | | **52** | **52** | **0** |
 
-PASS atual = comportamento provado por unit tests já verdes (26 testes). PENDING = property / integration / e2e / mutation ainda a criar. **Testes verdes isolados não bastam** — mutation/discrimination confirmam a força da suíte.
+Evidência (gate full determinístico, 2026-08-13): unit+property **39**, integration **6** (Postgres real), e2e **11** (browser real), coverage **100%** em `lib/`, mutation **97.67%** (pote/rodízio 100%; comissão 95.12% com 2 sobreviventes **equivalentes**: nudge do `EPSILON` no round2 e `<=0` vs `<0` com q=0). Testes property com **seed fixa** (determinismo). **Testes verdes isolados não bastam** — mutation confirmou a força da suíte e caçou uma AC real faltando (borda de hidratação negativa).
 
 ## EXIT_SIGNAL: false
 Vira `true` **somente por evidência**, quando TODOS abaixo forem verdade:
-- [ ] Todas as 52 ACs obrigatórias em PASS **com evidência** (arquivo de teste + resultado), ou explicitamente BLOCKED com justificativa aceitável.
-- [ ] Property tests dos invariantes do motor (COM/POTE/ROD) verdes.
-- [ ] Integration (Testcontainers Postgres) do catálogo/seed verde (CAT-*).
-- [ ] E2E Playwright dos critical journeys (PNL-*, CUI-*) verde contra a app real local.
-- [ ] Mutation em `lib/` sem sobreviventes relevantes nas áreas críticas (dinheiro).
-- [ ] `quality:full` (lint + typecheck + unit + integration + e2e + build + coverage + security) passa.
-- [ ] Security review sem CRITICAL/HIGH aberto.
-- [ ] Verifier fresh retorna PASS por feature; test-reviewer sem findings abertos.
-- [ ] `.ralph/fix_plan.md` sem trabalho obrigatório executável.
-- [ ] Sem TODO/stub/debug pendente; sem regressões.
+- [x] Todas as 52 ACs obrigatórias em PASS **com evidência** (arquivo de teste + resultado). tlc-validate: 52/52.
+- [x] Property tests dos invariantes do motor (COM/POTE/ROD) verdes (seed fixa).
+- [x] Integration (Testcontainers Postgres) do catálogo/seed verde (CAT-*): 6/6.
+- [x] E2E Playwright dos critical journeys (PNL-*, CUI-*) verde contra a app real local: 11/11.
+- [x] Mutation em `lib/` sem sobreviventes relevantes (97.67%; 2 equivalentes documentados).
+- [x] `quality:full` (`node tools/gate.mjs full`) passa (GATE: PASS, determinístico).
+- [x] Security review sem CRITICAL/HIGH alcançável no código (CLEAR; ver fix_plan SEC-*).
+- [ ] **Verifier fresh PASS + test-reviewer sem findings** — verifier round 1 = NEEDS_WORK (flaky property test), **corrigido**; falta RE-VERIFY (round 2) + test-reviewer independente.
+- [~] `.ralph/fix_plan.md` sem trabalho obrigatório executável — restam SEC-03 (bump drizzle antes de query dinâmica), SEC-04 (infra pré-deploy), SEC-05 (LOW): todos **não-bloqueantes / future-gated**.
+- [ ] Sem TODO/stub/debug pendente; sem regressões — a confirmar na verificação final.
+
+**Status:** falta apenas a rodada final independente (re-verify + test-reviewer) para considerar EXIT_SIGNAL.
 
 ## Decisões (resumo — detalhe em docs/TOOLCHAIN_DECISIONS.md)
 - Vitest KEEP; fast-check/coverage-v8/Playwright/Stryker/Testcontainers INSTALL; nock/MSW NOT_NEEDED (sem HTTP externo hoje).

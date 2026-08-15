@@ -5,6 +5,7 @@ import { defineConfig, configDefaults } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
+    setupFiles: ["./vitest.setup.ts"],
     include: ["lib/**/*.test.ts"],
     exclude: [...configDefaults.exclude, "**/*.integration.test.ts"],
     coverage: {
