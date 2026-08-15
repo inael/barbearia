@@ -26,7 +26,7 @@ Regras de comissão da Faith Barbearia. Fonte de verdade: `docs/produto/CONSTITU
 | COM-012 | INVARIANTE: `comissaoServico(v,faixa,c) ≤ v` para todo v≥0 | property | lib/comissao.property.test.ts | PASS | property verde (seed fixa) |
 | COM-013 | INVARIANTE: `faixaComissaoServico` é monotônica não-decrescente em f | property | lib/comissao.property.test.ts | PASS | property verde (seed fixa) |
 | COM-014 | INVARIANTE: barbeiro+recepção de `comissaoDividida(v)` = round2(0.40v) | property | lib/comissao.property.test.ts | PASS | property verde (seed fixa) |
-| COM-015 | Mutação em limiares (12000/15000/2500) e percentuais (.4/.45/.5/.05/.1/.2/.7) é morta pela suíte | mutation | stryker (lib/comissao.ts) | PASS | 95.12%; limiares/percentuais mortos; 2 sobreviventes equivalentes |
+| COM-015 | Mutação em limiares (12000/15000/2500) e percentuais (.4/.45/.5/.05/.1/.2/.7) é morta pela suíte | mutation | stryker (lib/comissao.ts) | PASS | 97.56%; limiares/percentuais + round-half-up mortos; 1 sobrevivente equivalente |
 
 ## Invariants (property-based)
 1. `comissaoServico(v, faixa, isCombo) ≤ v` para v ≥ 0.

@@ -19,6 +19,25 @@ async function counts() {
   return { servicos: s.n, combos: c.n, profissionais: p.n };
 }
 
+// Conteudo do catalogo (sem o id serial, que muda a cada delete+insert), ordenado.
+// Serve p/ provar que o re-seed mantem os VALORES, nao so a contagem.
+async function snapshot() {
+  const t = schema;
+  const servicos = await db
+    .select({ slug: t.servicos.slug, nome: t.servicos.nome, precoCentavos: t.servicos.precoCentavos, duracaoMin: t.servicos.duracaoMin, entraPote: t.servicos.entraPote, pontosPote: t.servicos.pontosPote, ativo: t.servicos.ativo })
+    .from(t.servicos)
+    .orderBy(t.servicos.slug);
+  const combos = await db
+    .select({ slug: t.combos.slug, nome: t.combos.nome, precoCentavos: t.combos.precoCentavos, duracaoMin: t.combos.duracaoMin, inclui: t.combos.inclui, ativo: t.combos.ativo })
+    .from(t.combos)
+    .orderBy(t.combos.slug);
+  const profissionais = await db
+    .select({ nome: t.profissionais.nome, papel: t.profissionais.papel, ativo: t.profissionais.ativo })
+    .from(t.profissionais)
+    .orderBy(t.profissionais.nome);
+  return { servicos, combos, profissionais };
+}
+
 beforeAll(async () => {
   container = await new PostgreSqlContainer("postgres:16-alpine").start();
   const url = container.getConnectionUri();
@@ -47,13 +66,17 @@ describe("CAT — catalogo/DB (integration, Postgres real)", () => {
     expect(PROFISSIONAIS.length).toBe(4);
   });
 
-  it("CAT-005 seed e idempotente (rodar 2x mantem as contagens)", async () => {
+  it("CAT-005 seed e idempotente (contagens E conteudo estaveis)", async () => {
     await seedCatalog(db);
-    const c1 = await counts();
+    const snap1 = await snapshot();
     await seedCatalog(db);
-    const c2 = await counts();
-    expect(c2).toEqual(c1);
-    expect(c2).toEqual({ servicos: 19, combos: 6, profissionais: 4 });
+    const snap2 = await snapshot();
+    // Conteudo identico apos re-seed, nao so a contagem: pega um impl que
+    // reinserisse valores diferentes mantendo o numero de linhas.
+    expect(snap2).toEqual(snap1);
+    expect(snap2.servicos).toHaveLength(19);
+    expect(snap2.combos).toHaveLength(6);
+    expect(snap2.profissionais).toHaveLength(4);
   });
 
   it("CAT-003 papel fora do enum e rejeitado", async () => {

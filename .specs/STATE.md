@@ -15,7 +15,7 @@
 | CUI — Simulador `/comissao` | .specs/features/comissao-ui.md | 6 | 6 | 0 |
 | **Total** | | **52** | **52** | **0** |
 
-Evidência (gate full determinístico, 2026-08-13): unit+property **39**, integration **6** (Postgres real), e2e **11** (browser real), coverage **100%** em `lib/`, mutation **97.67%** (pote/rodízio 100%; comissão 95.12% com 2 sobreviventes **equivalentes**: nudge do `EPSILON` no round2 e `<=0` vs `<0` com q=0). Testes property com **seed fixa** (determinismo). **Testes verdes isolados não bastam** — mutation confirmou a força da suíte e caçou uma AC real faltando (borda de hidratação negativa).
+Evidência (gate full determinístico, 2026-08-13): unit+property **41**, integration **6** (Postgres real), e2e **11** (browser real), coverage **100%** em `lib/`, mutation **98.84%** (pote/rodízio 100%; comissão 97.56%; **1 sobrevivente equivalente**: `<=0` vs `<0` com q=0, indistinguível por qualquer input). Testes property com **seed fixa** (determinismo). **Testes verdes isolados não bastam** — o ciclo de review pegou (a) uma AC real faltando (borda de hidratação negativa), (b) um teste property flaky, (c) invariantes só de um lado + idempotência só de contagem, todos corrigidos; e um mutante do `EPSILON` que parecia equivalente mas foi morto por um teste de round-half-up.
 
 ## EXIT_SIGNAL: false
 Vira `true` **somente por evidência**, quando TODOS abaixo forem verdade:

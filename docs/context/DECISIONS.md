@@ -23,6 +23,6 @@ Registro de decisões de arquitetura/produto. Mais recente no topo.
 
 **Refactor justificado:** `lib/db/seed.ts` passou a exportar `seedCatalog(db)` + arrays (testabilidade da integração); CLI movida p/ `lib/db/seed.run.ts`.
 
-**Evidência:** gate full PASS — unit+property 39, integration 6 (Postgres real), e2e 11 (browser real), coverage 100% em `lib/`, mutation 97.67% (2 sobreviventes equivalentes documentados).
+**Evidência:** gate full PASS — unit+property 41, integration 6 (Postgres real), e2e 11 (browser real), coverage 100% em `lib/`, mutation 98.84% (1 sobrevivente equivalente documentado). Ciclo de review independente (verifier + security + test-reviewer) pegou e corrigiu: AC de borda faltando, teste property flaky, invariantes de um lado só e idempotência só por contagem.
 
 **Regra operacional desta fase:** commits **locais atômicos**, **sem push, sem deploy**. `EXIT_SIGNAL` só vira `true` por evidência (checklist em `.specs/STATE.md`), após verifier independente + security review sem CRITICAL/HIGH.

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import fc from "fast-check";
 import {
   comissaoServico,
+  comissaoProduto,
   faixaComissaoServico,
   comissaoDividida,
   valeProdutoBarbeiro,
@@ -76,5 +77,23 @@ describe("comissao — invariantes (property-based)", () => {
   it("COM-011 borda do salto de tarifa: 10 -> R$5/un, 11 -> R$10/un", () => {
     expect(comissaoHidratacaoRecepcionista(10)).toBe(50);
     expect(comissaoHidratacaoRecepcionista(11)).toBe(110);
+  });
+
+  // COM-012b ORACULO EXATO (dois lados): pega under/over-payment que a invariante
+  // `<= v` sozinha nao pega (ex.: um impl que sempre retorna 0 satisfaz `<= v`).
+  it("COM-012b comissaoServico(v,faixa,c) == round2(v*pct)", () => {
+    fc.assert(
+      fc.property(money(), fc.constantFrom(...FAIXAS), fc.boolean(), (v, faixa, isCombo) => {
+        const pct = isCombo ? 0.4 : faixa;
+        return Math.abs(comissaoServico(v, faixa, isCombo) - round2(v * pct)) <= 1e-9;
+      }),
+    );
+  });
+
+  // Convencao de arredondamento (round-half-up): fixa que o meio-centavo sobe.
+  // Tambem mata o mutante do `+ Number.EPSILON` no round2 (comissao.ts:17).
+  it("round-half-up: R$0,30 a 5% = R$0,02; R$0,50 a 5% = R$0,03", () => {
+    expect(comissaoProduto(0.3, 0.05)).toBe(0.02);
+    expect(comissaoProduto(0.5, 0.05)).toBe(0.03);
   });
 });
