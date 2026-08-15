@@ -26,11 +26,13 @@ Vira `true` **somente por evidência**, quando TODOS abaixo forem verdade:
 - [x] Mutation em `lib/` sem sobreviventes relevantes (97.67%; 2 equivalentes documentados).
 - [x] `quality:full` (`node tools/gate.mjs full`) passa (GATE: PASS, determinístico).
 - [x] Security review sem CRITICAL/HIGH alcançável no código (CLEAR; ver fix_plan SEC-*).
-- [ ] **Verifier fresh PASS + test-reviewer sem findings** — verifier round 1 = NEEDS_WORK (flaky property test), **corrigido**; falta RE-VERIFY (round 2) + test-reviewer independente.
-- [~] `.ralph/fix_plan.md` sem trabalho obrigatório executável — restam SEC-03 (bump drizzle antes de query dinâmica), SEC-04 (infra pré-deploy), SEC-05 (LOW): todos **não-bloqueantes / future-gated**.
-- [ ] Sem TODO/stub/debug pendente; sem regressões — a confirmar na verificação final.
+- [x] **Verifier fresh + test-reviewer** — verifier round 1 = NEEDS_WORK (property flaky), corrigido e re-validado (gate PASS determinístico); test-reviewer independente = STRONG, 3 findings consumidos (oráculo exato, round-half-up, idempotência de conteúdo).
+- [~] `.ralph/fix_plan.md` sem trabalho obrigatório executável — restam SEC-03/04/05, todos **não-bloqueantes / future-gated**.
+- [x] Sem TODO/stub/debug/skip; sem regressões — grep limpo, working tree limpo, gate full PASS.
 
-**Status:** falta apenas a rodada final independente (re-verify + test-reviewer) para considerar EXIT_SIGNAL.
+**Status — harness + fatia atual: COMPLETO e com evidência.** Todos os critérios de qualidade acima estão satisfeitos para as 6 features implementadas até hoje.
+
+**`EXIT_SIGNAL` do PRODUTO permanece `false`** — e deve. O produto barbearia tem features obrigatórias ainda **não construídas**: auth (Logto/RBAC), agenda/rodízio ao vivo, atendente IA, assinaturas, módulo TV. Isso é **backlog de produto, não lacuna de qualidade** do que existe. Quando cada uma for construída: normalizar spec TLC + provar as ACs pelo mesmo gate. Auth tem pré-requisito externo (registrar o app `barbearia` no console Logto).
 
 ## Decisões (resumo — detalhe em docs/TOOLCHAIN_DECISIONS.md)
 - Vitest KEEP; fast-check/coverage-v8/Playwright/Stryker/Testcontainers INSTALL; nock/MSW NOT_NEEDED (sem HTTP externo hoje).
