@@ -28,9 +28,11 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] POTE-009 Stryker em `lib/pote.ts` — matar mutante de RETENCAO_BARBEARIA e pontos
 - [ ] ROD-008 Stryker em `lib/rodizio.ts` — matar mutante de filtro ultimoAtendeu / comparação de contagem
 
-## P2 — Security review
-- [ ] SEC-01 `npm audit` (deps) + checagem de segredos versionados + config insegura; classificar CRITICAL/HIGH/MEDIUM/LOW
-- [ ] SEC-02 Revisar acesso a DB (env `DATABASE_URL`), força-dynamic/SSR, ausência de segredos no bundle client (/comissao)
+## P2 — Security review  (executado 2026-08-13 — GATE: CLEAR, nenhum CRITICAL/HIGH alcançável no código)
+- [x] SEC-01 `npm audit` + segredos + bundle client + injeção — triado. Resultado: 2 crit são **dev-only** (vitest, @vitest/coverage-v8 — nunca no bundle); segredos limpos (só `.env.example`); `/comissao` (client) não importa `lib/db`/segredo; queries 100% estáticas (sem sink de user input).
+- [ ] SEC-03 [MEDIUM] Bumpar `drizzle-orm` de ^0.36.4 p/ >=0.45.2 (advisory HIGH GHSA-gpj5-g38j-94v9, SQL-injection via identificadores) **ANTES** de introduzir qualquer query dinâmica / nome de tabela-coluna vindo de input. Hoje NÃO há sink alcançável. Requer bump do `drizzle-kit` + regen.
+- [ ] SEC-04 [HIGH][infra, fora do repo] Fechar Postgres público 5432 (bind localhost/Tailscale) + desabilitar login SSH root por senha (key-only) na VPS do cliente **antes do 1º deploy**. Não bloqueia o gate de código (app ainda não deployada).
+- [ ] SEC-05 [LOW] `npm audit fix` (nanoid transitive, build-time) quando conveniente; `audit fix --force` p/ dev tooling (breaking) fora do caminho crítico.
 
 ## Notas
 - Nada de instance-health/billing/Clerk/Prisma (não existem neste projeto).
