@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, boolean, pgEnum, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, boolean, pgEnum, uniqueIndex, timestamp } from "drizzle-orm/pg-core";
 
 export const papelEnum = pgEnum("papel", ["dono", "recepcionista", "barbeiro"]);
 
@@ -49,7 +49,19 @@ export const duracoesBarbeiro = pgTable(
   (t) => [uniqueIndex("uniq_duracao_barbeiro_servico").on(t.profissionalId, t.servicoId)],
 );
 
+/** Bloqueios de agenda (ausências) por barbeiro (R2). Intervalo semi-aberto [inicio, fim). */
+export const bloqueiosAgenda = pgTable("bloqueios_agenda", {
+  id: serial("id").primaryKey(),
+  profissionalId: integer("profissional_id")
+    .notNull()
+    .references(() => profissionais.id, { onDelete: "cascade" }),
+  inicio: timestamp("inicio", { withTimezone: true }).notNull(),
+  fim: timestamp("fim", { withTimezone: true }).notNull(),
+  motivo: text("motivo"),
+});
+
 export type Servico = typeof servicos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
+export type BloqueioAgenda = typeof bloqueiosAgenda.$inferSelect;

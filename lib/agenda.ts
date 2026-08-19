@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt, lte } from "drizzle-orm";
 import * as schema from "./db/schema";
 
 /**
@@ -34,4 +34,41 @@ export async function resolverDuracao(
       ),
     );
   return duracaoEfetiva(servico.dur, ov?.dur);
+}
+
+// ---- R2: bloqueio de agenda ----
+
+export interface Bloqueio {
+  profissionalId: number;
+  inicio: Date;
+  fim: Date;
+}
+
+/** True se o profissional está bloqueado no instante. Intervalo semi-aberto: [inicio, fim). */
+export function estaBloqueado(bloqueios: Bloqueio[], profissionalId: number, instante: Date): boolean {
+  const t = instante.getTime();
+  return bloqueios.some(
+    (b) => b.profissionalId === profissionalId && b.inicio.getTime() <= t && t < b.fim.getTime(),
+  );
+}
+
+/** Remove dos disponíveis (por id) os barbeiros bloqueados no instante. */
+export function disponiveisSemBloqueio(
+  disponiveis: number[],
+  bloqueios: Bloqueio[],
+  instante: Date,
+): number[] {
+  return disponiveis.filter((id) => !estaBloqueado(bloqueios, id, instante));
+}
+
+/** Ids (sem repetição) dos barbeiros bloqueados no instante, consultando o banco. */
+export async function barbeirosBloqueadosEm(
+  db: PostgresJsDatabase<typeof schema>,
+  instante: Date,
+): Promise<number[]> {
+  const rows = await db
+    .select({ pid: schema.bloqueiosAgenda.profissionalId })
+    .from(schema.bloqueiosAgenda)
+    .where(and(lte(schema.bloqueiosAgenda.inicio, instante), gt(schema.bloqueiosAgenda.fim, instante)));
+  return [...new Set(rows.map((r) => r.pid))];
 }

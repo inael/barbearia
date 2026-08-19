@@ -6,7 +6,7 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { seedCatalog } from "./seed";
-import { resolverDuracao } from "../agenda";
+import { resolverDuracao, barbeirosBloqueadosEm } from "../agenda";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -67,5 +67,31 @@ describe("AGD — duracao por barbeiro (integration, Postgres real)", () => {
 
   it("AGD-009 servico inexistente -> null", async () => {
     expect(await resolverDuracao(db, rodrigoId, 999999)).toBeNull();
+  });
+});
+
+describe("BLQ — bloqueio de agenda (integration, Postgres real)", () => {
+  const d = (iso: string) => new Date(iso);
+
+  it("BLQ-004 barbeirosBloqueadosEm: dentro retorna o barbeiro; em fim e fora, nao (semi-aberto)", async () => {
+    await db.insert(schema.bloqueiosAgenda).values({
+      profissionalId: rodrigoId,
+      inicio: d("2026-10-01T12:00:00Z"),
+      fim: d("2026-10-01T14:00:00Z"),
+      motivo: "medico",
+    });
+    expect(await barbeirosBloqueadosEm(db, d("2026-10-01T13:00:00Z"))).toContain(rodrigoId);
+    expect(await barbeirosBloqueadosEm(db, d("2026-10-01T14:00:00Z"))).not.toContain(rodrigoId); // fim exclusivo
+    expect(await barbeirosBloqueadosEm(db, d("2026-10-01T15:00:00Z"))).not.toContain(rodrigoId);
+  });
+
+  it("BLQ-005 FK invalida (profissional inexistente) e rejeitada", async () => {
+    await expect(
+      db.insert(schema.bloqueiosAgenda).values({
+        profissionalId: 999999,
+        inicio: d("2026-10-02T10:00:00Z"),
+        fim: d("2026-10-02T11:00:00Z"),
+      }),
+    ).rejects.toThrow();
   });
 });
