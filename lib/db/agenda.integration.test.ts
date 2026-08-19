@@ -6,12 +6,13 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { seedCatalog } from "./seed";
-import { resolverDuracao, barbeirosBloqueadosEm } from "../agenda";
+import { resolverDuracao, barbeirosBloqueadosEm, slotsDoBarbeiro } from "../agenda";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
 let db: PostgresJsDatabase<typeof schema>;
 let rodrigoId: number;
+let pedroId: number;
 let corteId: number; // padrao 40
 let barbaId: number; // padrao 30
 let pezinhoId: number; // padrao 10
@@ -29,6 +30,8 @@ beforeAll(async () => {
   };
   const [r] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Rodrigo"));
   rodrigoId = r.id;
+  const [p] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Pedro"));
+  pedroId = p.id;
   corteId = await id(schema.servicos.slug, "corte");
   barbaId = await id(schema.servicos.slug, "barba");
   pezinhoId = await id(schema.servicos.slug, "pezinho");
@@ -93,5 +96,28 @@ describe("BLQ — bloqueio de agenda (integration, Postgres real)", () => {
         fim: d("2026-10-02T11:00:00Z"),
       }),
     ).rejects.toThrow();
+  });
+});
+
+describe("SLT — slots do barbeiro (integration, compoe R1+R2)", () => {
+  const d = (iso: string) => new Date(iso);
+  const iso = (x: Date) => x.toISOString();
+
+  it("SLT-006 usa a duracao override do barbeiro (R1) e remove os bloqueios (R2)", async () => {
+    await db.insert(schema.duracoesBarbeiro).values({ profissionalId: pedroId, servicoId: barbaId, duracaoMin: 60 });
+    await db.insert(schema.bloqueiosAgenda).values({
+      profissionalId: pedroId,
+      inicio: d("2026-10-05T10:00:00Z"),
+      fim: d("2026-10-05T11:00:00Z"),
+    });
+    const slots = await slotsDoBarbeiro(db, pedroId, barbaId, d("2026-10-05T09:00:00Z"), d("2026-10-05T12:00:00Z"), 30);
+    // dur=60 (override) -> candidatos 09:00,09:30,10:00,10:30,11:00; bloqueio [10,11) tira 09:30,10:00,10:30
+    expect(slots?.map(iso)).toEqual(["2026-10-05T09:00:00.000Z", "2026-10-05T11:00:00.000Z"]);
+  });
+
+  it("SLT-007 servico inexistente -> null", async () => {
+    expect(
+      await slotsDoBarbeiro(db, pedroId, 999999, d("2026-10-05T09:00:00Z"), d("2026-10-05T12:00:00Z"), 30),
+    ).toBeNull();
   });
 });

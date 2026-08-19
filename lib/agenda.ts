@@ -72,3 +72,58 @@ export async function barbeirosBloqueadosEm(
     .where(and(lte(schema.bloqueiosAgenda.inicio, instante), gt(schema.bloqueiosAgenda.fim, instante)));
   return [...new Set(rows.map((r) => r.pid))];
 }
+
+// ---- Slots: horários disponíveis (compõe duração R1 + bloqueio R2) ----
+
+export interface Intervalo {
+  inicio: Date;
+  fim: Date;
+}
+
+/**
+ * Gera os horários de início disponíveis para um serviço de `duracaoMin`, dentro
+ * da janela [inicio, fim), em passos de `passoMin`, evitando sobreposição com os
+ * intervalos `ocupados`. Um slot [t, t+duracao) é válido se `t+duracao <= fim` e
+ * não se sobrepõe a nenhum ocupado (intervalos semi-abertos). Determinístico.
+ */
+export function gerarSlots(opts: {
+  inicio: Date;
+  fim: Date;
+  duracaoMin: number;
+  passoMin: number;
+  ocupados?: Intervalo[];
+}): Date[] {
+  const { inicio, fim, duracaoMin, passoMin, ocupados = [] } = opts;
+  if (duracaoMin <= 0 || passoMin <= 0) return [];
+  const dur = duracaoMin * 60_000;
+  const passo = passoMin * 60_000;
+  const end = fim.getTime();
+  const slots: Date[] = [];
+  for (let t = inicio.getTime(); t + dur <= end; t += passo) {
+    const sFim = t + dur;
+    const colide = ocupados.some((o) => t < o.fim.getTime() && o.inicio.getTime() < sFim);
+    if (!colide) slots.push(new Date(t));
+  }
+  return slots;
+}
+
+/**
+ * Slots de um barbeiro para um serviço: usa a duração efetiva do barbeiro (R1) e
+ * remove os horários que caem nos bloqueios dele (R2). null se o serviço não existe.
+ */
+export async function slotsDoBarbeiro(
+  db: PostgresJsDatabase<typeof schema>,
+  profissionalId: number,
+  servicoId: number,
+  inicio: Date,
+  fim: Date,
+  passoMin: number,
+): Promise<Date[] | null> {
+  const duracaoMin = await resolverDuracao(db, profissionalId, servicoId);
+  if (duracaoMin == null) return null;
+  const ocupados = await db
+    .select({ inicio: schema.bloqueiosAgenda.inicio, fim: schema.bloqueiosAgenda.fim })
+    .from(schema.bloqueiosAgenda)
+    .where(eq(schema.bloqueiosAgenda.profissionalId, profissionalId));
+  return gerarSlots({ inicio, fim, duracaoMin, passoMin, ocupados });
+}
