@@ -23,6 +23,10 @@ Esta spec cobre as **fundações** (hash, RBAC, usuários). A ligação com Auth
 | AUTH-013 | usuário inativo → null | integration | lib/db/usuarios.integration.test.ts | PASS | verde (gate) |
 | AUTH-014 | e-mail único: 2º usuário com o mesmo e-mail é rejeitado | integration | lib/db/usuarios.integration.test.ts | PASS | verde (gate) |
 | AUTH-015 | papel fora do enum é rejeitado | integration | lib/db/usuarios.integration.test.ts | PASS | verde (gate) |
+| AUTH-016 | `/conta` sem login redireciona pra `/login` (proxy/middleware) | e2e | e2e/auth.spec.ts | PASS | verde (gate) |
+| AUTH-017 | login com credenciais certas → `/conta` mostra o papel; dono vê "caixa" | e2e | e2e/auth.spec.ts | PASS | verde (gate) |
+| AUTH-018 | senha errada → mensagem de erro, continua em `/login` | e2e | e2e/auth.spec.ts | PASS | verde (gate) |
+| AUTH-019 | RBAC na UI: barbeiro logado NÃO vê "caixa"; vê "comissao" | e2e | e2e/auth.spec.ts | PASS | verde (gate) |
 
 ## Invariants (property)
 1. `verificarSenha(hashSenha(p), p) === true` para toda senha p.
@@ -33,8 +37,8 @@ REQUIREMENT (senha segura) → AUTH-001..005 → unit/property → lib/auth/pass
 REQUIREMENT (RBAC por papel) → AUTH-006..009 → unit → lib/auth/rbac.test.ts → PENDING
 REQUIREMENT (usuários no banco) → AUTH-010..015 → integration → lib/db/usuarios.integration.test.ts → PENDING
 
-## Gaps (próxima iteração do loop, agora DESBLOQUEADA)
-- Instalar Auth.js (NextAuth v5) + Credentials provider chamando `autenticar`; sessão JWT com `papel`+`profissionalId`; `AUTH_SECRET` no env.
-- Página `/login` + logout; middleware protegendo as rotas; helper `podeAcessar` nas telas.
-- **E2E autenticado** (login → acessa rota protegida; senha errada → erro; RBAC: barbeiro não vê caixa) com usuário de teste semeado.
-- Depois: as UIs de Agenda (R1/R2/slots) e TV, já com login + RBAC.
+## Feito + Gaps
+- ✅ **Wiring completo:** Auth.js (NextAuth v5) Credentials → `autenticar`; sessão JWT com `papel`/`profissionalId`; `/login` + logout; `proxy.ts` (ex-middleware, convenção Next 16) protegendo `/conta`; RBAC na UI. E2E autenticado verde (AUTH-016..019).
+- ⬜ **Go-live:** setar `AUTH_SECRET` real no env do deploy (VPS/Coolify) — o e2e usa um secret de teste (vault: `BARBEARIA_AUTH_SECRET`).
+- ⬜ Expandir o `matcher` do `proxy.ts` pras rotas reais (agenda/admin) quando as UIs existirem.
+- ⬜ Depois: UIs de Agenda (R1/R2/slots) e TV com login + RBAC (barbeiro edita a própria).
