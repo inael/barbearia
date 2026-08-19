@@ -60,8 +60,33 @@ export const bloqueiosAgenda = pgTable("bloqueios_agenda", {
   motivo: text("motivo"),
 });
 
+/** TVs/telas de mídia indoor (R3). Cada tela tem playlist e velocidade PRÓPRIAS (não espelha). */
+export const telas = pgTable("telas", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  velocidadeSegundos: integer("velocidade_segundos").notNull().default(10),
+  ativo: boolean("ativo").notNull().default(true),
+});
+
+/** Item da playlist de uma tela (propaganda). Ordem única por tela. */
+export const itensPlaylist = pgTable(
+  "itens_playlist",
+  {
+    id: serial("id").primaryKey(),
+    telaId: integer("tela_id")
+      .notNull()
+      .references(() => telas.id, { onDelete: "cascade" }),
+    ordem: integer("ordem").notNull(),
+    url: text("url").notNull(),
+    ativo: boolean("ativo").notNull().default(true),
+  },
+  (t) => [uniqueIndex("uniq_tela_ordem").on(t.telaId, t.ordem)],
+);
+
 export type Servico = typeof servicos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
 export type BloqueioAgenda = typeof bloqueiosAgenda.$inferSelect;
+export type Tela = typeof telas.$inferSelect;
+export type ItemPlaylist = typeof itensPlaylist.$inferSelect;

@@ -44,3 +44,14 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [x] UXB Responsivo 375px sem overflow (`/`, `/comissao`) + acessibilidade axe sem violacao serious/critical (contraste corrigido)
 - [ ] OPS-GOLIVE [HUMANO] cadastrar a URL `/health` no painel status.toolpad.cloud quando deployar
 - [ ] READINESS Rodar `/revisar-produto` (auditoria completa) antes do go-live; aspectos HUMANO (smoke WhatsApp/IA, visual final, infra/LGPD, treinar dono) ficam com o Inael
+
+## BLOQUEADO — auth Logto (loop /construir-produto parou aqui, 2026-08-19)
+Motor/dados de TODAS as features de roadmap prontos e testados sem auth: Agenda R1 (duração),
+R2 (bloqueio), slots, TV R3. O que sobra depende de **auth Logto** (externo):
+- [ ] AUTH-01 [BLOQUEADO, precisa do Inael] Registrar o app `barbearia` no console Logto
+  (ou fornecer um M2M token). Sem isso não dá pra saber quem é o barbeiro logado.
+  → destrava: login + RBAC (dono/recepção/barbeiro) + as UIs abaixo.
+- [ ] UI-AGENDA [dep AUTH-01] tela do barbeiro editar a própria minutagem (R1) e criar/liberar bloqueios (R2); grade de agenda (slots).
+- [ ] UI-TV [dep AUTH-01] admin das telas/playlists + player em tela cheia (reuso midia-play).
+- [ ] MODELO-AGENDAMENTOS (feature nova) para os slots virarem agendamentos de verdade (appointments como "ocupados").
+- [ ] SMOKE-REAL [precisa do Inael] WhatsApp (SimplesZap/Evolution) + IA (UseTokia) com credencial real.
