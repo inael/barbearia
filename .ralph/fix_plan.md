@@ -37,3 +37,10 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 ## Notas
 - Nada de instance-health/billing/Clerk/Prisma (não existem neste projeto).
 - Se Docker cair, CAT-* e o E2E do painel ficam BLOCKED (registrar); property/e2e do /comissao seguem (não dependem de banco).
+
+## P1 — Base de produto (readiness) — FEITO 2026-08 (ver .specs/PRODUCT_READINESS.md)
+- [x] SUP Suporte: botao "Ajuda" -> WhatsApp IT Booster (556191196730) em todas as telas (e2e)
+- [x] OPS `/health` (liveness p/ uptime), sem depender do banco (unit + e2e)
+- [x] UXB Responsivo 375px sem overflow (`/`, `/comissao`) + acessibilidade axe sem violacao serious/critical (contraste corrigido)
+- [ ] OPS-GOLIVE [HUMANO] cadastrar a URL `/health` no painel status.toolpad.cloud quando deployar
+- [ ] READINESS Rodar `/revisar-produto` (auditoria completa) antes do go-live; aspectos HUMANO (smoke WhatsApp/IA, visual final, infra/LGPD, treinar dono) ficam com o Inael

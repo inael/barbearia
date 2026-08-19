@@ -13,14 +13,14 @@
 | 1 | **Funcional** (cada AC da spec faz o que promete) | SIM | AUTO | `.specs/` + gate (unit/integration/e2e) + mutação | ✅ nas 6 features atuais |
 | 2 | **UI bonita / sem cara de IA / consistente** | SIM | AGENTE + HUMANO | product-reviewer tira screenshot e avalia (heurística impeccable + tira-cara-de-ia); você dá o ok final | ⬜ a montar |
 | 3 | **Navegação por papel** (dono/recepção/barbeiro sem dead-end) | SIM | AUTO | Playwright e2e por papel | 🟡 parcial (painel/comissao) |
-| 4 | **Responsivo** (mobile 375px + tablet) | SIM | AUTO | Playwright em viewports (barbeiro/recepção usam celular) | ⬜ a montar |
-| 5 | **Acessibilidade** (contraste, labels, foco de teclado, roles) | SIM | AUTO | axe-core dentro do Playwright | ⬜ a montar |
+| 4 | **Responsivo** (mobile 375px + tablet) | SIM | AUTO | Playwright em viewports (barbeiro/recepção usam celular) | ✅ 375px sem overflow (`/`, `/comissao`) — UXB-001/002 |
+| 5 | **Acessibilidade** (contraste, labels, foco de teclado, roles) | SIM | AUTO | axe-core dentro do Playwright | ✅ sem violação serious/critical — UXB-003/004 (contraste corrigido) |
 | 6 | **Estados de UI** (carregando, erro, vazio) | SIM | AUTO + AGENTE | e2e força cada estado + review | ⬜ a montar |
 | 7 | **Auth/RBAC** (barbeiro só vê a própria agenda, etc.) | SIM (com auth) | AUTO + AGENTE | e2e por papel + security-reviewer (IDOR) | ⬜ depende do auth Logto |
 | 8 | **Cliques / forms / validação de input** | SIM | AUTO | e2e (botões, formulários, mensagens de erro) | 🟡 parcial |
 | 9 | **Integrações externas** (WhatsApp, IA) | SIM | AUTO(mock) + HUMANO(smoke) | mock na fronteira (nock/MSW) + smoke real 1x | ⬜ quando entrar SimplesZap/UseTokia |
-| 10 | **Suporte / abrir chamado** | A DECIDIR | AUTO + HUMANO | e2e do fluxo + smoke real | ⬜ escopo a confirmar |
-| 11 | **"Está no ar" / saúde** (uptime) | SIM (no deploy) | AUTO + HUMANO | endpoint `/health` (teste) + cadastro em status.toolpad.cloud | ⬜ no go-live |
+| 10 | **Suporte / abrir chamado** | SIM (botão WhatsApp) | AUTO | botão "Ajuda" -> wa.me IT Booster (556191196730) — SUP-001/002/003 | ✅ e2e verde |
+| 11 | **"Está no ar" / saúde** (uptime) | SIM | AUTO + HUMANO | `/health` (OPS-001/002/003) + cadastro em status.toolpad.cloud | 🟡 `/health` ✅; falta cadastrar no dashboard (go-live) |
 | 12 | **Observabilidade** (log, captura de erro) | SIM | HUMANO(config) | logs estruturados + erro capturado | ⬜ a montar |
 | 13 | **Segurança** (auth/injection/segredo/config) | SIM | AGENTE + HUMANO | security-reviewer + checklist pré-deploy | 🟡 CLEAR no código; infra pré-deploy pendente (5432, root SSH) |
 | 14 | **Performance** (painel rápido; IA responde em tempo) | SIM (leve) | AUTO(orçamento) + HUMANO | tempo de carga do painel + tempo de resposta da IA | ⬜ medir |

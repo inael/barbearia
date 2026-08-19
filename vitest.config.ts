@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["lib/**/*.test.ts"],
+    include: ["lib/**/*.test.ts", "app/**/*.test.ts"],
     exclude: [...configDefaults.exclude, "**/*.integration.test.ts"],
     coverage: {
       provider: "v8",

@@ -33,7 +33,7 @@ function Campo({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-neutral-500">{label}</span>
+      <span className="text-xs font-medium text-neutral-600">{label}</span>
       <div className="mt-1 flex items-center rounded-lg border border-neutral-300 bg-white focus-within:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus-within:border-neutral-100">
         <input
           inputMode="decimal"
@@ -42,7 +42,7 @@ function Campo({
           className="w-full rounded-lg bg-transparent px-3 py-2 text-sm outline-none"
         />
         {suffix ? (
-          <span className="px-3 text-xs text-neutral-400">{suffix}</span>
+          <span className="px-3 text-xs text-neutral-600">{suffix}</span>
         ) : null}
       </div>
     </label>
@@ -58,7 +58,7 @@ function Card({
 }) {
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">
         {titulo}
       </h2>
       {children}
@@ -143,7 +143,7 @@ export default function ComissaoPage() {
       <div className="mx-auto max-w-5xl px-5 py-10">
         <header className="mb-8 border-b border-neutral-200 pb-6 dark:border-neutral-800">
           <h1 className="text-3xl font-bold tracking-tight">Comissao & Pote</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-neutral-600">
             Simulador do fechamento, usando as regras oficiais da Faith Barbearia.
           </p>
         </header>
@@ -157,7 +157,7 @@ export default function ComissaoPage() {
             <div className="mt-4">
               <Linha label="Faixa de servico" valor={pct(r.faixaServ)} forte />
               <Linha label="Faixa de produto" valor={pct(r.faixaProd)} />
-              <p className="mt-2 text-xs text-neutral-400">
+              <p className="mt-2 text-xs text-neutral-600">
                 Servico: 40% base, 45% a partir de R$ 12.000, 50% a partir de R$ 15.000. Produto: 5%, ou 10% a partir de R$ 2.500.
               </p>
             </div>
@@ -203,7 +203,7 @@ export default function ComissaoPage() {
               <Campo label="Pontos Pedro" value={pontosPedro} onChange={setPontosPedro} suffix="pts" />
               <Campo label="Pontos Joao" value={pontosJoao} onChange={setPontosJoao} suffix="pts" />
             </div>
-            <p className="mt-3 text-xs text-neutral-400">
+            <p className="mt-3 text-xs text-neutral-600">
               A barbearia retem 60%; 40% viram o pote, dividido proporcional aos pontos.
             </p>
           </Card>
@@ -218,7 +218,7 @@ export default function ComissaoPage() {
           </Card>
         </div>
 
-        <footer className="mt-8 border-t border-neutral-200 pt-6 text-xs text-neutral-400 dark:border-neutral-800">
+        <footer className="mt-8 border-t border-neutral-200 pt-6 text-xs text-neutral-600 dark:border-neutral-800">
           Calculo 100% no navegador, com o mesmo motor coberto por testes (lib/comissao, lib/pote). IT Booster.
         </footer>
       </div>
