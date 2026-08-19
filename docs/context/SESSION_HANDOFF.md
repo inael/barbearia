@@ -13,7 +13,9 @@
   - Agenda **R2** (bloqueio: `bloqueios_agenda` + `estaBloqueado`/`disponiveisSemBloqueio`/`barbeirosBloqueadosEm`) — `d028f7b`.
   - Agenda **slots** (`gerarSlots` puro + `slotsDoBarbeiro` compondo R1+R2) — `3b39ec7`.
   - **TV R3** (multi-tela: `telas`+`itens_playlist`, `itemAtualIndex`/`itemAtualDaTela`, telas independentes) — `28f5d0c`.
-  - `.specs` **89/89** ACs. **PAROU no muro do auth Logto** (registrado em `.ralph/fix_plan.md`): toda UI + RBAC + login + smoke real dependem de registrar o app `barbearia` no console Logto. Próximo comando ao reabrir: destravar AUTH-01.
+  - **Auth (muro derrubado):** trocado Logto → **Auth.js self-hosted** (DECISIONS 2026-08-19). Fundações (hash scrypt + RBAC + `usuarios`) — `2459371`. **Wiring completo e funcional** (login `/login`, sessão JWT com papel, `proxy.ts` protege `/conta`, RBAC na UI, e2e autenticado) — `88c7d4b`. `AUTH_SECRET` no vault (`BARBEARIA_AUTH_SECRET`).
+  - `.specs` **108/108** ACs · gate full PASS (unit 66, integration 24, e2e 22, coverage 100%, mutation 98.84%).
+  - **Próximo (desbloqueado):** UIs de Agenda (barbeiro edita minutagem/bloqueios, grade de slots) e TV (admin/player) usando o auth+RBAC; modelo de agendamentos. Depois: go-live (AUTH_SECRET no Coolify, smoke real, status dashboard).
 
 ### Em aberto
 - **Auth Logto** tem **pré-requisito manual**: registrar o app `barbearia` no console Logto (ou criar M2M token pra Management API). Sem isso não dá pra fazer 100% headless. → é o gate da próxima feature.
