@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, boolean, pgEnum, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const papelEnum = pgEnum("papel", ["dono", "recepcionista", "barbeiro"]);
 
@@ -33,6 +33,23 @@ export const profissionais = pgTable("profissionais", {
   ativo: boolean("ativo").notNull().default(true),
 });
 
+/** Override de duração de um serviço por barbeiro (R1). Sem linha = usa a duração padrão do serviço. */
+export const duracoesBarbeiro = pgTable(
+  "duracoes_barbeiro",
+  {
+    id: serial("id").primaryKey(),
+    profissionalId: integer("profissional_id")
+      .notNull()
+      .references(() => profissionais.id, { onDelete: "cascade" }),
+    servicoId: integer("servico_id")
+      .notNull()
+      .references(() => servicos.id, { onDelete: "cascade" }),
+    duracaoMin: integer("duracao_min").notNull(),
+  },
+  (t) => [uniqueIndex("uniq_duracao_barbeiro_servico").on(t.profissionalId, t.servicoId)],
+);
+
 export type Servico = typeof servicos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
+export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
