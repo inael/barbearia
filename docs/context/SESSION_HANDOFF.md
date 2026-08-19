@@ -8,7 +8,12 @@
 
 - **Base de produto (readiness) + tooling (2026-08-19):** `/health` (liveness), botão "Ajuda" -> WhatsApp IT Booster em todas as telas, responsivo 375px e acessibilidade (axe, contraste corrigido). Gate full PASS (unit 42, integration 6, e2e 18, coverage 100%, mutação 98.84%). Matriz de prontidão em `.specs/PRODUCT_READINESS.md` (18 aspectos, pagamento=N/A). Comandos novos: `/entregar` (feature ponta a ponta) e `/revisar-produto` (auditoria). loopx rodando no Windows (runbook `docs/runbooks/loopx-windows.md`; issues #3355/#3356 abertas).
 
-- **Loop `/construir-produto` (2026-08-19):** Agenda **R1** (duração por barbeiro: `duracoes_barbeiro` + `duracaoEfetiva`/`resolverDuracao`) e **R2** (bloqueio: `bloqueios_agenda` + `estaBloqueado`/`disponiveisSemBloqueio`/`barbeirosBloqueadosEm`) — **motor + dados + testes**, gate full PASS cada. `.specs` 76/76. Falta (buildável sem auth): cálculo de slots (compõe duração+bloqueio+rodízio) e TV R3. **PAROU no muro do auth Logto**: toda UI + RBAC das features (barbeiro edita a própria minutagem/bloqueio) depende de registrar o app `barbearia` no console Logto.
+- **Loop `/construir-produto` (2026-08-19):** motor + dados + testes de TODAS as features de roadmap, gate full PASS cada, commits locais atômicos:
+  - Agenda **R1** (duração por barbeiro: `duracoes_barbeiro` + `duracaoEfetiva`/`resolverDuracao`) — `07476f4`.
+  - Agenda **R2** (bloqueio: `bloqueios_agenda` + `estaBloqueado`/`disponiveisSemBloqueio`/`barbeirosBloqueadosEm`) — `d028f7b`.
+  - Agenda **slots** (`gerarSlots` puro + `slotsDoBarbeiro` compondo R1+R2) — `3b39ec7`.
+  - **TV R3** (multi-tela: `telas`+`itens_playlist`, `itemAtualIndex`/`itemAtualDaTela`, telas independentes) — `28f5d0c`.
+  - `.specs` **89/89** ACs. **PAROU no muro do auth Logto** (registrado em `.ralph/fix_plan.md`): toda UI + RBAC + login + smoke real dependem de registrar o app `barbearia` no console Logto. Próximo comando ao reabrir: destravar AUTH-01.
 
 ### Em aberto
 - **Auth Logto** tem **pré-requisito manual**: registrar o app `barbearia` no console Logto (ou criar M2M token pra Management API). Sem isso não dá pra fazer 100% headless. → é o gate da próxima feature.
