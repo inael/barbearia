@@ -22,3 +22,8 @@ __pycache__/
 /reports
 e2e/.runtime.json
 *.tsbuildinfo
+
+# loopx control-plane state
+.loopx/
+.codex/goals/
+.local/
