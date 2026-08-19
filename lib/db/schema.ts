@@ -83,6 +83,17 @@ export const itensPlaylist = pgTable(
   (t) => [uniqueIndex("uniq_tela_ordem").on(t.telaId, t.ordem)],
 );
 
+/** Usuários do sistema (login). Papel = RBAC; profissionalId liga o barbeiro ao seu cadastro. */
+export const usuarios = pgTable("usuarios", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  senhaHash: text("senha_hash").notNull(),
+  nome: text("nome").notNull(),
+  papel: papelEnum("papel").notNull(),
+  profissionalId: integer("profissional_id").references(() => profissionais.id, { onDelete: "set null" }),
+  ativo: boolean("ativo").notNull().default(true),
+});
+
 export type Servico = typeof servicos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
@@ -90,3 +101,4 @@ export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
 export type BloqueioAgenda = typeof bloqueiosAgenda.$inferSelect;
 export type Tela = typeof telas.$inferSelect;
 export type ItemPlaylist = typeof itensPlaylist.$inferSelect;
+export type Usuario = typeof usuarios.$inferSelect;
