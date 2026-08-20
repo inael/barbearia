@@ -14,8 +14,9 @@
   - Agenda **slots** (`gerarSlots` puro + `slotsDoBarbeiro` compondo R1+R2) — `3b39ec7`.
   - **TV R3** (multi-tela: `telas`+`itens_playlist`, `itemAtualIndex`/`itemAtualDaTela`, telas independentes) — `28f5d0c`.
   - **Auth (muro derrubado):** trocado Logto → **Auth.js self-hosted** (DECISIONS 2026-08-19). Fundações (hash scrypt + RBAC + `usuarios`) — `2459371`. **Wiring completo e funcional** (login `/login`, sessão JWT com papel, `proxy.ts` protege `/conta`, RBAC na UI, e2e autenticado) — `88c7d4b`. `AUTH_SECRET` no vault (`BARBEARIA_AUTH_SECRET`).
-  - `.specs` **108/108** ACs · gate full PASS (unit 66, integration 24, e2e 22, coverage 100%, mutation 98.84%).
-  - **Próximo (desbloqueado):** UIs de Agenda (barbeiro edita minutagem/bloqueios, grade de slots) e TV (admin/player) usando o auth+RBAC; modelo de agendamentos. Depois: go-live (AUTH_SECRET no Coolify, smoke real, status dashboard).
+  - **1ª UI usável (com RBAC):** `/minha-agenda/duracoes` — barbeiro/dono edita a própria minutagem (upsert `definirDuracao`, server actions revalidam RBAC no servidor), link na `/conta` — `61684f7`.
+  - `.specs` **115/115** ACs · gate full PASS (unit 66, integration 28, e2e 25, coverage 100%, mutation 98.84%).
+  - **Próximo:** UI de bloqueios (R2), grade de slots, admin/player da TV; modelo de agendamentos. Depois: go-live (AUTH_SECRET no Coolify, smoke real, cadastrar `/health` no status dashboard, treinar o dono).
 
 ### Em aberto
 - **Auth Logto** tem **pré-requisito manual**: registrar o app `barbearia` no console Logto (ou criar M2M token pra Management API). Sem isso não dá pra fazer 100% headless. → é o gate da próxima feature.
