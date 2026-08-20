@@ -13,6 +13,9 @@ import {
   definirDuracao,
   removerDuracao,
   listarDuracoesEfetivas,
+  criarBloqueio,
+  removerBloqueio,
+  listarBloqueios,
 } from "../agenda";
 
 let container: StartedPostgreSqlContainer;
@@ -159,5 +162,36 @@ describe("AGDUI — edicao de duracao pelo barbeiro (integration)", () => {
     const pezinho = lista.find((x) => x.slug === "pezinho")!;
     expect(pezinho.overrideMin).toBeNull();
     expect(pezinho.efetivaMin).toBe(pezinho.padraoMin);
+  });
+});
+
+describe("BLQUI — bloqueios pelo barbeiro (integration)", () => {
+  const d = (iso: string) => new Date(iso);
+
+  it("BLQUI-001 criarBloqueio insere e aparece em listarBloqueios", async () => {
+    const id = await criarBloqueio(db, pedroId, d("2026-11-01T09:00:00Z"), d("2026-11-01T10:00:00Z"), "almoco");
+    const lista = await listarBloqueios(db, pedroId);
+    const achado = lista.find((b) => b.id === id);
+    expect(achado).toBeTruthy();
+    expect(achado?.motivo).toBe("almoco");
+  });
+
+  it("BLQUI-002 criarBloqueio com inicio >= fim lanca", async () => {
+    await expect(criarBloqueio(db, pedroId, d("2026-11-01T10:00:00Z"), d("2026-11-01T10:00:00Z"))).rejects.toThrow();
+    await expect(criarBloqueio(db, pedroId, d("2026-11-01T11:00:00Z"), d("2026-11-01T10:00:00Z"))).rejects.toThrow();
+  });
+
+  it("BLQUI-003 removerBloqueio NAO apaga bloqueio de outro barbeiro (seguranca)", async () => {
+    const id = await criarBloqueio(db, pedroId, d("2026-11-02T09:00:00Z"), d("2026-11-02T10:00:00Z"));
+    await removerBloqueio(db, id, rodrigoId); // rodrigo tentando apagar bloqueio do pedro
+    const lista = await listarBloqueios(db, pedroId);
+    expect(lista.some((b) => b.id === id)).toBe(true); // continua la
+  });
+
+  it("BLQUI-004 removerBloqueio do proprio remove", async () => {
+    const id = await criarBloqueio(db, pedroId, d("2026-11-03T09:00:00Z"), d("2026-11-03T10:00:00Z"));
+    await removerBloqueio(db, id, pedroId);
+    const lista = await listarBloqueios(db, pedroId);
+    expect(lista.some((b) => b.id === id)).toBe(false);
   });
 });

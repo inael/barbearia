@@ -55,3 +55,13 @@ R2 (bloqueio), slots, TV R3. O que sobra depende de **auth Logto** (externo):
 - [ ] UI-TV [dep AUTH-01] admin das telas/playlists + player em tela cheia (reuso midia-play).
 - [ ] MODELO-AGENDAMENTOS (feature nova) para os slots virarem agendamentos de verdade (appointments como "ocupados").
 - [ ] SMOKE-REAL [precisa do Inael] WhatsApp (SimplesZap/Evolution) + IA (UseTokia) com credencial real.
+
+## BLOQUEADO — Docker Desktop caiu (2026-08-20)
+- [ ] DOCKER-01 [EXTERNO, precisa do Inael] O engine Linux do Docker Desktop está em erro 500
+  (`dockerDesktopLinuxEngine`), restart automático não resolveu. Integration (Testcontainers)
+  e e2e ficam BLOCKED. Ação: reiniciar o Docker Desktop de verdade (fechar pela bandeja +
+  abrir; se persistir, `wsl --shutdown` no PowerShell e reabrir Docker Desktop; ou reiniciar a
+  máquina). Depois: `node tools/gate.mjs full` deve voltar a passar.
+- [ ] BLQUI-VERIFY UI de bloqueios (R2) está com CÓDIGO + typecheck/lint/unit/coverage/mutation
+  VERDES, mas integration (BLQUI-001..004) e e2e (BLQUI-005/006) NÃO rodaram (Docker). Specs
+  BLQUI seguem PENDING até o gate verificar com Docker no ar.

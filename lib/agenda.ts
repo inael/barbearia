@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, eq, gt, lte } from "drizzle-orm";
+import { and, asc, eq, gt, lte } from "drizzle-orm";
 import * as schema from "./db/schema";
 
 /**
@@ -59,6 +59,58 @@ export function disponiveisSemBloqueio(
   instante: Date,
 ): number[] {
   return disponiveis.filter((id) => !estaBloqueado(bloqueios, id, instante));
+}
+
+export interface BloqueioView {
+  id: number;
+  inicio: Date;
+  fim: Date;
+  motivo: string | null;
+}
+
+/** Cria um bloqueio do barbeiro. Exige `inicio < fim`. Retorna o id. */
+export async function criarBloqueio(
+  db: PostgresJsDatabase<typeof schema>,
+  profissionalId: number,
+  inicio: Date,
+  fim: Date,
+  motivo?: string | null,
+): Promise<number> {
+  if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) throw new Error("datas invalidas");
+  if (inicio.getTime() >= fim.getTime()) throw new Error("inicio deve ser antes do fim");
+  const [row] = await db
+    .insert(schema.bloqueiosAgenda)
+    .values({ profissionalId, inicio, fim, motivo: motivo ?? null })
+    .returning({ id: schema.bloqueiosAgenda.id });
+  return row.id;
+}
+
+/** Remove um bloqueio APENAS se for do próprio barbeiro (segurança). */
+export async function removerBloqueio(
+  db: PostgresJsDatabase<typeof schema>,
+  bloqueioId: number,
+  profissionalId: number,
+): Promise<void> {
+  await db
+    .delete(schema.bloqueiosAgenda)
+    .where(and(eq(schema.bloqueiosAgenda.id, bloqueioId), eq(schema.bloqueiosAgenda.profissionalId, profissionalId)));
+}
+
+/** Lista os bloqueios do barbeiro, ordenados por início. */
+export async function listarBloqueios(
+  db: PostgresJsDatabase<typeof schema>,
+  profissionalId: number,
+): Promise<BloqueioView[]> {
+  return db
+    .select({
+      id: schema.bloqueiosAgenda.id,
+      inicio: schema.bloqueiosAgenda.inicio,
+      fim: schema.bloqueiosAgenda.fim,
+      motivo: schema.bloqueiosAgenda.motivo,
+    })
+    .from(schema.bloqueiosAgenda)
+    .where(eq(schema.bloqueiosAgenda.profissionalId, profissionalId))
+    .orderBy(asc(schema.bloqueiosAgenda.inicio));
 }
 
 /** Ids (sem repetição) dos barbeiros bloqueados no instante, consultando o banco. */

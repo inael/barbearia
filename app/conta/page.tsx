@@ -47,12 +47,18 @@ export default async function ContaPage() {
         </ul>
 
         {papel && podeAcessar(papel, "agenda_propria") ? (
-          <p className="mt-6">
+          <p className="mt-6 flex flex-wrap gap-4">
             <Link
               href="/minha-agenda/duracoes"
               className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-900 dark:text-emerald-400"
             >
               Editar minha minutagem
+            </Link>
+            <Link
+              href="/minha-agenda/bloqueios"
+              className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-900 dark:text-emerald-400"
+            >
+              Meus bloqueios
             </Link>
           </p>
         ) : null}
