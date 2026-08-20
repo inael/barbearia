@@ -37,7 +37,7 @@ REQUIREMENT (senha segura) → AUTH-001..005 → unit/property → lib/auth/pass
 REQUIREMENT (RBAC por papel) → AUTH-006..009 → unit → lib/auth/rbac.test.ts → PENDING
 REQUIREMENT (usuários no banco) → AUTH-010..015 → integration → lib/db/usuarios.integration.test.ts → PENDING
 
-## Feito + Gaps
+## Gaps
 - ✅ **Wiring completo:** Auth.js (NextAuth v5) Credentials → `autenticar`; sessão JWT com `papel`/`profissionalId`; `/login` + logout; `proxy.ts` (ex-middleware, convenção Next 16) protegendo `/conta`; RBAC na UI. E2E autenticado verde (AUTH-016..019).
 - ⬜ **Go-live:** setar `AUTH_SECRET` real no env do deploy (VPS/Coolify) — o e2e usa um secret de teste (vault: `BARBEARIA_AUTH_SECRET`).
 - ⬜ Expandir o `matcher` do `proxy.ts` pras rotas reais (agenda/admin) quando as UIs existirem.

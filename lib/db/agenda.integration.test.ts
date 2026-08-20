@@ -6,7 +6,14 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { seedCatalog } from "./seed";
-import { resolverDuracao, barbeirosBloqueadosEm, slotsDoBarbeiro } from "../agenda";
+import {
+  resolverDuracao,
+  barbeirosBloqueadosEm,
+  slotsDoBarbeiro,
+  definirDuracao,
+  removerDuracao,
+  listarDuracoesEfetivas,
+} from "../agenda";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -119,5 +126,38 @@ describe("SLT — slots do barbeiro (integration, compoe R1+R2)", () => {
     expect(
       await slotsDoBarbeiro(db, pedroId, 999999, d("2026-10-05T09:00:00Z"), d("2026-10-05T12:00:00Z"), 30),
     ).toBeNull();
+  });
+});
+
+describe("AGDUI — edicao de duracao pelo barbeiro (integration)", () => {
+  it("AGDUI-001 definirDuracao faz upsert (insere e depois atualiza o mesmo par)", async () => {
+    await definirDuracao(db, pedroId, corteId, 50);
+    expect(await resolverDuracao(db, pedroId, corteId)).toBe(50);
+    await definirDuracao(db, pedroId, corteId, 35);
+    expect(await resolverDuracao(db, pedroId, corteId)).toBe(35);
+  });
+
+  it("AGDUI-002 removerDuracao volta pra duracao padrao do servico", async () => {
+    await removerDuracao(db, pedroId, corteId);
+    expect(await resolverDuracao(db, pedroId, corteId)).toBe(40); // corte padrao
+  });
+
+  it("AGDUI-003 definirDuracao com valor invalido lanca e nao persiste", async () => {
+    await expect(definirDuracao(db, pedroId, corteId, 0)).rejects.toThrow();
+    await expect(definirDuracao(db, pedroId, corteId, -5)).rejects.toThrow();
+    await expect(definirDuracao(db, pedroId, corteId, 1.5)).rejects.toThrow();
+    expect(await resolverDuracao(db, pedroId, corteId)).toBe(40); // segue no padrao
+  });
+
+  it("AGDUI-004 listarDuracoesEfetivas: 19 servicos, override onde definido, padrao onde nao", async () => {
+    await definirDuracao(db, pedroId, corteId, 22);
+    const lista = await listarDuracoesEfetivas(db, pedroId);
+    expect(lista).toHaveLength(19);
+    const corte = lista.find((x) => x.slug === "corte")!;
+    expect(corte.overrideMin).toBe(22);
+    expect(corte.efetivaMin).toBe(22);
+    const pezinho = lista.find((x) => x.slug === "pezinho")!;
+    expect(pezinho.overrideMin).toBeNull();
+    expect(pezinho.efetivaMin).toBe(pezinho.padraoMin);
   });
 });

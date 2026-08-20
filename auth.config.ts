@@ -7,10 +7,10 @@ export default {
   pages: { signIn: "/login" },
   providers: [],
   callbacks: {
-    authorized({ auth, request }) {
-      const logado = !!auth?.user;
-      const protegido = request.nextUrl.pathname.startsWith("/conta");
-      return protegido ? logado : true;
+    authorized({ auth }) {
+      // O matcher do proxy.ts já limita o middleware às rotas protegidas;
+      // qualquer rota casada exige login.
+      return !!auth?.user;
     },
     jwt({ token, user }) {
       if (user) {

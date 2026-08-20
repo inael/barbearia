@@ -127,3 +127,82 @@ export async function slotsDoBarbeiro(
     .where(eq(schema.bloqueiosAgenda.profissionalId, profissionalId));
   return gerarSlots({ inicio, fim, duracaoMin, passoMin, ocupados });
 }
+
+// ---- R1 edição (barbeiro define a própria minutagem) ----
+
+export interface DuracaoServicoBarbeiro {
+  servicoId: number;
+  slug: string;
+  nome: string;
+  padraoMin: number;
+  overrideMin: number | null;
+  efetivaMin: number;
+}
+
+/** Define (upsert) a duração override de um barbeiro para um serviço. Exige inteiro > 0. */
+export async function definirDuracao(
+  db: PostgresJsDatabase<typeof schema>,
+  profissionalId: number,
+  servicoId: number,
+  duracaoMin: number,
+): Promise<void> {
+  if (!Number.isInteger(duracaoMin) || duracaoMin <= 0) {
+    throw new Error("duracao invalida (deve ser inteiro > 0)");
+  }
+  await db
+    .insert(schema.duracoesBarbeiro)
+    .values({ profissionalId, servicoId, duracaoMin })
+    .onConflictDoUpdate({
+      target: [schema.duracoesBarbeiro.profissionalId, schema.duracoesBarbeiro.servicoId],
+      set: { duracaoMin },
+    });
+}
+
+/** Remove o override do barbeiro (volta pra duração padrão do serviço). */
+export async function removerDuracao(
+  db: PostgresJsDatabase<typeof schema>,
+  profissionalId: number,
+  servicoId: number,
+): Promise<void> {
+  await db
+    .delete(schema.duracoesBarbeiro)
+    .where(
+      and(
+        eq(schema.duracoesBarbeiro.profissionalId, profissionalId),
+        eq(schema.duracoesBarbeiro.servicoId, servicoId),
+      ),
+    );
+}
+
+/** Lista os serviços ativos com a duração efetiva do barbeiro (padrão + override). */
+export async function listarDuracoesEfetivas(
+  db: PostgresJsDatabase<typeof schema>,
+  profissionalId: number,
+): Promise<DuracaoServicoBarbeiro[]> {
+  const servicos = await db
+    .select({
+      id: schema.servicos.id,
+      slug: schema.servicos.slug,
+      nome: schema.servicos.nome,
+      padraoMin: schema.servicos.duracaoMin,
+    })
+    .from(schema.servicos)
+    .where(eq(schema.servicos.ativo, true))
+    .orderBy(schema.servicos.nome);
+  const overrides = await db
+    .select({ servicoId: schema.duracoesBarbeiro.servicoId, duracaoMin: schema.duracoesBarbeiro.duracaoMin })
+    .from(schema.duracoesBarbeiro)
+    .where(eq(schema.duracoesBarbeiro.profissionalId, profissionalId));
+  const map = new Map(overrides.map((o) => [o.servicoId, o.duracaoMin]));
+  return servicos.map((s) => {
+    const ov = map.get(s.id) ?? null;
+    return {
+      servicoId: s.id,
+      slug: s.slug,
+      nome: s.nome,
+      padraoMin: s.padraoMin,
+      overrideMin: ov,
+      efetivaMin: duracaoEfetiva(s.padraoMin, ov),
+    };
+  });
+}

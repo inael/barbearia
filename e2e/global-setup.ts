@@ -42,8 +42,9 @@ export default async function globalSetup() {
   const client = postgres(url, { prepare: false });
   const db = drizzle(client, { schema });
   const [rodrigo] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Rodrigo"));
+  const [pedro] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Pedro"));
   await criarUsuario(db, { email: "dono@faith.com", senha: "dono123", nome: "Rodrigo Dono", papel: "dono", profissionalId: rodrigo.id });
-  await criarUsuario(db, { email: "barbeiro@faith.com", senha: "barb123", nome: "Barbeiro Teste", papel: "barbeiro" });
+  await criarUsuario(db, { email: "barbeiro@faith.com", senha: "barb123", nome: "Barbeiro Teste", papel: "barbeiro", profissionalId: pedro.id });
   await client.end();
 
   // Sobe a app real (build ja feito pelo script test:e2e).
