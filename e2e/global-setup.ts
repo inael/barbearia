@@ -7,6 +7,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import * as schema from "../lib/db/schema";
 import { criarUsuario } from "../lib/auth/usuarios";
+import { criarTela, adicionarItem } from "../lib/tv";
 
 const PORT = 3123;
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -45,6 +46,12 @@ export default async function globalSetup() {
   const [pedro] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Pedro"));
   await criarUsuario(db, { email: "dono@faith.com", senha: "dono123", nome: "Rodrigo Dono", papel: "dono", profissionalId: rodrigo.id });
   await criarUsuario(db, { email: "barbeiro@faith.com", senha: "barb123", nome: "Barbeiro Teste", papel: "barbeiro", profissionalId: pedro.id });
+
+  // Tela + playlist para o e2e do player (velocidade 1s p/ testar o ciclo rápido).
+  const telaId = await criarTela(db, "Player E2E", 1);
+  await adicionarItem(db, telaId, "http://ex/p1.png");
+  await adicionarItem(db, telaId, "http://ex/p2.png");
+
   await client.end();
 
   // Sobe a app real (build ja feito pelo script test:e2e).
