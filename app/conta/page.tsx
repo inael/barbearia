@@ -63,6 +63,17 @@ export default async function ContaPage() {
           </p>
         ) : null}
 
+        {papel && podeAcessar(papel, "tv") ? (
+          <p className="mt-2">
+            <Link
+              href="/admin/tv"
+              className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-900 dark:text-emerald-400"
+            >
+              Gerenciar TVs
+            </Link>
+          </p>
+        ) : null}
+
         <form
           action={async () => {
             "use server";

@@ -45,16 +45,17 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] OPS-GOLIVE [HUMANO] cadastrar a URL `/health` no painel status.toolpad.cloud quando deployar
 - [ ] READINESS Rodar `/revisar-produto` (auditoria completa) antes do go-live; aspectos HUMANO (smoke WhatsApp/IA, visual final, infra/LGPD, treinar dono) ficam com o Inael
 
-## BLOQUEADO — auth Logto (loop /construir-produto parou aqui, 2026-08-19)
-Motor/dados de TODAS as features de roadmap prontos e testados sem auth: Agenda R1 (duração),
-R2 (bloqueio), slots, TV R3. O que sobra depende de **auth Logto** (externo):
-- [ ] AUTH-01 [BLOQUEADO, precisa do Inael] Registrar o app `barbearia` no console Logto
-  (ou fornecer um M2M token). Sem isso não dá pra saber quem é o barbeiro logado.
-  → destrava: login + RBAC (dono/recepção/barbeiro) + as UIs abaixo.
-- [ ] UI-AGENDA [dep AUTH-01] tela do barbeiro editar a própria minutagem (R1) e criar/liberar bloqueios (R2); grade de agenda (slots).
-- [ ] UI-TV [dep AUTH-01] admin das telas/playlists + player em tela cheia (reuso midia-play).
-- [ ] MODELO-AGENDAMENTOS (feature nova) para os slots virarem agendamentos de verdade (appointments como "ocupados").
+## Roadmap do produto (loop /construir-produto)
+Auth RESOLVIDO via **Auth.js self-hosted** (não Logto) — login + RBAC + e2e verdes.
+Motor completo: Agenda R1/R2/slots + TV R3.
+- [x] AUTH login + RBAC (Auth.js) — feito, gate PASS.
+- [x] UI-AGENDA-R1 barbeiro edita a própria minutagem (`/minha-agenda/duracoes`).
+- [x] UI-AGENDA-R2 barbeiro cria/remove bloqueios (`/minha-agenda/bloqueios`).
+- [ ] UI-SLOTS grade de agenda (mostrar slots por barbeiro/serviço/dia via `slotsDoBarbeiro`).
+- [x] UI-TV-ADMIN [RBAC tv=dono] admin de telas/playlists + player em tela cheia (reuso midia-play).
+- [ ] MODELO-AGENDAMENTOS (feature nova) p/ os slots virarem agendamentos reais (appointments como "ocupados").
 - [ ] SMOKE-REAL [precisa do Inael] WhatsApp (SimplesZap/Evolution) + IA (UseTokia) com credencial real.
+- [ ] GO-LIVE [HUMANO] AUTH_SECRET no Coolify, cadastrar /health no status dashboard, treinar o dono.
 
 ## BLOQUEADO — Docker Desktop caiu (2026-08-20)
 - [x] DOCKER-01 (resolvido: reboot, Docker OK) [EXTERNO, precisa do Inael] O engine Linux do Docker Desktop está em erro 500

@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import postgres from "postgres";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
-import { itemAtualDaTela } from "../tv";
+import { itemAtualDaTela, criarTela, listarTelas, adicionarItem, removerItem, playlistDaTela } from "../tv";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -60,5 +60,33 @@ describe("TV — multi-tela (integration): telas independentes", () => {
     await expect(
       db.insert(schema.itensPlaylist).values({ telaId: 999999, ordem: 1, url: "z" }),
     ).rejects.toThrow(); // FK
+  });
+});
+
+describe("TVUI — admin de telas/playlist (integration)", () => {
+  it("TVUI-001 criarTela + listarTelas retorna a tela criada", async () => {
+    const id = await criarTela(db, "Vitrine", 7);
+    const telas = await listarTelas(db);
+    const achada = telas.find((t) => t.id === id);
+    expect(achada?.nome).toBe("Vitrine");
+    expect(achada?.velocidadeSegundos).toBe(7);
+  });
+
+  it("TVUI-002 criarTela com velocidade invalida lanca", async () => {
+    await expect(criarTela(db, "X", 0)).rejects.toThrow();
+    await expect(criarTela(db, "X", -3)).rejects.toThrow();
+    await expect(criarTela(db, "X", 1.5)).rejects.toThrow();
+  });
+
+  it("TVUI-003 adicionarItem auto-incrementa a ordem; removerItem remove", async () => {
+    const telaId = await criarTela(db, "Balcao", 5);
+    const i1 = await adicionarItem(db, telaId, "img1");
+    await adicionarItem(db, telaId, "img2");
+    let pl = await playlistDaTela(db, telaId);
+    expect(pl.map((p) => p.ordem)).toEqual([1, 2]);
+    expect(pl.map((p) => p.url)).toEqual(["img1", "img2"]);
+    await removerItem(db, i1);
+    pl = await playlistDaTela(db, telaId);
+    expect(pl.map((p) => p.url)).toEqual(["img2"]);
   });
 });

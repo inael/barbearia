@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
 
 /**
@@ -14,6 +14,73 @@ export function itemAtualIndex(
 ): number | null {
   if (qtdItens <= 0 || velocidadeSegundos <= 0 || segundosDecorridos < 0) return null;
   return Math.floor(segundosDecorridos / velocidadeSegundos) % qtdItens;
+}
+
+// ---- Admin de telas/playlist (R3 UI) ----
+
+/** Cria uma tela (TV). Exige velocidade inteira > 0. Retorna o id. */
+export async function criarTela(
+  db: PostgresJsDatabase<typeof schema>,
+  nome: string,
+  velocidadeSegundos: number,
+): Promise<number> {
+  if (!Number.isInteger(velocidadeSegundos) || velocidadeSegundos <= 0) {
+    throw new Error("velocidade invalida (inteiro > 0)");
+  }
+  const [row] = await db
+    .insert(schema.telas)
+    .values({ nome, velocidadeSegundos })
+    .returning({ id: schema.telas.id });
+  return row.id;
+}
+
+/** Lista as telas, ordenadas por nome. */
+export async function listarTelas(
+  db: PostgresJsDatabase<typeof schema>,
+): Promise<{ id: number; nome: string; velocidadeSegundos: number; ativo: boolean }[]> {
+  return db
+    .select({
+      id: schema.telas.id,
+      nome: schema.telas.nome,
+      velocidadeSegundos: schema.telas.velocidadeSegundos,
+      ativo: schema.telas.ativo,
+    })
+    .from(schema.telas)
+    .orderBy(asc(schema.telas.nome));
+}
+
+/** Adiciona um item à playlist da tela, na próxima `ordem` (max+1). Retorna o id. */
+export async function adicionarItem(
+  db: PostgresJsDatabase<typeof schema>,
+  telaId: number,
+  url: string,
+): Promise<number> {
+  const [{ prox }] = await db
+    .select({ prox: sql<number>`coalesce(max(${schema.itensPlaylist.ordem}), 0) + 1` })
+    .from(schema.itensPlaylist)
+    .where(eq(schema.itensPlaylist.telaId, telaId));
+  const [row] = await db
+    .insert(schema.itensPlaylist)
+    .values({ telaId, ordem: Number(prox), url })
+    .returning({ id: schema.itensPlaylist.id });
+  return row.id;
+}
+
+/** Remove um item da playlist. */
+export async function removerItem(db: PostgresJsDatabase<typeof schema>, itemId: number): Promise<void> {
+  await db.delete(schema.itensPlaylist).where(eq(schema.itensPlaylist.id, itemId));
+}
+
+/** Itens da playlist de uma tela (com id, pro admin). Ordenados por `ordem`. */
+export async function listarItens(
+  db: PostgresJsDatabase<typeof schema>,
+  telaId: number,
+): Promise<{ id: number; ordem: number; url: string }[]> {
+  return db
+    .select({ id: schema.itensPlaylist.id, ordem: schema.itensPlaylist.ordem, url: schema.itensPlaylist.url })
+    .from(schema.itensPlaylist)
+    .where(eq(schema.itensPlaylist.telaId, telaId))
+    .orderBy(asc(schema.itensPlaylist.ordem));
 }
 
 /** Playlist ordenada (por `ordem`) de uma tela. */
