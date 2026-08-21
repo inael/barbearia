@@ -25,7 +25,8 @@
 | BLQUI — UI: barbeiro gerencia bloqueios (R2) | .specs/features/agenda-bloqueio-ui.md | 6 | 6 | 0 |
 | TVUI — UI: admin de TVs/playlist (R3) | .specs/features/tv-ui.md | 6 | 6 | 0 |
 | TVPLR — UI: player da TV (R3) | .specs/features/tv-player.md | 2 | 2 | 0 |
-| **Total** | | **129** | **129** | **0** |
+| GRD — UI: grade de horários livres | .specs/features/agenda-grade.md | 2 | 2 | 0 |
+| **Total** | | **131** | **131** | **0** |
 
 Evidência (gate full determinístico): unit+property **42**, integration **6** (Postgres real), e2e **18** (browser real: painel, simulador, suporte, /health, responsivo 375px, acessibilidade axe), coverage **100%** em `lib/`, mutation **98.84%** (pote/rodízio 100%; comissão 97.56%; **1 sobrevivente equivalente**: `<=0` vs `<0` com q=0, indistinguível por qualquer input). Testes property com **seed fixa** (determinismo). **Testes verdes isolados não bastam** — o ciclo de review pegou (a) uma AC real faltando (borda de hidratação negativa), (b) um teste property flaky, (c) invariantes só de um lado + idempotência só de contagem, todos corrigidos; e um mutante do `EPSILON` que parecia equivalente mas foi morto por um teste de round-half-up.
 

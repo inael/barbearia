@@ -51,8 +51,8 @@ Motor completo: Agenda R1/R2/slots + TV R3.
 - [x] AUTH login + RBAC (Auth.js) — feito, gate PASS.
 - [x] UI-AGENDA-R1 barbeiro edita a própria minutagem (`/minha-agenda/duracoes`).
 - [x] UI-AGENDA-R2 barbeiro cria/remove bloqueios (`/minha-agenda/bloqueios`).
-- [ ] UI-SLOTS grade de agenda (mostrar slots por barbeiro/serviço/dia via `slotsDoBarbeiro`).
-- [x] UI-TV-ADMIN [RBAC tv=dono] admin de telas/playlists + player em tela cheia (reuso midia-play).
+- [x] UI-SLOTS grade de agenda (mostrar slots por barbeiro/serviço/dia via `slotsDoBarbeiro`).
+- [x] UI-TV admin de telas/playlists (/admin/tv) + player em tela cheia (/tv/[id]) - feito.
 - [ ] MODELO-AGENDAMENTOS (feature nova) p/ os slots virarem agendamentos reais (appointments como "ocupados").
 - [ ] SMOKE-REAL [precisa do Inael] WhatsApp (SimplesZap/Evolution) + IA (UseTokia) com credencial real.
 - [ ] GO-LIVE [HUMANO] AUTH_SECRET no Coolify, cadastrar /health no status dashboard, treinar o dono.

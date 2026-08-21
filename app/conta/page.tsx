@@ -60,6 +60,12 @@ export default async function ContaPage() {
             >
               Meus bloqueios
             </Link>
+            <Link
+              href="/minha-agenda/grade"
+              className="text-sm font-semibold text-emerald-800 underline hover:text-emerald-900 dark:text-emerald-400"
+            >
+              Minha grade
+            </Link>
           </p>
         ) : null}
 
