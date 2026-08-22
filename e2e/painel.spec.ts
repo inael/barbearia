@@ -22,12 +22,15 @@ test.describe("PNL — Painel do catalogo", () => {
     await expect(page.getByText("Rodrigo")).toBeVisible();
   });
 
-  test("PNL-004 stats mostram 19 servicos / 6 combos / 4 profissionais", { tag: "@critical" }, async ({ page }) => {
+  test("PNL-004 stats refletem o catalogo (>= seed; catalogo agora e editavel)", { tag: "@critical" }, async ({ page }) => {
     await page.goto("/");
-    const stats = page.locator("section.grid-cols-3");
-    await expect(stats.getByText("19", { exact: true })).toBeVisible();
-    await expect(stats.getByText("6", { exact: true })).toBeVisible();
-    await expect(stats.getByText("4", { exact: true })).toBeVisible();
+    // O catalogo virou editavel (cadastros), entao a contagem e >= o seed (19/6/4),
+    // nao mais um numero fixo. Outros testes e2e podem ter adicionado itens no mesmo banco.
+    const nums = (await page.locator("section.grid-cols-3 .text-3xl").allInnerTexts()).map((t) => parseInt(t, 10));
+    const [servicos, combos, profissionais] = nums;
+    expect(servicos).toBeGreaterThanOrEqual(19);
+    expect(combos).toBeGreaterThanOrEqual(6);
+    expect(profissionais).toBeGreaterThanOrEqual(4);
   });
 
   test("PNL-005 badge de pote so em servico que entra no pote", { tag: "@critical" }, async ({ page }) => {

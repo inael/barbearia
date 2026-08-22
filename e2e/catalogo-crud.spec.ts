@@ -21,7 +21,7 @@ test.describe("SVC — cadastro de serviços/combos (e2e)", () => {
     await expect(page.getByRole("heading", { name: "Cadastro de serviços e combos" })).toBeVisible();
 
     await page.getByTestId("svc-nome").fill("Corte E2E Unico");
-    await page.getByTestId("svc-preco").fill("60,00");
+    await page.getByTestId("svc-preco").fill("61,00");
     await page.getByTestId("svc-duracao").fill("40");
     await page.getByRole("button", { name: "Criar serviço" }).click();
 

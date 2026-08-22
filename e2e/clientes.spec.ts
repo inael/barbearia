@@ -16,7 +16,7 @@ test.describe("CLI — cadastro de clientes (e2e)", () => {
 
     await login(page, "recepcao@faith.com", "recep123");
     await page.goto("/cadastros/clientes");
-    await expect(page.getByRole("heading", { name: "Clientes" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Clientes", exact: true })).toBeVisible();
 
     await page.getByTestId("cli-nome").fill("Cliente E2E Unico");
     await page.getByTestId("cli-telefone").fill("61 98888-7777");
