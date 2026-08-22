@@ -39,6 +39,10 @@ export default async function CadastrosHubPage() {
             <h2 className="font-semibold">Clientes</h2>
             <p className="mt-1 text-sm text-neutral-600">Pré-cadastro por telefone; CPF só na nota.</p>
           </Link>
+          <Link href="/cadastros/produtos" className={card}>
+            <h2 className="font-semibold">Produtos</h2>
+            <p className="mt-1 text-sm text-neutral-600">Itens de balcão vendidos no caixa.</p>
+          </Link>
           {podeConfig ? (
             <>
               <Link href="/cadastros/profissionais" className={card}>

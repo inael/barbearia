@@ -66,8 +66,9 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [x] AGE (agenda-agendamento) agendamentos reais: cria/cancela, ocupa slot (some da grade), rejeita conflito e bloqueio, rodízio. unit 3/3 + integration 5/5 + e2e 2/2. Tela /agenda (dono/recepção).
 - [ ] LEM (lembretes) lembretes/confirmação ao cliente.
 
-### Fase 3 — Caixa + Financeiro (alimenta o motor com dados reais)
-- [ ] CX (caixa) lançar serviço/produto + fechar conta.
+### Fase 3 — Caixa + Financeiro (alimenta o motor com dados reais) (EM ANDAMENTO)
+- [x] PRD (produtos-crud) catálogo de produtos de balcão (pré-requisito do caixa). integration 4/4 + e2e.
+- [x] CX (caixa) comanda + lançar serviço/combo/produto + fechar conta; **comissaoDoPeriodo alimenta o motor COM com vendas reais por profissional**. unit 2/2 + integration 3/3 (CX-004 = R$91,75) + e2e 2/2. Tela /caixa.
 - [ ] PAG (pagamento-asaas) cobrança cartão/PIX no fechamento.
 - [ ] VAL (vales) vales com desconto.
 - [ ] MET (metas-relatorios) metas + relatório por profissional.

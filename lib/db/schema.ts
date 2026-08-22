@@ -14,6 +14,15 @@ export const servicos = pgTable("servicos", {
   ativo: boolean("ativo").notNull().default(true),
 });
 
+/** Produtos vendidos no balcão (pomada, shampoo, etc.). Catálogo simples; estoque vem depois (EST). */
+export const produtos = pgTable("produtos", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  nome: text("nome").notNull(),
+  precoCentavos: integer("preco_centavos").notNull(),
+  ativo: boolean("ativo").notNull().default(true),
+});
+
 /** Combos (pacotes de servicos). */
 export const combos = pgTable("combos", {
   id: serial("id").primaryKey(),
@@ -84,6 +93,32 @@ export const itensPlaylist = pgTable(
   (t) => [uniqueIndex("uniq_tela_ordem").on(t.telaId, t.ordem)],
 );
 
+/** Comanda do caixa. Aberta -> recebe itens; fechada = venda (fechadaEm + formaPagamento). */
+export const comandas = pgTable("comandas", {
+  id: serial("id").primaryKey(),
+  clienteId: integer("cliente_id").references(() => clientes.id, { onDelete: "set null" }),
+  status: text("status").notNull().default("aberta"),
+  formaPagamento: text("forma_pagamento"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+  fechadaEm: timestamp("fechada_em", { withTimezone: true }),
+});
+
+/** Item de uma comanda. tipo: servico|combo|produto. slug do serviço p/ detectar dividido. */
+export const comandaItens = pgTable("comanda_itens", {
+  id: serial("id").primaryKey(),
+  comandaId: integer("comanda_id")
+    .notNull()
+    .references(() => comandas.id, { onDelete: "cascade" }),
+  tipo: text("tipo").notNull(),
+  refId: integer("ref_id").notNull(),
+  slug: text("slug"),
+  profissionalId: integer("profissional_id")
+    .notNull()
+    .references(() => profissionais.id, { onDelete: "restrict" }),
+  descricao: text("descricao").notNull(),
+  valorCentavos: integer("valor_centavos").notNull(),
+});
+
 /** Horário de funcionamento por dia da semana (0=domingo..6=sábado). Minutos desde a meia-noite. */
 export const horariosFuncionamento = pgTable("horarios_funcionamento", {
   id: serial("id").primaryKey(),
@@ -139,6 +174,7 @@ export const agendamentos = pgTable("agendamentos", {
 });
 
 export type Servico = typeof servicos.$inferSelect;
+export type Produto = typeof produtos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
@@ -148,5 +184,7 @@ export type ItemPlaylist = typeof itensPlaylist.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;
 export type Cliente = typeof clientes.$inferSelect;
 export type Agendamento = typeof agendamentos.$inferSelect;
+export type Comanda = typeof comandas.$inferSelect;
+export type ComandaItem = typeof comandaItens.$inferSelect;
 export type HorarioFuncionamento = typeof horariosFuncionamento.$inferSelect;
 export type Feriado = typeof feriados.$inferSelect;

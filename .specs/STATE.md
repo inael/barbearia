@@ -40,13 +40,14 @@
 | USR — Gestão de usuários | usuarios-admin.md | 6 | 6 | sim | **Fase 1** (dono) |
 | AGE — Agenda ao vivo (agendamentos) | agenda-agendamento.md | 9 | 9 | sim | **Fase 2** — agenda de verdade |
 | HOR — Horário de funcionamento | agenda-horarios.md | 5 | 5 | sim | **Fase 2** — grade respeita config/feriados |
-| **Subtotal A** | | **176** | **176** | | |
+| PRD — Cadastro de produtos | produtos-crud.md | 6 | 6 | sim | **Fase 3** — catálogo de balcão |
+| CX — Caixa (comanda/fechar conta) | caixa.md | 7 | 7 | sim | **Fase 3** — vendas reais alimentam a comissão |
+| **Subtotal A** | | **189** | **189** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
 |---------|---------|------|--------|------------|
 | LEM — Lembretes ao cliente | lembretes.md | 5 | Agenda | AGE, WhatsApp |
-| CX — Caixa (lançar/fechar) | caixa.md | 7 | Financeiro | CLI, SVC, PRO |
 | PAG — Pagamento Asaas | pagamento-asaas.md | 5 | Financeiro | CX |
 | VAL — Vales | vales.md | 5 | Financeiro | PRO |
 | MET — Metas + relatórios | metas-relatorios.md | 5 | Financeiro | CX |
@@ -59,9 +60,9 @@
 | PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
 | EST — Estoque | estoque.md | 6 | Operação | — |
 | TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
-| **Subtotal B** | | **78** | | |
+| **Subtotal B** | | **71** | | |
 
-**Total: 40 features · 254 ACs · 176 PASS / 78 PENDING.** (tlc-validate: OK.) **Fase 1 (SHELL + cadastros) concluída + Fase 2 em andamento (AGE agenda ao vivo + HOR horários) — 2026-08-22** — unit 72, integration 60, e2e 50, todos verdes.
+**Total: 41 features · 260 ACs · 189 PASS / 71 PENDING.** (tlc-validate: OK.) **Fase 1 (cadastros) + Fase 2 (AGE+HOR) + Fase 3 início (PRD produtos + CX caixa) — 2026-08-22** — unit 74, integration 67, e2e 54, todos verdes. O `/comissao` deixou de ser só simulador: o **caixa gera vendas reais que alimentam o motor de comissão** (CX-004).
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
@@ -71,7 +72,7 @@ Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com t
 - [x] Navegação por papel (fim das páginas órfãs) — SHELL ✅ **Fase 1**
 - [x] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR ✅ **Fase 1**
 - [~] Agenda ao vivo — AGE + HOR ✅ **Fase 2** (agendar de verdade + horários/feriados na grade); falta LEM (lembretes)
-- [ ] Caixa + pagamento (alimenta a comissão com dados reais) — CX/PAG/VAL/MET/NF
+- [~] Caixa — **CX + PRD ✅ Fase 3** (comanda, fechar conta, comissão por profissional a partir de vendas reais); falta PAG (Asaas)/VAL/MET/NF
 - [ ] Painel do dono real — DASH; Notificações — NOT
 - [ ] **Atendente IA no WhatsApp (feature-âncora, 0% hoje)** — IA
 - [ ] Assinaturas + cobrança + pote real — ASS/COB/PTG
