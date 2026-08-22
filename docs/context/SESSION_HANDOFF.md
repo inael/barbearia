@@ -1,8 +1,8 @@
 # SESSION_HANDOFF
 
-## Sessão autônoma 2026-08-22 (loop) — CONSTRUÍDO DE VERDADE (Fase 1 + Fase 2 quase completa)
+## Sessão autônoma 2026-08-22 (loop) — CONSTRUÍDO DE VERDADE (Fase 1 + 2 + 3 + DASH)
 
-Autorizado pelo Inael a rodar o loop e tomar decisões. Construído com o harness (spec → TDD → gate → **linkado/clicável** → commit). **8 features novas, todas verdes e no `origin/master`.** Estado final: **254 ACs, 176 PASS / 78 PENDING**; unit 72, integration 60, e2e 50 — todos passando; typecheck/lint limpos.
+Autorizado pelo Inael a rodar o loop e tomar decisões. Construído com o harness (spec → TDD → gate → **linkado/clicável** → commit). **11 features novas, todas verdes e no `origin/master`.** Estado final: **41 features · 260 ACs · 195 PASS / 65 PENDING**; unit 75, integration 70, e2e 56 — todos passando; typecheck/lint limpos. **Loop operacional completo: cadastro → agenda → caixa → comissão real → painel do dono.**
 
 ### Fase 1 — navegável + cadastros (CONCLUÍDA)
 - **SHELL** (`components/NavBar.tsx`): navegação por papel + login/logout no menu. **Matou as páginas órfãs** — login, minha-agenda, admin/tv, cadastros agora alcançáveis. Hubs `/cadastros` e `/minha-agenda`.
@@ -16,15 +16,24 @@ Autorizado pelo Inael a rodar o loop e tomar decisões. Construído com o harnes
 - **HOR** `/cadastros/horarios` (dono): horários por dia da semana + feriados; a **grade respeita** (mostra "Fechado nesse dia"), fallback 9h–19h. `lib/horarios.ts`, tabelas `horarios_funcionamento`/`feriados`.
 - **LEM (lembretes) — NÃO feito de propósito:** precisa de agendador (cron/fila) + credencial real de WhatsApp (SMOKE-REAL, precisa do Inael). Construir só a lógica com envio mockado seria "parece pronto mas não envia". Deixado como próximo passo honesto.
 
-### Commits (autor inael): 4dc28fa SVC · aa2b295 PRO · 803e4cf CLI · cee4be9 USR · 875d019 SHELL · 2548811 specs F1 · 88c73c1 AGE · 79ad069 HOR
+### Fase 3 — Caixa + Financeiro (INICIADA)
+- **PRD** `/cadastros/produtos`: catálogo de produtos de balcão (pré-requisito do caixa).
+- **CX** `/caixa` (dono/recepção): abre comanda, lança serviço/combo/produto (preço do catálogo), fecha conta (trava edição). **`comissaoDoPeriodo` agrega as vendas fechadas por profissional (avulso/combo/dividido/produto) e aplica o motor de comissão** — o `/comissao` deixou de ser só simulador. `lib/caixa.ts`, tabelas `comandas`/`comanda_itens`.
+- Falta na Fase 3: PAG (Asaas), VAL (vales), MET (metas/relatórios), NF (nota fiscal).
+
+### Fase 4 — Gestão do dono (INICIADA)
+- **DASH** `/painel` (dono): faturamento hoje/30d, por profissional, ranking de itens, novos clientes, churn — **tudo das vendas reais do caixa**. `lib/dashboard.ts`.
+- Falta na Fase 4: NOT (notificações ao dono) e **IA (atendente WhatsApp — âncora)**.
+
+### Commits (autor inael): 4dc28fa SVC · aa2b295 PRO · 803e4cf CLI · cee4be9 USR · 875d019 SHELL · 2548811 specs F1 · 88c73c1 AGE · 79ad069 HOR · 7a18fe1 PRD+CX · abe1f72 DASH
 ### Banco de dev (localhost:3001, pg 5544) atualizado: schema + usuários demo dono@faith.com/dono123 · recepcao@faith.com/recep123 · barbeiro@faith.com/barb123.
 
 ### Próximos passos (ordem sugerida)
-1. **LEM** (quando houver credencial WhatsApp) + agendador.
-2. **Fase 3 — Caixa (CX)**: lançar serviço/produto, fechar conta, alimentar o motor de comissão com dados reais (hoje o `/comissao` é simulador). Depois PAG (Asaas), VAL, MET, NF.
-3. **Fase 4**: DASH (painel do dono real) + **IA (atendente WhatsApp — âncora)**.
-4. **Fase 5**: assinaturas/cobrança/pote real, estoque, TV upload.
-5. **Go-live** (precisa do Inael): AUTH_SECRET no Coolify, deploy VPS, /health no status dashboard, treinar o dono; SEC-04 (fechar 5432/SSH root).
+1. **Fase 3 restante:** VAL (vales) e MET (metas/relatórios) — dá pra construir já, em cima do caixa. PAG (Asaas) e NF precisam de credencial/emissor.
+2. **IA (atendente WhatsApp, âncora)** + NOT (notificações): dependem de credencial WhatsApp (SimplesZap) + Hub de IA (SMOKE-REAL, precisa do Inael).
+3. **Fase 5:** assinaturas/cobrança/pote real, estoque (EST), TV upload (storage do cliente).
+4. **LEM** (lembretes): agendador + WhatsApp.
+5. **Go-live** (precisa do Inael): AUTH_SECRET no Coolify, deploy VPS, /health no status dashboard, SEC-04 (fechar 5432/SSH root), treinar o dono.
 
 ---
 
