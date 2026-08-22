@@ -18,6 +18,9 @@ export default async function NavBar() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-600">
           <Link href="/" className={linkCls}>Painel</Link>
           <Link href="/comissao" className={linkCls}>Comissao</Link>
+          {papel && podeAcessar(papel, "agenda") ? (
+            <Link href="/agenda" className={linkCls}>Agenda</Link>
+          ) : null}
           {papel && podeAcessar(papel, "agenda_propria") ? (
             <Link href="/minha-agenda" className={linkCls}>Minha agenda</Link>
           ) : null}

@@ -173,10 +173,16 @@ export async function slotsDoBarbeiro(
 ): Promise<Date[] | null> {
   const duracaoMin = await resolverDuracao(db, profissionalId, servicoId);
   if (duracaoMin == null) return null;
-  const ocupados = await db
+  const bloqueios = await db
     .select({ inicio: schema.bloqueiosAgenda.inicio, fim: schema.bloqueiosAgenda.fim })
     .from(schema.bloqueiosAgenda)
     .where(eq(schema.bloqueiosAgenda.profissionalId, profissionalId));
+  // Agendamentos ativos também ocupam o horário (AGE): um slot não pode cair em cima deles.
+  const agendados = await db
+    .select({ inicio: schema.agendamentos.inicio, fim: schema.agendamentos.fim })
+    .from(schema.agendamentos)
+    .where(and(eq(schema.agendamentos.profissionalId, profissionalId), eq(schema.agendamentos.status, "agendado")));
+  const ocupados = [...bloqueios, ...agendados];
   return gerarSlots({ inicio, fim, duracaoMin, passoMin, ocupados });
 }
 

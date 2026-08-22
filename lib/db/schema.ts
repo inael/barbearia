@@ -104,6 +104,24 @@ export const clientes = pgTable("clientes", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Agendamentos (AGE). Intervalo [inicio, fim); fim = inicio + duração do barbeiro (R1). status: agendado|cancelado|concluido. */
+export const agendamentos = pgTable("agendamentos", {
+  id: serial("id").primaryKey(),
+  clienteId: integer("cliente_id")
+    .notNull()
+    .references(() => clientes.id, { onDelete: "restrict" }),
+  servicoId: integer("servico_id")
+    .notNull()
+    .references(() => servicos.id, { onDelete: "restrict" }),
+  profissionalId: integer("profissional_id")
+    .notNull()
+    .references(() => profissionais.id, { onDelete: "restrict" }),
+  inicio: timestamp("inicio", { withTimezone: true }).notNull(),
+  fim: timestamp("fim", { withTimezone: true }).notNull(),
+  status: text("status").notNull().default("agendado"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Servico = typeof servicos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
@@ -113,3 +131,4 @@ export type Tela = typeof telas.$inferSelect;
 export type ItemPlaylist = typeof itensPlaylist.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;
 export type Cliente = typeof clientes.$inferSelect;
+export type Agendamento = typeof agendamentos.$inferSelect;

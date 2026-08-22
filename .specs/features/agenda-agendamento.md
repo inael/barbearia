@@ -6,24 +6,24 @@ Fonte: `docs/produto/REQUISITOS.md` RF5, RF7 + BRIEFING (módulo 1, estilo Trink
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| AGE-001 | `criarAgendamento` grava cliente+serviço+profissional+início+fim (fim = início + duração do barbeiro) | integration | lib/db/agendamento.integration.test.ts | PENDING | — |
-| AGE-002 | Slot ocupado some de `slotsDoBarbeiro` (não oferece horário já agendado) | integration | lib/db/agendamento.integration.test.ts | PENDING | — |
-| AGE-003 | Conflito: 2º agendamento sobrepondo o mesmo barbeiro/horário é rejeitado | integration | lib/db/agendamento.integration.test.ts | PENDING | — |
-| AGE-004 | Agendamento respeita bloqueio (R2): horário bloqueado não aceita agendamento | integration | lib/db/agendamento.integration.test.ts | PENDING | — |
-| AGE-005 | Sem preferência de barbeiro, o rodízio escolhe entre os disponíveis (não repete o último) | unit | lib/agenda.test.ts | PENDING | — |
-| AGE-006 | Cancelar/editar agendamento libera o slot de volta | integration | lib/db/agendamento.integration.test.ts | PENDING | — |
-| AGE-007 | INVARIANTE: nunca há 2 agendamentos ativos sobrepostos para o mesmo profissional | property | lib/agenda.test.ts | PENDING | — |
-| AGE-008 | Recepção cria um agendamento pela UI e ele aparece na grade do barbeiro (read-only) | e2e | e2e/agendamento.spec.ts | PENDING | — |
-| AGE-009 | RBAC: barbeiro NÃO cria/edita agendamento (só vê a própria grade); recepção/dono editam | e2e | e2e/agendamento.spec.ts | PENDING | — |
+| AGE-001 | `criarAgendamento` grava cliente+serviço+profissional+início+fim (fim = início + duração do barbeiro) | integration | lib/db/agendamento.integration.test.ts | PASS | verde (gate) |
+| AGE-002 | Slot ocupado some de `slotsDoBarbeiro` (não oferece horário já agendado) | integration | lib/db/agendamento.integration.test.ts | PASS | verde (gate) |
+| AGE-003 | Conflito: 2º agendamento sobrepondo o mesmo barbeiro/horário é rejeitado | integration | lib/db/agendamento.integration.test.ts | PASS | verde (gate) |
+| AGE-004 | Agendamento respeita bloqueio (R2): horário bloqueado não aceita agendamento | integration | lib/db/agendamento.integration.test.ts | PASS | verde (gate) |
+| AGE-005 | Sem preferência de barbeiro, o rodízio escolhe entre os disponíveis (não repete o último) | unit | lib/agendamento.test.ts | PASS | verde (gate) |
+| AGE-006 | Cancelar/editar agendamento libera o slot de volta | integration | lib/db/agendamento.integration.test.ts | PASS | verde (gate) |
+| AGE-007 | INVARIANTE: nunca há 2 agendamentos ativos sobrepostos para o mesmo profissional | property | lib/agendamento.test.ts | PASS | verde (gate) |
+| AGE-008 | Recepção cria um agendamento pela UI e ele aparece na agenda do dia | e2e | e2e/agenda-agendamento.spec.ts | PASS | verde (gate) |
+| AGE-009 | RBAC: barbeiro NÃO cria/edita agendamento (só vê a própria grade); recepção/dono editam | e2e | e2e/agenda-agendamento.spec.ts | PASS | verde (gate) |
 
 ## Invariants (property)
 1. Dois agendamentos ativos do mesmo profissional nunca têm interseção de intervalo.
 2. Um horário ofertado por `slotsDoBarbeiro` nunca coincide com agendamento ativo nem bloqueio.
 
 ## Test Coverage Matrix
-REQUIREMENT (modelo + disponibilidade + conflito) → AGE-001..004,006 → integration (Postgres) → lib/db/agendamento.integration.test.ts → PENDING
-REQUIREMENT (rodízio + invariante) → AGE-005,007 → unit/property → lib/agenda.test.ts → PENDING
-REQUIREMENT (grade transacional na UI + RBAC) → AGE-008,009 → e2e → e2e/agendamento.spec.ts → PENDING
+REQUIREMENT (modelo + disponibilidade + conflito) → AGE-001..004,006 → integration (Postgres) → lib/db/agendamento.integration.test.ts → PASS
+REQUIREMENT (rodízio + invariante) → AGE-005,007 → unit/property → lib/agendamento.test.ts → PASS
+REQUIREMENT (grade transacional na UI + RBAC) → AGE-008,009 → e2e → e2e/agenda-agendamento.spec.ts → PASS
 
 ## Gaps
 - Nova tabela `agendamentos` (cliente_id, servico_id, profissional_id, inicio, fim, status). Depende de CLI (clientes) e SVC (serviços).

@@ -61,9 +61,9 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [x] CLI (clientes-crud) cadastro/reconhecimento de clientes por telefone; CPF válido. integration 5/5 + e2e.
 - [x] USR (usuarios-admin) dono gerencia logins (papel/senha/ativo). integration 4/4 + e2e.
 
-### Fase 2 — Agenda ao vivo
+### Fase 2 — Agenda ao vivo (EM ANDAMENTO)
 - [ ] HOR (agenda-horarios) horário de funcionamento configurável.
-- [ ] AGE (agenda-agendamento) agendamentos reais (slots viram ocupados; usa R1/R2/rodízio).
+- [x] AGE (agenda-agendamento) agendamentos reais: cria/cancela, ocupa slot (some da grade), rejeita conflito e bloqueio, rodízio. unit 3/3 + integration 5/5 + e2e 2/2. Tela /agenda (dono/recepção).
 - [ ] LEM (lembretes) lembretes/confirmação ao cliente.
 
 ### Fase 3 — Caixa + Financeiro (alimenta o motor com dados reais)

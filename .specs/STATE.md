@@ -38,13 +38,13 @@
 | PRO — CRUD profissionais | profissionais-crud.md | 6 | 6 | sim | **Fase 1** (dono) |
 | CLI — Cadastro de clientes | clientes-crud.md | 6 | 6 | sim | **Fase 1** (cadastro) |
 | USR — Gestão de usuários | usuarios-admin.md | 6 | 6 | sim | **Fase 1** (dono) |
-| **Subtotal A** | | **162** | **162** | | |
+| AGE — Agenda ao vivo (agendamentos) | agenda-agendamento.md | 9 | 9 | sim | **Fase 2** — agenda de verdade |
+| **Subtotal A** | | **171** | **171** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
 |---------|---------|------|--------|------------|
 | HOR — Horário de funcionamento config | agenda-horarios.md | 5 | Agenda | — |
-| AGE — Agenda ao vivo (agendamentos) | agenda-agendamento.md | 9 | Agenda | CLI, SVC, PRO, R1/R2/ROD |
 | LEM — Lembretes ao cliente | lembretes.md | 5 | Agenda | AGE, WhatsApp |
 | CX — Caixa (lançar/fechar) | caixa.md | 7 | Financeiro | CLI, SVC, PRO |
 | PAG — Pagamento Asaas | pagamento-asaas.md | 5 | Financeiro | CX |
@@ -59,9 +59,9 @@
 | PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
 | EST — Estoque | estoque.md | 6 | Operação | — |
 | TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
-| **Subtotal B** | | **92** | | |
+| **Subtotal B** | | **83** | | |
 
-**Total: 40 features · 254 ACs · 162 PASS / 92 PENDING.** (tlc-validate: OK.) **Fase 1 (SHELL + cadastros) concluída 2026-08-22** — unit 66, integration 53, e2e 47, todos verdes.
+**Total: 40 features · 254 ACs · 171 PASS / 83 PENDING.** (tlc-validate: OK.) **Fase 1 (SHELL + cadastros) + AGE (agenda ao vivo, Fase 2) concluídas 2026-08-22** — unit 69, integration 58, e2e 50, todos verdes.
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
@@ -70,7 +70,7 @@ unit+property, integration (Postgres real), e2e (browser real), coverage 100% em
 Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com teste verde nomeado E o produto for **navegável ponta a ponta** conforme `docs/context/AUDITORIA_REAL.md`. Hoje faltam **123 ACs (todo o Bloco B)**, incluindo:
 - [x] Navegação por papel (fim das páginas órfãs) — SHELL ✅ **Fase 1**
 - [x] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR ✅ **Fase 1**
-- [ ] Agenda ao vivo (agendar de verdade) — AGE/HOR/LEM
+- [~] Agenda ao vivo — AGE ✅ **Fase 2** (agendar de verdade, conflito/bloqueio/rodízio); falta HOR/LEM
 - [ ] Caixa + pagamento (alimenta a comissão com dados reais) — CX/PAG/VAL/MET/NF
 - [ ] Painel do dono real — DASH; Notificações — NOT
 - [ ] **Atendente IA no WhatsApp (feature-âncora, 0% hoje)** — IA
