@@ -1,8 +1,10 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { hashSenha, verificarSenha } from "./password";
 import type { Papel } from "./rbac";
+
+type DB = PostgresJsDatabase<typeof schema>;
 
 export interface DadosUsuario {
   email: string;
@@ -52,4 +54,47 @@ export async function autenticar(
   if (!u || !u.ativo) return null;
   if (!verificarSenha(senha, u.senhaHash)) return null;
   return { id: u.id, nome: u.nome, papel: u.papel as Papel, profissionalId: u.profissionalId };
+}
+
+// ---- Administração de usuários (só dono) ----
+
+export interface UsuarioListado {
+  id: number;
+  email: string;
+  nome: string;
+  papel: Papel;
+  profissionalId: number | null;
+  ativo: boolean;
+}
+
+/** Lista usuários (NUNCA retorna o hash), ordenados por e-mail. */
+export async function listarUsuarios(db: DB): Promise<UsuarioListado[]> {
+  const rows = await db
+    .select({
+      id: schema.usuarios.id,
+      email: schema.usuarios.email,
+      nome: schema.usuarios.nome,
+      papel: schema.usuarios.papel,
+      profissionalId: schema.usuarios.profissionalId,
+      ativo: schema.usuarios.ativo,
+    })
+    .from(schema.usuarios)
+    .orderBy(asc(schema.usuarios.email));
+  return rows.map((r) => ({ ...r, papel: r.papel as Papel }));
+}
+
+/** Ativa/desativa um usuário. Desativado não consegue autenticar. */
+export async function definirAtivo(db: DB, id: number, ativo: boolean): Promise<void> {
+  await db.update(schema.usuarios).set({ ativo }).where(eq(schema.usuarios.id, id));
+}
+
+/** Altera o papel (RBAC) de um usuário. */
+export async function alterarPapel(db: DB, id: number, papel: Papel): Promise<void> {
+  await db.update(schema.usuarios).set({ papel }).where(eq(schema.usuarios.id, id));
+}
+
+/** Reseta a senha (novo hash scrypt). A senha antiga passa a falhar. */
+export async function resetarSenha(db: DB, id: number, novaSenha: string): Promise<void> {
+  if (!novaSenha || novaSenha.length < 4) throw new Error("senha muito curta");
+  await db.update(schema.usuarios).set({ senhaHash: hashSenha(novaSenha) }).where(eq(schema.usuarios.id, id));
 }
