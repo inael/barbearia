@@ -42,7 +42,8 @@
 | HOR — Horário de funcionamento | agenda-horarios.md | 5 | 5 | sim | **Fase 2** — grade respeita config/feriados |
 | PRD — Cadastro de produtos | produtos-crud.md | 6 | 6 | sim | **Fase 3** — catálogo de balcão |
 | CX — Caixa (comanda/fechar conta) | caixa.md | 7 | 7 | sim | **Fase 3** — vendas reais alimentam a comissão |
-| **Subtotal A** | | **189** | **189** | | |
+| DASH — Painel do dono | painel-dono.md | 6 | 6 | sim | **Fase 4** — faturamento/ranking/churn reais |
+| **Subtotal A** | | **195** | **195** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
@@ -51,7 +52,6 @@
 | PAG — Pagamento Asaas | pagamento-asaas.md | 5 | Financeiro | CX |
 | VAL — Vales | vales.md | 5 | Financeiro | PRO |
 | MET — Metas + relatórios | metas-relatorios.md | 5 | Financeiro | CX |
-| DASH — Painel do dono (real) | painel-dono.md | 6 | Gestão | CX, CLI |
 | NOT — Notificações ao dono | notificacoes-dono.md | 5 | Gestão | EST, WhatsApp |
 | NF — Nota fiscal | nota-fiscal.md | 4 | Financeiro | CX, CLI |
 | IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | **Âncora** | AGE, CLI, HOR |
@@ -60,9 +60,9 @@
 | PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
 | EST — Estoque | estoque.md | 6 | Operação | — |
 | TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
-| **Subtotal B** | | **71** | | |
+| **Subtotal B** | | **65** | | |
 
-**Total: 41 features · 260 ACs · 189 PASS / 71 PENDING.** (tlc-validate: OK.) **Fase 1 (cadastros) + Fase 2 (AGE+HOR) + Fase 3 início (PRD produtos + CX caixa) — 2026-08-22** — unit 74, integration 67, e2e 54, todos verdes. O `/comissao` deixou de ser só simulador: o **caixa gera vendas reais que alimentam o motor de comissão** (CX-004).
+**Total: 41 features · 260 ACs · 195 PASS / 65 PENDING.** (tlc-validate: OK.) **Fase 1 (cadastros) + Fase 2 (AGE+HOR) + Fase 3 (PRD+CX) + DASH (Fase 4) — 2026-08-22** — unit 75, integration 70, e2e 56, todos verdes. Fluxo completo: **caixa gera vendas reais → alimentam a comissão (CX-004) e o painel do dono (DASH)**.
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
@@ -73,7 +73,7 @@ Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com t
 - [x] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR ✅ **Fase 1**
 - [~] Agenda ao vivo — AGE + HOR ✅ **Fase 2** (agendar de verdade + horários/feriados na grade); falta LEM (lembretes)
 - [~] Caixa — **CX + PRD ✅ Fase 3** (comanda, fechar conta, comissão por profissional a partir de vendas reais); falta PAG (Asaas)/VAL/MET/NF
-- [ ] Painel do dono real — DASH; Notificações — NOT
+- [~] Painel do dono real — **DASH ✅ Fase 4** (faturamento/ranking/churn do caixa); falta Notificações — NOT
 - [ ] **Atendente IA no WhatsApp (feature-âncora, 0% hoje)** — IA
 - [ ] Assinaturas + cobrança + pote real — ASS/COB/PTG
 - [ ] Estoque — EST; TV com upload — TVUP

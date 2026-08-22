@@ -74,8 +74,8 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] MET (metas-relatorios) metas + relatório por profissional.
 - [ ] NF (nota-fiscal) NF no fechamento + envio WhatsApp.
 
-### Fase 4 — Gestão do dono + Âncora IA
-- [ ] DASH (painel-dono) dashboard real (faturamento/ranking/churn).
+### Fase 4 — Gestão do dono + Âncora IA (EM ANDAMENTO)
+- [x] DASH (painel-dono) `/painel` (dono): faturamento hoje/30d, por profissional, ranking de itens, novos clientes, churn — tudo das vendas do caixa. unit 1/1 + integration 3/3 + e2e 2/2.
 - [ ] NOT (notificacoes-dono) canal "chefe".
 - [ ] **IA (atendente-ia) atendente no WhatsApp — feature-âncora, 0% hoje.**
 
