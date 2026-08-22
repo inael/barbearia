@@ -1,5 +1,33 @@
 # SESSION_HANDOFF
 
+## Sessão autônoma 2026-08-22 (loop) — CONSTRUÍDO DE VERDADE (Fase 1 + Fase 2 quase completa)
+
+Autorizado pelo Inael a rodar o loop e tomar decisões. Construído com o harness (spec → TDD → gate → **linkado/clicável** → commit). **8 features novas, todas verdes e no `origin/master`.** Estado final: **254 ACs, 176 PASS / 78 PENDING**; unit 72, integration 60, e2e 50 — todos passando; typecheck/lint limpos.
+
+### Fase 1 — navegável + cadastros (CONCLUÍDA)
+- **SHELL** (`components/NavBar.tsx`): navegação por papel + login/logout no menu. **Matou as páginas órfãs** — login, minha-agenda, admin/tv, cadastros agora alcançáveis. Hubs `/cadastros` e `/minha-agenda`.
+- **SVC** `/cadastros/servicos`: CRUD de serviços/combos (dono/recepção).
+- **PRO** `/cadastros/profissionais`: CRUD de profissionais (dono). Coluna `telefone` no schema.
+- **CLI** `/cadastros/clientes`: cadastro + reconhecimento por telefone; CPF válido só no fechamento. Tabela `clientes`.
+- **USR** `/cadastros/usuarios`: dono cria/edita/desativa logins, papel, reset de senha.
+
+### Fase 2 — agenda ao vivo (EM ANDAMENTO)
+- **AGE** `/agenda` (dono/recepção): **agendamento de verdade** — usa a duração do barbeiro (R1), rejeita conflito e bloqueio (R2), rodízio; slot agendado some da grade; cancelar libera. Tabela `agendamentos`. Motor `lib/agendamento.ts`.
+- **HOR** `/cadastros/horarios` (dono): horários por dia da semana + feriados; a **grade respeita** (mostra "Fechado nesse dia"), fallback 9h–19h. `lib/horarios.ts`, tabelas `horarios_funcionamento`/`feriados`.
+- **LEM (lembretes) — NÃO feito de propósito:** precisa de agendador (cron/fila) + credencial real de WhatsApp (SMOKE-REAL, precisa do Inael). Construir só a lógica com envio mockado seria "parece pronto mas não envia". Deixado como próximo passo honesto.
+
+### Commits (autor inael): 4dc28fa SVC · aa2b295 PRO · 803e4cf CLI · cee4be9 USR · 875d019 SHELL · 2548811 specs F1 · 88c73c1 AGE · 79ad069 HOR
+### Banco de dev (localhost:3001, pg 5544) atualizado: schema + usuários demo dono@faith.com/dono123 · recepcao@faith.com/recep123 · barbeiro@faith.com/barb123.
+
+### Próximos passos (ordem sugerida)
+1. **LEM** (quando houver credencial WhatsApp) + agendador.
+2. **Fase 3 — Caixa (CX)**: lançar serviço/produto, fechar conta, alimentar o motor de comissão com dados reais (hoje o `/comissao` é simulador). Depois PAG (Asaas), VAL, MET, NF.
+3. **Fase 4**: DASH (painel do dono real) + **IA (atendente WhatsApp — âncora)**.
+4. **Fase 5**: assinaturas/cobrança/pote real, estoque, TV upload.
+5. **Go-live** (precisa do Inael): AUTH_SECRET no Coolify, deploy VPS, /health no status dashboard, treinar o dono; SEC-04 (fechar 5432/SSH root).
+
+---
+
 ## Última sessão: 2026-08-22 — CORREÇÃO DE ROTA (auditoria honesta)
 ### O que aconteceu
 O Inael olhou o app rodando e constatou o óbvio que os relatórios escondiam: **não é um sistema de gestão de barbearia** — é catálogo read-only (`/`) + simulador de comissão (`/comissao`) + **páginas órfãs** (login, `/minha-agenda/*`, `/admin/tv`, player existem em código mas **não há link no menu**). Faltam por completo: cadastros (serviços/profissionais/clientes/usuários), agenda ao vivo, caixa/pagamento, painel do dono real, **atendente IA no WhatsApp (0%, a feature-âncora)**, assinaturas, estoque, NF. O "131/131 ACs PASS" era verdadeiro mas media fatias estreitas — reportá-lo como "pronto" foi erro meu.
