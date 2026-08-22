@@ -20,6 +20,8 @@ REQUIREMENT (painel renderiza catálogo real) → PNL-001..005 → e2e (Playwrig
 REQUIREMENT (navegação) → PNL-006 → e2e → e2e/painel.spec.ts → PENDING
 
 ## Gaps
+- **IMPORTANTE (auditoria 2026-08-22):** esta rota `/` é só o **catálogo read-only**. NÃO é o painel do dono (RF22) — esse é uma feature separada, ver `painel-dono.md` (DASH). Não confundir "PNL PASS" com "painel do dono pronto".
+- A navegação por papel + fim das páginas órfãs está na spec `shell-navegacao.md` (SHELL).
 - Suíte E2E do painel — não existe.
 - E2E precisa de dados determinísticos: a app aponta para um Postgres com o catálogo semeado (seed data). Estratégia de seed determinístico para E2E em `.specs/STATE.md` / fix_plan.
 - `/` é `force-dynamic` e depende de `DATABASE_URL`; o E2E precisa da app rodando com banco acessível (definir env do runner).

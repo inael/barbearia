@@ -45,17 +45,49 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] OPS-GOLIVE [HUMANO] cadastrar a URL `/health` no painel status.toolpad.cloud quando deployar
 - [ ] READINESS Rodar `/revisar-produto` (auditoria completa) antes do go-live; aspectos HUMANO (smoke WhatsApp/IA, visual final, infra/LGPD, treinar dono) ficam com o Inael
 
-## Roadmap do produto (loop /construir-produto)
-Auth RESOLVIDO via **Auth.js self-hosted** (não Logto) — login + RBAC + e2e verdes.
-Motor completo: Agenda R1/R2/slots + TV R3.
-- [x] AUTH login + RBAC (Auth.js) — feito, gate PASS.
-- [x] UI-AGENDA-R1 barbeiro edita a própria minutagem (`/minha-agenda/duracoes`).
-- [x] UI-AGENDA-R2 barbeiro cria/remove bloqueios (`/minha-agenda/bloqueios`).
-- [x] UI-SLOTS grade de agenda (mostrar slots por barbeiro/serviço/dia via `slotsDoBarbeiro`).
-- [x] UI-TV admin de telas/playlists (/admin/tv) + player em tela cheia (/tv/[id]) - feito.
-- [ ] MODELO-AGENDAMENTOS (feature nova) p/ os slots virarem agendamentos reais (appointments como "ocupados").
-- [ ] SMOKE-REAL [precisa do Inael] WhatsApp (SimplesZap/Evolution) + IA (UseTokia) com credencial real.
-- [ ] GO-LIVE [HUMANO] AUTH_SECRET no Coolify, cadastrar /health no status dashboard, treinar o dono.
+## Roadmap do produto — REVISADO 2026-08-22 (ver docs/context/AUDITORIA_REAL.md)
+
+**Correção honesta:** o que existe é catálogo read-only + simulador + páginas órfãs. O backlog REAL virou spec (Bloco B do STATE, 123 ACs PENDING). Ordem abaixo = a que torna o app usável ponta a ponta (VP1). Cada item: spec → TDD → gate → **linkado e clicável** → só então `[x]`.
+
+### Feito (fatias, PASS no gate)
+- [x] AUTH login + RBAC (Auth.js) — motor + wiring; **mas login está órfão no menu** (ver SHELL).
+- [x] Motores: Agenda R1/R2/slots + TV R3 + Comissão/Pote/Rodízio (testados).
+- [x] UIs R1/R2/grade/TV admin/player — **existem porém órfãs** (sem link; ver SHELL).
+
+### Fase 1 — Tornar navegável + Cadastros (base de tudo)
+- [ ] SHELL (shell-navegacao) navegação por papel + login/logout no menu; matar páginas órfãs.
+- [ ] SVC (catalogo-crud) CRUD de serviços/combos.
+- [ ] PRO (profissionais-crud) CRUD de profissionais.
+- [ ] CLI (clientes-crud) cadastro/reconhecimento de clientes.
+- [ ] USR (usuarios-admin) dono gerencia logins.
+
+### Fase 2 — Agenda ao vivo
+- [ ] HOR (agenda-horarios) horário de funcionamento configurável.
+- [ ] AGE (agenda-agendamento) agendamentos reais (slots viram ocupados; usa R1/R2/rodízio).
+- [ ] LEM (lembretes) lembretes/confirmação ao cliente.
+
+### Fase 3 — Caixa + Financeiro (alimenta o motor com dados reais)
+- [ ] CX (caixa) lançar serviço/produto + fechar conta.
+- [ ] PAG (pagamento-asaas) cobrança cartão/PIX no fechamento.
+- [ ] VAL (vales) vales com desconto.
+- [ ] MET (metas-relatorios) metas + relatório por profissional.
+- [ ] NF (nota-fiscal) NF no fechamento + envio WhatsApp.
+
+### Fase 4 — Gestão do dono + Âncora IA
+- [ ] DASH (painel-dono) dashboard real (faturamento/ranking/churn).
+- [ ] NOT (notificacoes-dono) canal "chefe".
+- [ ] **IA (atendente-ia) atendente no WhatsApp — feature-âncora, 0% hoje.**
+
+### Fase 5 — Assinaturas + Estoque + TV upload
+- [ ] ASS (assinaturas) planos/regras/descontos.
+- [ ] COB (assinaturas-cobranca) recorrência cartão + fila de espera.
+- [ ] PTG (pote-gestao) pote real ligado a dados.
+- [ ] EST (estoque) entrada/saída/contagem/pedidos.
+- [ ] TVUP (tv-upload) upload real de mídia.
+
+### Dependem do Inael (não são código)
+- [ ] SMOKE-REAL WhatsApp (SimplesZap/Evolution) + IA (Hub) + Asaas com credencial real.
+- [ ] GO-LIVE AUTH_SECRET no Coolify, deploy, cadastrar /health no status dashboard, treinar o dono.
 
 ## BLOQUEADO — Docker Desktop caiu (2026-08-20)
 - [x] DOCKER-01 (resolvido: reboot, Docker OK) [EXTERNO, precisa do Inael] O engine Linux do Docker Desktop está em erro 500

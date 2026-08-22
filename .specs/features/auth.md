@@ -40,5 +40,6 @@ REQUIREMENT (usuários no banco) → AUTH-010..015 → integration → lib/db/us
 ## Gaps
 - ✅ **Wiring completo:** Auth.js (NextAuth v5) Credentials → `autenticar`; sessão JWT com `papel`/`profissionalId`; `/login` + logout; `proxy.ts` (ex-middleware, convenção Next 16) protegendo `/conta`; RBAC na UI. E2E autenticado verde (AUTH-016..019).
 - ⬜ **Go-live:** setar `AUTH_SECRET` real no env do deploy (VPS/Coolify) — o e2e usa um secret de teste (vault: `BARBEARIA_AUTH_SECRET`).
-- ⬜ Expandir o `matcher` do `proxy.ts` pras rotas reais (agenda/admin) quando as UIs existirem.
-- ⬜ Depois: UIs de Agenda (R1/R2/slots) e TV com login + RBAC (barbeiro edita a própria).
+- ⬜ Expandir o `matcher` do `proxy.ts` pras rotas reais (agenda/admin/caixa/cadastros) quando as UIs existirem.
+- ⬜ **Login/logout no menu + navegação por papel:** hoje `/login` e `/conta` são órfãos (sem link). Coberto pela spec `shell-navegacao.md` (SHELL), PENDING.
+- ⬜ **Gestão de usuários pelo dono** (criar/editar/desativar logins): spec `usuarios-admin.md` (USR), PENDING — hoje só via script de seed.

@@ -1,53 +1,83 @@
 # .specs/STATE.md — Estado do produto & harness
 
-**Projeto:** barbearia (Faith Barbearia). Stack: Next.js 16 (App Router) + React 19 + Drizzle + Postgres + Vitest. Auth Logto (planejado). Node 24 / npm 11 / Docker local ativo.
+**Projeto:** barbearia (Faith Barbearia). Stack: Next.js 16 (App Router) + React 19 + Drizzle + Postgres + Vitest. Auth **Auth.js self-hosted** (feito). Node 24 / npm 11 / Docker local.
 
-**Natureza deste STATE:** normalização *brownfield*. O harness foi montado **adaptado ao que existe de verdade**. NÃO existem (e não são requisitos aqui): `instance-health`, billing/usage metering, Clerk, Prisma, multi-tenant. Qualquer referência a esses veio de um prompt de outro projeto e foi descartada por falta de referente no código.
+> **LEIA ANTES `docs/context/AUDITORIA_REAL.md` (2026-08-22).** Este STATE foi corrigido depois que o Inael olhou o app rodando e constatou: hoje só há **catálogo read-only + simulador de comissão + páginas órfãs**. O número "131 PASS" era verdadeiro mas media **fatias estreitas**, não o produto. Agora o índice inclui **todo o backlog real como PENDING**, para o loop (loopx) construir de verdade.
 
-## Índice de features (specs normalizadas)
-| Feature | Arquivo | #ACs | PASS | PENDING |
-|---------|---------|------|------|---------|
-| COM — Comissão | .specs/features/comissao.md | 15 | 15 | 0 |
-| POTE — Pote assinaturas | .specs/features/pote.md | 10 | 10 | 0 |
-| ROD — Rodízio | .specs/features/rodizio.md | 8 | 8 | 0 |
-| CAT — Catálogo/DB | .specs/features/catalogo-db.md | 7 | 7 | 0 |
-| PNL — Painel `/` | .specs/features/painel.md | 6 | 6 | 0 |
-| CUI — Simulador `/comissao` | .specs/features/comissao-ui.md | 6 | 6 | 0 |
-| SUP — Suporte (WhatsApp) | .specs/features/suporte.md | 3 | 3 | 0 |
-| OPS — Saúde `/health` | .specs/features/ops.md | 3 | 3 | 0 |
-| UXB — Responsivo + a11y | .specs/features/ux-base.md | 4 | 4 | 0 |
-| AGD — Agenda: duração/barbeiro (R1) | .specs/features/agenda-duracao.md | 9 | 9 | 0 |
-| BLQ — Agenda: bloqueio/ausência (R2) | .specs/features/agenda-bloqueio.md | 5 | 5 | 0 |
-| SLT — Agenda: cálculo de slots | .specs/features/agenda-slots.md | 7 | 7 | 0 |
-| TV — Mídia indoor multi-tela (R3) | .specs/features/tv.md | 6 | 6 | 0 |
-| AUTH — Auth/RBAC + login (Auth.js) | .specs/features/auth.md | 19 | 19 | 0 |
-| AGDUI — UI: barbeiro edita minutagem (R1) | .specs/features/agenda-duracao-ui.md | 7 | 7 | 0 |
-| BLQUI — UI: barbeiro gerencia bloqueios (R2) | .specs/features/agenda-bloqueio-ui.md | 6 | 6 | 0 |
-| TVUI — UI: admin de TVs/playlist (R3) | .specs/features/tv-ui.md | 6 | 6 | 0 |
-| TVPLR — UI: player da TV (R3) | .specs/features/tv-player.md | 2 | 2 | 0 |
-| GRD — UI: grade de horários livres | .specs/features/agenda-grade.md | 2 | 2 | 0 |
-| **Total** | | **131** | **131** | **0** |
+## Como ler este índice
+- **PASS** = fatia com evidência de teste verde no gate. **NÃO** significa "feature de produto pronta e navegável".
+- **PENDING** = ainda não construído (é o que falta pro produto ser usável ponta a ponta).
+- Coluna **Nav** = a tela é alcançável pela navegação por papel? (`—` = não se aplica / é motor; `órfã` = existe mas sem link; `n/a` = ainda não existe).
 
-Evidência (gate full determinístico): unit+property **42**, integration **6** (Postgres real), e2e **18** (browser real: painel, simulador, suporte, /health, responsivo 375px, acessibilidade axe), coverage **100%** em `lib/`, mutation **98.84%** (pote/rodízio 100%; comissão 97.56%; **1 sobrevivente equivalente**: `<=0` vs `<0` com q=0, indistinguível por qualquer input). Testes property com **seed fixa** (determinismo). **Testes verdes isolados não bastam** — o ciclo de review pegou (a) uma AC real faltando (borda de hidratação negativa), (b) um teste property flaky, (c) invariantes só de um lado + idempotência só de contagem, todos corrigidos; e um mutante do `EPSILON` que parecia equivalente mas foi morto por um teste de round-half-up.
+## Índice de features (40 specs)
+
+### A) Construído e com evidência (fatias — PASS)
+| Feature | Arquivo | #ACs | PASS | Nav | Observação honesta |
+|---------|---------|------|------|-----|--------------------|
+| COM — Comissão (motor) | comissao.md | 15 | 15 | — | motor sólido (mutation ~98%) |
+| POTE — Pote (motor) | pote.md | 10 | 10 | — | motor sólido |
+| ROD — Rodízio (motor) | rodizio.md | 8 | 8 | — | motor; não plugado em booking |
+| CAT — Catálogo/DB (seed) | catalogo-db.md | 7 | 7 | — | só leitura/seed |
+| PNL — Painel `/` (catálogo) | painel.md | 6 | 6 | sim | **read-only, NÃO é painel do dono** |
+| CUI — Simulador `/comissao` | comissao-ui.md | 6 | 6 | sim | você digita os números na mão |
+| SUP — Suporte (WhatsApp) | suporte.md | 3 | 3 | sim | botão Ajuda |
+| OPS — `/health` | ops.md | 3 | 3 | — | liveness |
+| UXB — Responsivo + a11y | ux-base.md | 4 | 4 | — | só nas 2 telas atuais |
+| AGD — Duração/barbeiro (motor R1) | agenda-duracao.md | 9 | 9 | — | motor + persistência |
+| AGDUI — UI duração (R1) | agenda-duracao-ui.md | 7 | 7 | **órfã** | existe, sem link |
+| BLQ — Bloqueio (motor R2) | agenda-bloqueio.md | 5 | 5 | — | motor + persistência |
+| BLQUI — UI bloqueio (R2) | agenda-bloqueio-ui.md | 6 | 6 | **órfã** | existe, sem link |
+| SLT — Slots (motor) | agenda-slots.md | 7 | 7 | — | motor |
+| GRD — Grade de horários livres | agenda-grade.md | 2 | 2 | **órfã** | só mostra livre, não agenda |
+| TV — Multi-tela (motor R3) | tv.md | 6 | 6 | — | motor |
+| TVUI — Admin de TVs | tv-ui.md | 6 | 6 | **órfã** | mídia por URL colada |
+| TVPLR — Player da TV | tv-player.md | 2 | 2 | **órfã** | existe, sem link |
+| AUTH — Auth/RBAC + login | auth.md | 19 | 19 | **órfã** | login funciona, sem link no menu |
+| **Subtotal A** | | **131** | **131** | | |
+
+### B) Backlog do produto real (PENDING — o que falta)
+| Feature | Arquivo | #ACs | Módulo | Depende de |
+|---------|---------|------|--------|------------|
+| SHELL — Navegação por papel + login no menu | shell-navegacao.md | 6 | Fundação | AUTH |
+| SVC — CRUD serviços/combos | catalogo-crud.md | 7 | Cadastros | AUTH |
+| PRO — CRUD profissionais | profissionais-crud.md | 6 | Cadastros | AUTH |
+| CLI — Cadastro de clientes | clientes-crud.md | 6 | Cadastros | AUTH |
+| USR — Gestão de usuários (dono) | usuarios-admin.md | 6 | Cadastros | AUTH |
+| HOR — Horário de funcionamento config | agenda-horarios.md | 5 | Agenda | — |
+| AGE — Agenda ao vivo (agendamentos) | agenda-agendamento.md | 9 | Agenda | CLI, SVC, PRO, R1/R2/ROD |
+| LEM — Lembretes ao cliente | lembretes.md | 5 | Agenda | AGE, WhatsApp |
+| CX — Caixa (lançar/fechar) | caixa.md | 7 | Financeiro | CLI, SVC, PRO |
+| PAG — Pagamento Asaas | pagamento-asaas.md | 5 | Financeiro | CX |
+| VAL — Vales | vales.md | 5 | Financeiro | PRO |
+| MET — Metas + relatórios | metas-relatorios.md | 5 | Financeiro | CX |
+| DASH — Painel do dono (real) | painel-dono.md | 6 | Gestão | CX, CLI |
+| NOT — Notificações ao dono | notificacoes-dono.md | 5 | Gestão | EST, WhatsApp |
+| NF — Nota fiscal | nota-fiscal.md | 4 | Financeiro | CX, CLI |
+| IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | **Âncora** | AGE, CLI, HOR |
+| ASS — Assinaturas (planos/regras) | assinaturas.md | 6 | Assinaturas | CLI, AGE |
+| COB — Cobrança recorrente + fila | assinaturas-cobranca.md | 6 | Assinaturas | ASS, PAG |
+| PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
+| EST — Estoque | estoque.md | 6 | Operação | — |
+| TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
+| **Subtotal B** | | **123** | | |
+
+**Total: 40 features · 254 ACs · 131 PASS / 123 PENDING.** (tlc-validate: OK.)
+
+## Evidência das fatias PASS (gate determinístico)
+unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
 
 ## EXIT_SIGNAL: false
-Vira `true` **somente por evidência**, quando TODOS abaixo forem verdade:
-- [x] Todas as 52 ACs obrigatórias em PASS **com evidência** (arquivo de teste + resultado). tlc-validate: 52/52.
-- [x] Property tests dos invariantes do motor (COM/POTE/ROD) verdes (seed fixa).
-- [x] Integration (Testcontainers Postgres) do catálogo/seed verde (CAT-*): 6/6.
-- [x] E2E Playwright dos critical journeys (PNL-*, CUI-*) verde contra a app real local: 11/11.
-- [x] Mutation em `lib/` sem sobreviventes relevantes (97.67%; 2 equivalentes documentados).
-- [x] `quality:full` (`node tools/gate.mjs full`) passa (GATE: PASS, determinístico).
-- [x] Security review sem CRITICAL/HIGH alcançável no código (CLEAR; ver fix_plan SEC-*).
-- [x] **Verifier fresh + test-reviewer** — verifier round 1 = NEEDS_WORK (property flaky), corrigido e re-validado (gate PASS determinístico); test-reviewer independente = STRONG, 3 findings consumidos (oráculo exato, round-half-up, idempotência de conteúdo).
-- [~] `.ralph/fix_plan.md` sem trabalho obrigatório executável — restam SEC-03/04/05, todos **não-bloqueantes / future-gated**.
-- [x] Sem TODO/stub/debug/skip; sem regressões — grep limpo, working tree limpo, gate full PASS.
+Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com teste verde nomeado E o produto for **navegável ponta a ponta** conforme `docs/context/AUDITORIA_REAL.md`. Hoje faltam **123 ACs (todo o Bloco B)**, incluindo:
+- [ ] Navegação por papel (fim das páginas órfãs) — SHELL
+- [ ] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR
+- [ ] Agenda ao vivo (agendar de verdade) — AGE/HOR/LEM
+- [ ] Caixa + pagamento (alimenta a comissão com dados reais) — CX/PAG/VAL/MET/NF
+- [ ] Painel do dono real — DASH; Notificações — NOT
+- [ ] **Atendente IA no WhatsApp (feature-âncora, 0% hoje)** — IA
+- [ ] Assinaturas + cobrança + pote real — ASS/COB/PTG
+- [ ] Estoque — EST; TV com upload — TVUP
 
-**Status — harness + fatia atual: COMPLETO e com evidência.** Todos os critérios de qualidade acima estão satisfeitos para as 6 features implementadas até hoje.
+Itens que dependem do Inael (não são código): SMOKE-REAL (credenciais WhatsApp/IA/Asaas) e GO-LIVE (deploy, `AUTH_SECRET`, treinar o dono). Ver `.ralph/fix_plan.md`.
 
-**`EXIT_SIGNAL` do PRODUTO permanece `false`** — e deve. O produto barbearia tem features obrigatórias ainda **não construídas**: auth (Logto/RBAC), agenda/rodízio ao vivo, atendente IA, assinaturas, módulo TV. Isso é **backlog de produto, não lacuna de qualidade** do que existe. Quando cada uma for construída: normalizar spec TLC + provar as ACs pelo mesmo gate. Auth tem pré-requisito externo (registrar o app `barbearia` no console Logto).
-
-## Decisões (resumo — detalhe em docs/TOOLCHAIN_DECISIONS.md)
-- Vitest KEEP; fast-check/coverage-v8/Playwright/Stryker/Testcontainers INSTALL; nock/MSW NOT_NEEDED (sem HTTP externo hoje).
-- "TLC" = esta estrutura `.specs/` + `tools/tlc-validate.mjs`. "Ralph" = `.ralph/fix_plan.md` + runner local compatível.
-- Commits desta fase: **locais, atômicos, sem push/deploy**.
+## Método daqui pra frente
+Especificação atualizada (este arquivo + Bloco B) é o **backlog do loopx**. Cada feature: spec → TDD → gate verde → **linkada e clicável** → só então "pronta". Ordem sugerida em `docs/context/ACTIVE_PLAN.md`.
