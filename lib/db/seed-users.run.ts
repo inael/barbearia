@@ -13,6 +13,7 @@ async function main() {
   const db = getDb();
   const [rodrigo] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Rodrigo"));
   const [pedro] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Pedro"));
+  const [recep] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Recepcao"));
 
   if (!(await existe(db, "dono@faith.com"))) {
     await criarUsuario(db, { email: "dono@faith.com", senha: "dono123", nome: "Rodrigo (dono)", papel: "dono", profissionalId: rodrigo?.id ?? null });
@@ -20,7 +21,10 @@ async function main() {
   if (!(await existe(db, "barbeiro@faith.com"))) {
     await criarUsuario(db, { email: "barbeiro@faith.com", senha: "barb123", nome: "Pedro (barbeiro)", papel: "barbeiro", profissionalId: pedro?.id ?? null });
   }
-  console.log("Usuarios demo prontos: dono@faith.com / dono123  e  barbeiro@faith.com / barb123");
+  if (!(await existe(db, "recepcao@faith.com"))) {
+    await criarUsuario(db, { email: "recepcao@faith.com", senha: "recep123", nome: "Recepcao", papel: "recepcionista", profissionalId: recep?.id ?? null });
+  }
+  console.log("Usuarios demo prontos: dono@faith.com/dono123 · recepcao@faith.com/recep123 · barbeiro@faith.com/barb123");
   process.exit(0);
 }
 

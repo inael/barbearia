@@ -24,25 +24,25 @@
 | OPS — `/health` | ops.md | 3 | 3 | — | liveness |
 | UXB — Responsivo + a11y | ux-base.md | 4 | 4 | — | só nas 2 telas atuais |
 | AGD — Duração/barbeiro (motor R1) | agenda-duracao.md | 9 | 9 | — | motor + persistência |
-| AGDUI — UI duração (R1) | agenda-duracao-ui.md | 7 | 7 | **órfã** | existe, sem link |
+| AGDUI — UI duração (R1) | agenda-duracao-ui.md | 7 | 7 | sim (SHELL) | existe, sem link |
 | BLQ — Bloqueio (motor R2) | agenda-bloqueio.md | 5 | 5 | — | motor + persistência |
-| BLQUI — UI bloqueio (R2) | agenda-bloqueio-ui.md | 6 | 6 | **órfã** | existe, sem link |
+| BLQUI — UI bloqueio (R2) | agenda-bloqueio-ui.md | 6 | 6 | sim (SHELL) | existe, sem link |
 | SLT — Slots (motor) | agenda-slots.md | 7 | 7 | — | motor |
-| GRD — Grade de horários livres | agenda-grade.md | 2 | 2 | **órfã** | só mostra livre, não agenda |
+| GRD — Grade de horários livres | agenda-grade.md | 2 | 2 | sim (SHELL) | só mostra livre, não agenda |
 | TV — Multi-tela (motor R3) | tv.md | 6 | 6 | — | motor |
-| TVUI — Admin de TVs | tv-ui.md | 6 | 6 | **órfã** | mídia por URL colada |
-| TVPLR — Player da TV | tv-player.md | 2 | 2 | **órfã** | existe, sem link |
-| AUTH — Auth/RBAC + login | auth.md | 19 | 19 | **órfã** | login funciona, sem link no menu |
-| **Subtotal A** | | **131** | **131** | | |
+| TVUI — Admin de TVs | tv-ui.md | 6 | 6 | sim (SHELL) | mídia por URL colada |
+| TVPLR — Player da TV | tv-player.md | 2 | 2 | sim (SHELL) | existe, sem link |
+| AUTH — Auth/RBAC + login | auth.md | 19 | 19 | sim | login + logout no menu (SHELL) |
+| SHELL — Navegação por papel | shell-navegacao.md | 6 | 6 | sim | **Fase 1** — matou as órfãs |
+| SVC — CRUD serviços/combos | catalogo-crud.md | 7 | 7 | sim | **Fase 1** (cadastro) |
+| PRO — CRUD profissionais | profissionais-crud.md | 6 | 6 | sim | **Fase 1** (dono) |
+| CLI — Cadastro de clientes | clientes-crud.md | 6 | 6 | sim | **Fase 1** (cadastro) |
+| USR — Gestão de usuários | usuarios-admin.md | 6 | 6 | sim | **Fase 1** (dono) |
+| **Subtotal A** | | **162** | **162** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
 |---------|---------|------|--------|------------|
-| SHELL — Navegação por papel + login no menu | shell-navegacao.md | 6 | Fundação | AUTH |
-| SVC — CRUD serviços/combos | catalogo-crud.md | 7 | Cadastros | AUTH |
-| PRO — CRUD profissionais | profissionais-crud.md | 6 | Cadastros | AUTH |
-| CLI — Cadastro de clientes | clientes-crud.md | 6 | Cadastros | AUTH |
-| USR — Gestão de usuários (dono) | usuarios-admin.md | 6 | Cadastros | AUTH |
 | HOR — Horário de funcionamento config | agenda-horarios.md | 5 | Agenda | — |
 | AGE — Agenda ao vivo (agendamentos) | agenda-agendamento.md | 9 | Agenda | CLI, SVC, PRO, R1/R2/ROD |
 | LEM — Lembretes ao cliente | lembretes.md | 5 | Agenda | AGE, WhatsApp |
@@ -59,17 +59,17 @@
 | PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
 | EST — Estoque | estoque.md | 6 | Operação | — |
 | TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
-| **Subtotal B** | | **123** | | |
+| **Subtotal B** | | **92** | | |
 
-**Total: 40 features · 254 ACs · 131 PASS / 123 PENDING.** (tlc-validate: OK.)
+**Total: 40 features · 254 ACs · 162 PASS / 92 PENDING.** (tlc-validate: OK.) **Fase 1 (SHELL + cadastros) concluída 2026-08-22** — unit 66, integration 53, e2e 47, todos verdes.
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
 
 ## EXIT_SIGNAL: false
 Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com teste verde nomeado E o produto for **navegável ponta a ponta** conforme `docs/context/AUDITORIA_REAL.md`. Hoje faltam **123 ACs (todo o Bloco B)**, incluindo:
-- [ ] Navegação por papel (fim das páginas órfãs) — SHELL
-- [ ] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR
+- [x] Navegação por papel (fim das páginas órfãs) — SHELL ✅ **Fase 1**
+- [x] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR ✅ **Fase 1**
 - [ ] Agenda ao vivo (agendar de verdade) — AGE/HOR/LEM
 - [ ] Caixa + pagamento (alimenta a comissão com dados reais) — CX/PAG/VAL/MET/NF
 - [ ] Painel do dono real — DASH; Notificações — NOT

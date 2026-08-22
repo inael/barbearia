@@ -6,17 +6,17 @@ Fonte: `docs/produto/REQUISITOS.md` RF2. Hoje o catálogo é **read-only** (vem 
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| SVC-001 | Criar serviço (nome/preço/duração) persiste e aparece na listagem | integration | lib/db/catalogo-crud.integration.test.ts | PENDING | — |
-| SVC-002 | Editar serviço (preço/duração/pontos/entraPote) atualiza no banco | integration | lib/db/catalogo-crud.integration.test.ts | PENDING | — |
-| SVC-003 | Remover/inativar serviço some da lista ativa (sem quebrar histórico) | integration | lib/db/catalogo-crud.integration.test.ts | PENDING | — |
-| SVC-004 | Validação: nome obrigatório, preço/duração > 0, slug único | integration | lib/db/catalogo-crud.integration.test.ts | PENDING | — |
-| SVC-005 | Criar/editar combo (itens inclusos, preço, duração) persiste | integration | lib/db/catalogo-crud.integration.test.ts | PENDING | — |
-| SVC-006 | RBAC: só dono/recepção (recurso `cadastro`) acessam a tela; barbeiro é bloqueado | e2e | e2e/catalogo-crud.spec.ts | PENDING | — |
-| SVC-007 | Dono cria um serviço pela UI e ele aparece no painel `/` | e2e | e2e/catalogo-crud.spec.ts | PENDING | — |
+| SVC-001 | Criar serviço (nome/preço/duração) persiste e aparece na listagem | integration | lib/db/catalogo-crud.integration.test.ts | PASS | verde (gate) |
+| SVC-002 | Editar serviço (preço/duração/pontos/entraPote) atualiza no banco | integration | lib/db/catalogo-crud.integration.test.ts | PASS | verde (gate) |
+| SVC-003 | Remover/inativar serviço some da lista ativa (sem quebrar histórico) | integration | lib/db/catalogo-crud.integration.test.ts | PASS | verde (gate) |
+| SVC-004 | Validação: nome obrigatório, preço/duração > 0, slug único | integration | lib/db/catalogo-crud.integration.test.ts | PASS | verde (gate) |
+| SVC-005 | Criar/editar combo (itens inclusos, preço, duração) persiste | integration | lib/db/catalogo-crud.integration.test.ts | PASS | verde (gate) |
+| SVC-006 | RBAC: só dono/recepção (recurso `cadastro`) acessam a tela; barbeiro é bloqueado | e2e | e2e/catalogo-crud.spec.ts | PASS | verde (gate) |
+| SVC-007 | Dono cria um serviço pela UI e ele aparece no painel `/` | e2e | e2e/catalogo-crud.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (CRUD serviço/combo + validação) → SVC-001..005 → integration (Postgres) → lib/db/catalogo-crud.integration.test.ts → PENDING
-REQUIREMENT (tela protegida + fluxo real) → SVC-006,007 → e2e → e2e/catalogo-crud.spec.ts → PENDING
+REQUIREMENT (CRUD serviço/combo + validação) → SVC-001..005 → integration (Postgres) → lib/db/catalogo-crud.integration.test.ts → PASS
+REQUIREMENT (tela protegida + fluxo real) → SVC-006,007 → e2e → e2e/catalogo-crud.spec.ts → PASS
 
 ## Gaps
 - Reaproveita o schema `servicos`/`combos` (já existe); adiciona `ativo` (soft-delete) se ainda não houver.

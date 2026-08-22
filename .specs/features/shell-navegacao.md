@@ -6,16 +6,16 @@ Fonte: `docs/context/AUDITORIA_REAL.md` (2026-08-22) + BRIEFING (papéis). Hoje 
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| SHELL-001 | Deslogado, o menu mostra "Entrar" (link p/ `/login`); logado, mostra nome/papel + "Sair" | e2e | e2e/shell.spec.ts | PENDING | — |
-| SHELL-002 | Dono logado vê no menu: Painel, Agenda, Caixa, Cadastros, Comissão, TVs (conforme RBAC) e chega em cada uma | e2e | e2e/shell.spec.ts | PENDING | — |
-| SHELL-003 | Recepcionista vê Agenda, Caixa, Cadastros; NÃO vê TVs/config | e2e | e2e/shell.spec.ts | PENDING | — |
-| SHELL-004 | Barbeiro vê "Minha agenda" (grade/duração/bloqueio) e "Meus números"; NÃO vê Caixa/Cadastros/TVs | e2e | e2e/shell.spec.ts | PENDING | — |
-| SHELL-005 | Varredura: toda rota protegida existente é alcançável por ≥1 link do menu conforme papel (0 páginas órfãs) | e2e | e2e/shell.spec.ts | PENDING | — |
-| SHELL-006 | Link ativo destacado + navegação por teclado sem violação axe serious/critical | e2e | e2e/shell.spec.ts | PENDING | — |
+| SHELL-001 | Deslogado, o menu mostra "Entrar" (link p/ `/login`); logado, mostra nome/papel + "Sair" | e2e | e2e/shell.spec.ts | PASS | verde (gate: e2e 47/47) |
+| SHELL-002 | Dono logado vê no menu: Painel, Agenda, Caixa, Cadastros, Comissão, TVs (conforme RBAC) e chega em cada uma | e2e | e2e/shell.spec.ts | PASS | verde (gate: e2e 47/47) |
+| SHELL-003 | Recepcionista vê Agenda, Caixa, Cadastros; NÃO vê TVs/config | e2e | e2e/shell.spec.ts | PASS | verde (gate: e2e 47/47) |
+| SHELL-004 | Barbeiro vê "Minha agenda" (grade/duração/bloqueio) e "Meus números"; NÃO vê Caixa/Cadastros/TVs | e2e | e2e/shell.spec.ts | PASS | verde (gate: e2e 47/47) |
+| SHELL-005 | Varredura: toda rota protegida existente é alcançável por ≥1 link do menu conforme papel (0 páginas órfãs) | e2e | e2e/shell.spec.ts | PASS | verde (gate: e2e 47/47) |
+| SHELL-006 | Link ativo destacado + navegação por teclado sem violação axe serious/critical | e2e | e2e/shell.spec.ts | PASS | verde (gate: e2e 47/47) |
 
 ## Test Coverage Matrix
-REQUIREMENT (menu por papel + login/logout) → SHELL-001..004 → e2e (browser + login) → e2e/shell.spec.ts → PENDING
-REQUIREMENT (nenhuma página órfã + a11y) → SHELL-005,006 → e2e → e2e/shell.spec.ts → PENDING
+REQUIREMENT (menu por papel + login/logout) → SHELL-001..004 → e2e (browser + login) → e2e/shell.spec.ts → PASS
+REQUIREMENT (nenhuma página órfã + a11y) → SHELL-005,006 → e2e → e2e/shell.spec.ts → PASS
 
 ## Gaps
 - Depende de AUTH (já feito) pra saber o papel na sessão.

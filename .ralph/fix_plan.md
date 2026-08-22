@@ -54,12 +54,12 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [x] Motores: Agenda R1/R2/slots + TV R3 + Comissão/Pote/Rodízio (testados).
 - [x] UIs R1/R2/grade/TV admin/player — **existem porém órfãs** (sem link; ver SHELL).
 
-### Fase 1 — Tornar navegável + Cadastros (base de tudo)
-- [ ] SHELL (shell-navegacao) navegação por papel + login/logout no menu; matar páginas órfãs.
-- [ ] SVC (catalogo-crud) CRUD de serviços/combos.
-- [ ] PRO (profissionais-crud) CRUD de profissionais.
-- [ ] CLI (clientes-crud) cadastro/reconhecimento de clientes.
-- [ ] USR (usuarios-admin) dono gerencia logins.
+### Fase 1 — Tornar navegável + Cadastros (base de tudo) ✅ CONCLUÍDA 2026-08-22
+- [x] SHELL (shell-navegacao) navegação por papel + login/logout no menu; matou as páginas órfãs. e2e 47/47.
+- [x] SVC (catalogo-crud) CRUD de serviços/combos. integration 5/5 + e2e.
+- [x] PRO (profissionais-crud) CRUD de profissionais (dono-only). integration 4/4 + e2e.
+- [x] CLI (clientes-crud) cadastro/reconhecimento de clientes por telefone; CPF válido. integration 5/5 + e2e.
+- [x] USR (usuarios-admin) dono gerencia logins (papel/senha/ativo). integration 4/4 + e2e.
 
 ### Fase 2 — Agenda ao vivo
 - [ ] HOR (agenda-horarios) horário de funcionamento configurável.
