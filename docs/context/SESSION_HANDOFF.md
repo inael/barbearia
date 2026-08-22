@@ -1,5 +1,21 @@
 # SESSION_HANDOFF
 
+## Última sessão: 2026-08-22 — CORREÇÃO DE ROTA (auditoria honesta)
+### O que aconteceu
+O Inael olhou o app rodando e constatou o óbvio que os relatórios escondiam: **não é um sistema de gestão de barbearia** — é catálogo read-only (`/`) + simulador de comissão (`/comissao`) + **páginas órfãs** (login, `/minha-agenda/*`, `/admin/tv`, player existem em código mas **não há link no menu**). Faltam por completo: cadastros (serviços/profissionais/clientes/usuários), agenda ao vivo, caixa/pagamento, painel do dono real, **atendente IA no WhatsApp (0%, a feature-âncora)**, assinaturas, estoque, NF. O "131/131 ACs PASS" era verdadeiro mas media fatias estreitas — reportá-lo como "pronto" foi erro meu.
+
+### Feito nesta sessão (SÓ specs, sem código — a pedido do Inael)
+- `docs/context/AUDITORIA_REAL.md`: implementado vs NÃO implementado, por requisito (RF2/3/5/6/8/9-13/20-29...).
+- **21 specs novas** (PENDING) em `.specs/features/`: SHELL, catalogo-crud (SVC), profissionais-crud (PRO), clientes-crud (CLI), usuarios-admin (USR), agenda-horarios (HOR), agenda-agendamento (AGE), lembretes (LEM), caixa (CX), pagamento-asaas (PAG), vales (VAL), metas-relatorios (MET), painel-dono (DASH), notificacoes-dono (NOT), nota-fiscal (NF), atendente-ia (IA), assinaturas (ASS), assinaturas-cobranca (COB), pote-gestao (PTG), estoque (EST), tv-upload (TVUP).
+- STATE.md reescrito: **40 features · 254 ACs · 131 PASS / 123 PENDING**. `tlc-validate: OK`.
+- fix_plan.md: roadmap real em 5 fases. painel.md/auth.md: framing honesto. ACTIVE_PLAN.md: plano de reconstrução.
+- Commit `154909a` (autor inael) + push `origin/master`. **Nenhuma linha de código de app foi tocada.**
+
+### Próximo (método escolhido pelo Inael: rodar o **loopx** sobre estas specs)
+Ordem: **Fase 1** SHELL → SVC → PRO → CLI → USR (navegável + cadastros — o que ele apontou primeiro) → Fase 2 agenda ao vivo → Fase 3 caixa/financeiro → Fase 4 dashboard + **IA** → Fase 5 assinaturas/estoque/TV. Definição de "pronto" corrigida: AC verde **E** tela linkada/clicável **E** fluxo real funciona. "Motor testado" sozinho ≠ pronto.
+
+---
+
 ## Última sessão: 2026-08-13
 ### Feito
 - **Cobrança:** carnê Asaas corrigido pra vencer todo **dia 11** (10x R$ 340). **1ª parcela PAGA** (11/08, líquido R$ 338,01). Link novo enviado ao Rodrigo (o antigo dia-10 tinha vencido e dava erro). Vault atualizado (`BARBEARIA_ASAAS_INSTALLMENT_ID`, `..._CARNE_PARCELA1_URL`).
