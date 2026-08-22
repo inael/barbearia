@@ -95,6 +95,15 @@ export const usuarios = pgTable("usuarios", {
   ativo: boolean("ativo").notNull().default(true),
 });
 
+/** Clientes da barbearia. Reconhecidos pelo telefone (normalizado). CPF só no fechamento (NF). */
+export const clientes = pgTable("clientes", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  telefone: text("telefone").notNull().unique(),
+  cpf: text("cpf").unique(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Servico = typeof servicos.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
@@ -103,3 +112,4 @@ export type BloqueioAgenda = typeof bloqueiosAgenda.$inferSelect;
 export type Tela = typeof telas.$inferSelect;
 export type ItemPlaylist = typeof itensPlaylist.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;
+export type Cliente = typeof clientes.$inferSelect;
