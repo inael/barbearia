@@ -44,8 +44,10 @@ export default async function globalSetup() {
   const db = drizzle(client, { schema });
   const [rodrigo] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Rodrigo"));
   const [pedro] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Pedro"));
+  const [recep] = await db.select().from(schema.profissionais).where(eq(schema.profissionais.nome, "Recepcao"));
   await criarUsuario(db, { email: "dono@faith.com", senha: "dono123", nome: "Rodrigo Dono", papel: "dono", profissionalId: rodrigo.id });
   await criarUsuario(db, { email: "barbeiro@faith.com", senha: "barb123", nome: "Barbeiro Teste", papel: "barbeiro", profissionalId: pedro.id });
+  await criarUsuario(db, { email: "recepcao@faith.com", senha: "recep123", nome: "Recepcao Teste", papel: "recepcionista", profissionalId: recep.id });
 
   // Tela + playlist para o e2e do player (velocidade 1s p/ testar o ciclo rápido).
   const telaId = await criarTela(db, "Player E2E", 1);
