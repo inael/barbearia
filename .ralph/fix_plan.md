@@ -62,7 +62,7 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [x] USR (usuarios-admin) dono gerencia logins (papel/senha/ativo). integration 4/4 + e2e.
 
 ### Fase 2 — Agenda ao vivo (EM ANDAMENTO)
-- [ ] HOR (agenda-horarios) horário de funcionamento configurável.
+- [x] HOR (agenda-horarios) horário de funcionamento configurável (por dia + feriados); grade respeita. unit 3/3 + integration 2/2 + e2e. Tela /cadastros/horarios (dono).
 - [x] AGE (agenda-agendamento) agendamentos reais: cria/cancela, ocupa slot (some da grade), rejeita conflito e bloqueio, rodízio. unit 3/3 + integration 5/5 + e2e 2/2. Tela /agenda (dono/recepção).
 - [ ] LEM (lembretes) lembretes/confirmação ao cliente.
 

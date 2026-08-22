@@ -84,6 +84,22 @@ export const itensPlaylist = pgTable(
   (t) => [uniqueIndex("uniq_tela_ordem").on(t.telaId, t.ordem)],
 );
 
+/** Horário de funcionamento por dia da semana (0=domingo..6=sábado). Minutos desde a meia-noite. */
+export const horariosFuncionamento = pgTable("horarios_funcionamento", {
+  id: serial("id").primaryKey(),
+  diaSemana: integer("dia_semana").notNull().unique(),
+  abreMin: integer("abre_min").notNull(),
+  fechaMin: integer("fecha_min").notNull(),
+  fechado: boolean("fechado").notNull().default(false),
+});
+
+/** Feriados (data ISO 'YYYY-MM-DD'): a barbearia fica fechada. */
+export const feriados = pgTable("feriados", {
+  id: serial("id").primaryKey(),
+  data: text("data").notNull().unique(),
+  descricao: text("descricao"),
+});
+
 /** Usuários do sistema (login). Papel = RBAC; profissionalId liga o barbeiro ao seu cadastro. */
 export const usuarios = pgTable("usuarios", {
   id: serial("id").primaryKey(),
@@ -132,3 +148,5 @@ export type ItemPlaylist = typeof itensPlaylist.$inferSelect;
 export type Usuario = typeof usuarios.$inferSelect;
 export type Cliente = typeof clientes.$inferSelect;
 export type Agendamento = typeof agendamentos.$inferSelect;
+export type HorarioFuncionamento = typeof horariosFuncionamento.$inferSelect;
+export type Feriado = typeof feriados.$inferSelect;

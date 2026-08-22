@@ -49,6 +49,10 @@ export default async function CadastrosHubPage() {
                 <h2 className="font-semibold">Usuários / logins</h2>
                 <p className="mt-1 text-sm text-neutral-600">Acessos ao sistema e papéis.</p>
               </Link>
+              <Link href="/cadastros/horarios" className={card}>
+                <h2 className="font-semibold">Horários de funcionamento</h2>
+                <p className="mt-1 text-sm text-neutral-600">Dias, abertura/fechamento e feriados.</p>
+              </Link>
             </>
           ) : null}
         </div>

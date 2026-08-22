@@ -2,12 +2,12 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarDuracoesEfetivas, slotsDoBarbeiro } from "@/lib/agenda";
+import { janelaDoDia, listarHorarios, listarFeriados } from "@/lib/horarios";
 
 export const dynamic = "force-dynamic";
 
-const ABERTURA = 9; // 09:00
-const FECHAMENTO = 19; // 19:00
 const PASSO_MIN = 30;
+const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 export default async function GradePage({
   searchParams,
@@ -47,11 +47,18 @@ export default async function GradePage({
   const dia = sp.dia && /^\d{4}-\d{2}-\d{2}$/.test(sp.dia) ? sp.dia : "";
 
   let slots: Date[] | null = null;
+  let fechadoNoDia = false;
   if (servicoId && dia) {
-    const inicio = new Date(`${dia}T${String(ABERTURA).padStart(2, "0")}:00:00`);
-    const fim = new Date(`${dia}T${String(FECHAMENTO).padStart(2, "0")}:00:00`);
-    if (!Number.isNaN(inicio.getTime())) {
-      slots = await slotsDoBarbeiro(db, pid, servicoId, inicio, fim, PASSO_MIN);
+    const [config, feriados] = await Promise.all([listarHorarios(db), listarFeriados(db)]);
+    const janela = janelaDoDia(config, feriados.map((f) => f.data), new Date(`${dia}T00:00:00`));
+    if (!janela) {
+      fechadoNoDia = true;
+    } else {
+      const inicio = new Date(`${dia}T${hhmm(janela.abreMin)}:00`);
+      const fim = new Date(`${dia}T${hhmm(janela.fechaMin)}:00`);
+      if (!Number.isNaN(inicio.getTime())) {
+        slots = await slotsDoBarbeiro(db, pid, servicoId, inicio, fim, PASSO_MIN);
+      }
     }
   }
   const fmtHora = (d: Date) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -61,7 +68,7 @@ export default async function GradePage({
       <div className="mx-auto max-w-2xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Minha grade</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Horários livres ({ABERTURA}h–{FECHAMENTO}h), já descontando a sua duração e os seus bloqueios.
+          Horários livres (dentro do horário de funcionamento), já descontando a sua duração, os bloqueios e os agendamentos.
         </p>
 
         <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
@@ -85,7 +92,9 @@ export default async function GradePage({
           </button>
         </form>
 
-        {slots ? (
+        {fechadoNoDia ? (
+          <p className="mt-8 text-sm text-neutral-600">Fechado nesse dia (feriado ou sem expediente).</p>
+        ) : slots ? (
           <div data-testid="slots" className="mt-8">
             {slots.length === 0 ? (
               <p className="text-sm text-neutral-600">Sem horários livres nesse dia.</p>
