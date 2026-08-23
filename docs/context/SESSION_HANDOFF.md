@@ -1,5 +1,25 @@
 # SESSION_HANDOFF
 
+## 2026-08-23 (tarde) — NO AR EM PRODUÇÃO + integrações ligadas
+
+**App deployado e funcionando:** http://179.198.113.115.sslip.io (VPS do Rodrigo, Coolify, build nixpacks). `/health` 200; home renderiza o catálogo real do banco de produção. DB `barbearia-db` (postgres:16) com schema + seed (19 serviços/6 combos/4 profissionais) + logins demo (dono@faith.com/dono123, recepcao@faith.com/recep123, barbeiro@faith.com/barb123). Env de prod (Coolify) configurada: DATABASE_URL, AUTH_SECRET (novo, no vault `BARBEARIA_PROD_AUTH_SECRET`), AUTH_TRUST_HOST, HUB_IA_*, ASAAS_* (sandbox), SIMPLESZAP_*.
+
+### Integrações — testadas de verdade
+- **IA (UseTokia/Hub)**: ✅ funciona. A key estava **bloqueada** no LiteLLM; desbloqueei via `/key/unblock`. Usar `litellm.toolpad.cloud` (NÃO api.usetokia.com) + modelo permitido `deepseek/deepseek-chat` (gpt-4o-mini negado). Código do cliente ajustado pro formato OpenAI.
+- **Asaas SANDBOX**: ✅ criei cliente + cobrança PIX real (`pay_...` PENDING). Env setada; fechar-com-PIX no caixa gera cobrança sandbox de verdade.
+- **WhatsApp (SimplesZap)**: código ajustado pro endpoint real (`/message/sendText/{instancia}`), key no env. ⚠️ **FALTA CONECTAR A INSTÂNCIA (QR)** — hoje não há instância conectada; sem isso não envia. Ação manual do Inael/Rodrigo no painel SimplesZap, depois setar `SIMPLESZAP_INSTANCE` no Coolify.
+
+### Pendências manuais (não-código)
+1. **Conectar instância SimplesZap** (QR no número da barbearia) → setar `SIMPLESZAP_INSTANCE` no Coolify e redeploy.
+2. **NFS-e do MEI do Rodrigo**: precisa CNPJ MEI + município + credencial NFS-e municipal (e idealmente conta/subconta Asaas dele). Hoje a NF é rascunho local. Ver "MEI" no relatório.
+3. **Asaas prod** (quando sair do sandbox) + registrar webhook `…/api/webhook/asaas` (token no vault `BARBEARIA_ASAAS_WEBHOOK_TOKEN`).
+4. **SEC-04**: a VPS expõe Postgres em 179.198.113.115:5432 (público) — fechar (bind interno) + SSH.
+5. **Cadastrar a URL no status.toolpad.cloud** (regra IT Booster). Domínio próprio (ex.: barbearia.itbooster/subdomínio do cliente) no lugar do sslip.io.
+6. **Scheduler/cron** pros lembretes dispararem.
+7. Trocar as senhas demo (dono/recepção/barbeiro) pelas reais do Rodrigo.
+
+---
+
 ## 2026-08-23 — PRODUTO COMPLETO (todas as features implementáveis): 262/262 ACs PASS
 
 Autorizado a rodar o loop até esgotar o que dá pra implementar sem credencial externa. **Feito.** `.specs`: **41 features · 262 ACs · 262 PASS / 0 PENDING** (`tlc-validate: OK`). Testes: **unit 104 · integration 97 · e2e 65 — todos verdes (retries:0)**. Tudo no `origin/master`.
