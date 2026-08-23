@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, asc, eq, gt, lte } from "drizzle-orm";
+import { and, asc, eq, gt, lte, ne } from "drizzle-orm";
 import * as schema from "./db/schema";
 
 /**
@@ -181,7 +181,7 @@ export async function slotsDoBarbeiro(
   const agendados = await db
     .select({ inicio: schema.agendamentos.inicio, fim: schema.agendamentos.fim })
     .from(schema.agendamentos)
-    .where(and(eq(schema.agendamentos.profissionalId, profissionalId), eq(schema.agendamentos.status, "agendado")));
+    .where(and(eq(schema.agendamentos.profissionalId, profissionalId), ne(schema.agendamentos.status, "cancelado")));
   const ocupados = [...bloqueios, ...agendados];
   return gerarSlots({ inicio, fim, duracaoMin, passoMin, ocupados });
 }

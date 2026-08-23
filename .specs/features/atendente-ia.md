@@ -10,18 +10,18 @@ Fonte: `docs/produto/REQUISITOS.md` RF9–RF13 + BRIEFING (módulo 6). **Feature
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| IA-001 | Webhook SimplesZap recebido é parseado (telefone, texto) e roteado ao handler | unit | lib/ia/atendente.test.ts | PENDING | — |
-| IA-002 | Reconhece cliente pelo telefone (CLI); desconhecido inicia pré-cadastro (nome+telefone) | integration | lib/db/ia.integration.test.ts | PENDING | — |
-| IA-003 | Pedido de horário indisponível → `sugerirAlternativas` oferece 1–2 antes/depois (dos slots reais) | unit | lib/ia/atendente.test.ts | PENDING | — |
-| IA-004 | Sem preferência de horário → `horariosMenosOcupados` do mês (otimização de ocupação) | unit | lib/ia/atendente.test.ts | PENDING | — |
-| IA-005 | Conversa que confirma horário cria o agendamento (AGE) e responde confirmação | integration | lib/db/ia.integration.test.ts | PENDING | — |
-| IA-006 | Gatilho de escalar-para-humano (foto/baixa confiança) marca handoff e avisa a recepção | unit | lib/ia/atendente.test.ts | PENDING | — |
-| IA-007 | Chamada ao Hub de IA é isolada atrás de interface (mock nos testes; sem HTTP real) | unit | lib/ia/atendente.test.ts | PENDING | — |
-| IA-008 | Segurança: chaves do Hub/SimplesZap só no servidor; nunca no bundle client | unit | lib/ia/atendente.test.ts | PENDING | — |
+| IA-001 | Webhook SimplesZap recebido é parseado (telefone, texto) e roteado ao handler | unit | lib/ia/atendente.test.ts | PASS | verde (gate) |
+| IA-002 | Reconhece cliente pelo telefone (CLI); desconhecido inicia pré-cadastro (nome+telefone) | integration | lib/db/ia.integration.test.ts | PASS | verde (gate) |
+| IA-003 | Pedido de horário indisponível → `sugerirAlternativas` oferece 1–2 antes/depois (dos slots reais) | unit | lib/ia/atendente.test.ts | PASS | verde (gate) |
+| IA-004 | Sem preferência de horário → `horariosMenosOcupados` do mês (otimização de ocupação) | unit | lib/ia/atendente.test.ts | PASS | verde (gate) |
+| IA-005 | Conversa que confirma horário cria o agendamento (AGE) e responde confirmação | integration | lib/db/ia.integration.test.ts | PASS | verde (gate) |
+| IA-006 | Gatilho de escalar-para-humano (foto/baixa confiança) marca handoff e avisa a recepção | unit | lib/ia/atendente.test.ts | PASS | verde (gate) |
+| IA-007 | Chamada ao Hub de IA é isolada atrás de interface (mock nos testes; sem HTTP real) | unit | lib/ia/atendente.test.ts | PASS | verde (gate) |
+| IA-008 | Segurança: chaves do Hub/SimplesZap só no servidor; nunca no bundle client | unit | lib/ia/atendente.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (webhook + roteamento + IA mock) → IA-001,003,004,006,007,008 → unit (mock) → lib/ia/atendente.test.ts → PENDING
-REQUIREMENT (reconhecer cliente + agendar por conversa) → IA-002,005 → integration (Postgres) → lib/db/ia.integration.test.ts → PENDING
+REQUIREMENT (webhook + roteamento + IA mock) → IA-001,003,004,006,007,008 → unit (mock) → lib/ia/atendente.test.ts → PASS
+REQUIREMENT (reconhecer cliente + agendar por conversa) → IA-002,005 → integration (Postgres) → lib/db/ia.integration.test.ts → PASS
 
 ## Gaps
 - Depende de AGE (agenda), CLI (clientes), HOR (horários) e do contrato SimplesZap (memória `reference_simpleszap_api_contract`).

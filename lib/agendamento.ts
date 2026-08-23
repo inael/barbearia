@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, asc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, eq, gte, lt, ne } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { resolverDuracao } from "./agenda";
 import { escolherBarbeiroRodizio } from "./rodizio";
@@ -67,7 +67,7 @@ export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<num
   const ativos = await db
     .select({ inicio: schema.agendamentos.inicio, fim: schema.agendamentos.fim })
     .from(schema.agendamentos)
-    .where(and(eq(schema.agendamentos.profissionalId, d.profissionalId), eq(schema.agendamentos.status, "agendado")));
+    .where(and(eq(schema.agendamentos.profissionalId, d.profissionalId), ne(schema.agendamentos.status, "cancelado")));
   if (haConflito(ativos.map((a) => ({ inicio: a.inicio.getTime(), fim: a.fim.getTime() })), novo)) {
     throw new Error("horario ocupado");
   }
@@ -100,7 +100,7 @@ export interface AgendamentoView {
 /** Agendamentos ativos com início em [de, ate) — opcionalmente de um profissional. Com nomes. */
 export async function listarAgendamentos(db: DB, de: Date, ate: Date, profissionalId?: number): Promise<AgendamentoView[]> {
   const conds = [
-    eq(schema.agendamentos.status, "agendado"),
+    ne(schema.agendamentos.status, "cancelado"),
     gte(schema.agendamentos.inicio, de),
     lt(schema.agendamentos.inicio, ate),
   ];

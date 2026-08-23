@@ -316,6 +316,12 @@ export const notificacoes = pgTable("notificacoes", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Gatilhos de lembrete ao cliente (minutos antes do agendamento). */
+export const lembreteConfig = pgTable("lembrete_config", {
+  id: serial("id").primaryKey(),
+  minutosAntes: integer("minutos_antes").notNull().unique(),
+});
+
 /** Config de quais eventos notificam o dono (default: ativo). */
 export const notificacaoConfig = pgTable("notificacao_config", {
   id: serial("id").primaryKey(),

@@ -64,7 +64,7 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 ### Fase 2 — Agenda ao vivo (EM ANDAMENTO)
 - [x] HOR (agenda-horarios) horário de funcionamento configurável (por dia + feriados); grade respeita. unit 3/3 + integration 2/2 + e2e. Tela /cadastros/horarios (dono).
 - [x] AGE (agenda-agendamento) agendamentos reais: cria/cancela, ocupa slot (some da grade), rejeita conflito e bloqueio, rodízio. unit 3/3 + integration 5/5 + e2e 2/2. Tela /agenda (dono/recepção).
-- [ ] LEM (lembretes) lembretes/confirmação ao cliente.
+- [x] LEM (lembretes) cálculo de disparos (1d/15min, sem passado) + config de gatilhos + confirmação (agendado→confirmado) + envio mock. unit 3/3 + integration 2/2. Scheduler/cron = go-live.
 
 ### Fase 3 — Caixa + Financeiro (alimenta o motor com dados reais) (EM ANDAMENTO)
 - [x] PRD (produtos-crud) catálogo de produtos de balcão (pré-requisito do caixa). integration 4/4 + e2e.
@@ -77,14 +77,14 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 ### Fase 4 — Gestão do dono + Âncora IA (EM ANDAMENTO)
 - [x] DASH (painel-dono) `/painel` (dono): faturamento hoje/30d, por profissional, ranking de itens, novos clientes, churn — tudo das vendas do caixa. unit 1/1 + integration 3/3 + e2e 2/2.
 - [x] NOT (notificacoes-dono) canal "chefe": config de eventos, detecção de anomalia, envio via sender (contrato SimplesZap, mock), tela /notificacoes. unit 3/3 + integration 2/2 + e2e. Envio real = SMOKE-REAL.
-- [ ] **IA (atendente-ia) atendente no WhatsApp — feature-âncora, 0% hoje.**
+- [x] **IA (atendente-ia) ÂNCORA:** webhook parse, reconhecer/pré-cadastrar cliente, agendar por conversa (cria AGE), sugerir alternativas, horários menos ocupados, escalar p/ humano, Hub de IA isolado (mock). unit 6/6 + integration 2/2 + rota /api/webhook/whatsapp. Hub+SimplesZap reais = SMOKE-REAL.
 
 ### Fase 5 — Assinaturas + Estoque + TV upload
 - [x] ASS (assinaturas) planos Flex/Premium, desconto por tipo, reconhece por telefone, atraso bloqueia agenda. unit 2/2 + integration 3/3 + e2e. /assinaturas.
 - [x] COB (assinaturas-cobranca) recorrência cartão + PIX fallback (mock) + fila de espera com aprovação do dono + webhook status. unit 2/2 + integration 3/3 + e2e. Credencial real = go-live.
 - [x] PTG (pote-gestao) pontos de serviços de assinantes → divisão real do pote (40% da receita). integration 3/3 + e2e. /pote (dono total, barbeiro fatia).
 - [x] EST (estoque) cadastro + entrada/saída (não deixa negativo) + contagem 2x/dia + pedido de compra que notifica o dono. unit 1/1 + integration 4/4 + e2e. /estoque.
-- [ ] TVUP (tv-upload) upload real de mídia.
+- [x] TVUP (tv-upload) validação de mídia + upload → playlist → player; /admin/tv com input de arquivo. unit 1/1 + integration 1/1 + e2e. Bucket do cliente (S3/R2) = go-live (dev/e2e usa data URL).
 
 ### Dependem do Inael (não são código)
 - [ ] SMOKE-REAL WhatsApp (SimplesZap/Evolution) + IA (Hub) + Asaas com credencial real.

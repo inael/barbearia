@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarTelas, criarTela, adicionarItem, removerItem, listarItens } from "@/lib/tv";
+import { uploadMidia, getStorageClient } from "@/lib/tv-upload";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/admin/tv";
@@ -39,6 +40,21 @@ async function excluirItem(formData: FormData) {
   const itemId = Number(formData.get("itemId"));
   if (!Number.isInteger(itemId)) return;
   await removerItem(getDb(), itemId);
+  revalidatePath(ROTA);
+}
+
+async function enviarMidia(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const telaId = Number(formData.get("telaId"));
+  const arquivo = formData.get("arquivo");
+  if (!Number.isInteger(telaId) || !(arquivo instanceof File) || arquivo.size === 0) return;
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  try {
+    await uploadMidia(getDb(), getStorageClient(), telaId, { nome: arquivo.name, tipo: arquivo.type, tamanho: arquivo.size, bytes });
+  } catch {
+    /* mídia inválida: ignora */
+  }
   revalidatePath(ROTA);
 }
 
@@ -116,6 +132,16 @@ export default async function AdminTvPage() {
                   </label>
                   <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900">
                     Adicionar
+                  </button>
+                </form>
+                <form action={enviarMidia} className="mt-2 flex items-end gap-2">
+                  <input type="hidden" name="telaId" value={t.id} />
+                  <label className="flex flex-col gap-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                    Enviar mídia (imagem/vídeo)
+                    <input name="arquivo" type="file" accept="image/*,video/*" aria-label={`Upload para ${t.nome}`} data-testid={`tv-upload-${t.id}`} className="text-xs" />
+                  </label>
+                  <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900">
+                    Enviar mídia
                   </button>
                 </form>
               </section>
