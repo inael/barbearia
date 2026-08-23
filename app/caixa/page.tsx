@@ -19,6 +19,7 @@ import {
   totalComanda,
   totalVendas,
 } from "@/lib/caixa";
+import { emitirNota } from "@/lib/nf";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/caixa";
@@ -80,7 +81,15 @@ async function fechar(formData: FormData) {
   } catch (e) {
     redirect(`${ROTA}?comanda=${comandaId}&erro=${encodeURIComponent(e instanceof Error ? e.message : "erro")}`);
   }
-  redirect(`${ROTA}?fechada=1`);
+  // Emite a NF automaticamente se o cliente tiver CPF (emissão fiscal real = go-live).
+  let nf = false;
+  try {
+    await emitirNota(getDb(), comandaId);
+    nf = true;
+  } catch {
+    /* sem CPF / já emitida: segue sem NF */
+  }
+  redirect(`${ROTA}?fechada=1${nf ? "&nf=1" : ""}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -90,7 +99,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CaixaPage({ searchParams }: { searchParams: Promise<{ comanda?: string; fechada?: string; erro?: string }> }) {
+export default async function CaixaPage({ searchParams }: { searchParams: Promise<{ comanda?: string; fechada?: string; erro?: string; nf?: string }> }) {
   const session = await auth();
   const papel = session?.user?.papel;
   const sp = await searchParams;
@@ -137,7 +146,9 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
         </div>
 
         {sp.fechada ? (
-          <p className="mt-4 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">Conta fechada.</p>
+          <p className="mt-4 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+            Conta fechada.{sp.nf ? " Nota fiscal emitida." : ""}
+          </p>
         ) : null}
         {sp.erro ? (
           <p role="alert" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Não foi possível fechar: {sp.erro}.</p>

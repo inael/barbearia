@@ -72,11 +72,11 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] PAG (pagamento-asaas) cobrança cartão/PIX no fechamento.
 - [x] VAL (vales) vales com 30% desconto, por tipo (produto-cliente x retirado). unit 2/2 + integration 2/2 + e2e. /vales.
 - [x] MET (metas-relatorios) meta semanal + relatório (faturamento/comissão/vales/batido) do caixa. unit 2/2 + integration 3/3 + e2e. /metas.
-- [ ] NF (nota-fiscal) NF no fechamento + envio WhatsApp.
+- [x] NF (nota-fiscal) monta/valida (CPF)/registra a nota (idempotente por comanda) + envio WhatsApp (mock); emite no fechamento do caixa. unit 3/3 + integration 1/1 + e2e. Emissor NFS-e real = go-live.
 
 ### Fase 4 — Gestão do dono + Âncora IA (EM ANDAMENTO)
 - [x] DASH (painel-dono) `/painel` (dono): faturamento hoje/30d, por profissional, ranking de itens, novos clientes, churn — tudo das vendas do caixa. unit 1/1 + integration 3/3 + e2e 2/2.
-- [ ] NOT (notificacoes-dono) canal "chefe".
+- [x] NOT (notificacoes-dono) canal "chefe": config de eventos, detecção de anomalia, envio via sender (contrato SimplesZap, mock), tela /notificacoes. unit 3/3 + integration 2/2 + e2e. Envio real = SMOKE-REAL.
 - [ ] **IA (atendente-ia) atendente no WhatsApp — feature-âncora, 0% hoje.**
 
 ### Fase 5 — Assinaturas + Estoque + TV upload

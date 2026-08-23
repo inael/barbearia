@@ -46,23 +46,23 @@
 | VAL — Vales | vales.md | 5 | 5 | sim | **Fase 3** — 30% off, por tipo |
 | MET — Metas + relatórios | metas-relatorios.md | 5 | 5 | sim | **Fase 3** — meta semanal + batido real |
 | EST — Estoque | estoque.md | 6 | 6 | sim | **Fase 5** — mov./contagem/pedido+notifica |
-| **Subtotal A** | | **211** | **211** | | |
+| NOT — Notificações ao dono | notificacoes-dono.md | 6 | 6 | sim | **Fase 4** — canal "chefe" + anomalia |
+| NF — Nota fiscal | nota-fiscal.md | 5 | 5 | sim | **Fase 3** — emite no fechamento (c/ CPF) |
+| **Subtotal A** | | **222** | **222** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
 |---------|---------|------|--------|------------|
 | LEM — Lembretes ao cliente | lembretes.md | 5 | Agenda | AGE, WhatsApp |
 | PAG — Pagamento Asaas | pagamento-asaas.md | 5 | Financeiro | CX |
-| NOT — Notificações ao dono | notificacoes-dono.md | 5 | Gestão | EST, WhatsApp |
-| NF — Nota fiscal | nota-fiscal.md | 4 | Financeiro | CX, CLI |
 | IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | **Âncora** | AGE, CLI, HOR |
 | ASS — Assinaturas (planos/regras) | assinaturas.md | 6 | Assinaturas | CLI, AGE |
 | COB — Cobrança recorrente + fila | assinaturas-cobranca.md | 6 | Assinaturas | ASS, PAG |
 | PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
 | TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
-| **Subtotal B** | | **49** | | |
+| **Subtotal B** | | **40** | | |
 
-**Total: 41 features · 260 ACs · 211 PASS / 49 PENDING.** (tlc-validate: OK.) **Fases 1–4 + VAL/MET/EST — 2026-08-23** — unit 80, integration 79, e2e 59, todos verdes. Fluxo completo: **caixa → vendas reais → comissão (CX-004), painel do dono (DASH), metas/relatórios (MET) e vales (VAL); estoque (EST) com pedido que notifica o dono.**
+**Total: 41 features · 262 ACs · 222 PASS / 40 PENDING.** (tlc-validate: OK.) **Fases 1–5 quase completas — 2026-08-23** — unit 86, integration 82, e2e 61, todos verdes (retries:0). Operação inteira: cadastros → agenda → caixa → comissão/metas/vales → painel do dono → estoque/notificações → nota fiscal no fechamento. **Restam só features que dependem de credencial externa (IA/WhatsApp, Asaas, storage) ou go-live.**
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
@@ -74,7 +74,7 @@ Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com t
 - [~] Agenda ao vivo — AGE + HOR ✅ **Fase 2** (agendar de verdade + horários/feriados na grade); falta LEM (lembretes)
 - [~] Caixa — **CX + PRD + VAL + MET ✅ Fase 3** (comanda, fechar conta, comissão real, vales, metas/relatórios); falta PAG (Asaas)/NF
 - [x] Estoque — **EST ✅ Fase 5** (entrada/saída, contagem, pedido de compra que notifica o dono)
-- [~] Painel do dono real — **DASH ✅ Fase 4** (faturamento/ranking/churn do caixa); falta Notificações — NOT
+- [x] Painel do dono real — **DASH ✅** (faturamento/ranking/churn) + **NOT ✅** (notificações ao dono, anomalia)
 - [ ] **Atendente IA no WhatsApp (feature-âncora, 0% hoje)** — IA
 - [ ] Assinaturas + cobrança + pote real — ASS/COB/PTG
 - [ ] Estoque — EST; TV com upload — TVUP

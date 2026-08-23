@@ -1,11 +1,14 @@
 import { test, expect, type Page } from "@playwright/test";
 
 async function login(page: Page, email: string, senha: string) {
+  await page.context().clearCookies(); // estado limpo: evita sessão residual no re-login
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(senha);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/conta/);
+  const papel = email.startsWith("dono") ? "Dono" : email.startsWith("recepcao") ? "Recepção" : "Barbeiro";
+  await expect(page.getByTestId("nav-usuario")).toContainText(papel);
 }
 
 test.describe("VAL — vales (e2e)", () => {

@@ -119,6 +119,18 @@ export const comandaItens = pgTable("comanda_itens", {
   valorCentavos: integer("valor_centavos").notNull(),
 });
 
+/** Nota fiscal emitida no fechamento (rascunho local; emissão real na prefeitura é go-live). */
+export const notasFiscais = pgTable("notas_fiscais", {
+  id: serial("id").primaryKey(),
+  comandaId: integer("comanda_id")
+    .notNull()
+    .unique()
+    .references(() => comandas.id, { onDelete: "cascade" }),
+  cpf: text("cpf").notNull(),
+  valorCentavos: integer("valor_centavos").notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** Horário de funcionamento por dia da semana (0=domingo..6=sábado). Minutos desde a meia-noite. */
 export const horariosFuncionamento = pgTable("horarios_funcionamento", {
   id: serial("id").primaryKey(),
@@ -252,6 +264,13 @@ export const notificacoes = pgTable("notificacoes", {
   mensagem: text("mensagem").notNull(),
   lida: boolean("lida").notNull().default(false),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Config de quais eventos notificam o dono (default: ativo). */
+export const notificacaoConfig = pgTable("notificacao_config", {
+  id: serial("id").primaryKey(),
+  evento: text("evento").notNull().unique(),
+  ativo: boolean("ativo").notNull().default(true),
 });
 
 export type Servico = typeof servicos.$inferSelect;

@@ -1,6 +1,7 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { desc, eq } from "drizzle-orm";
 import * as schema from "./db/schema";
+import type { WhatsAppSender } from "./whatsapp";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -29,4 +30,44 @@ export async function listarNotificacoes(db: DB, apenasNaoLidas = false): Promis
 
 export async function marcarLida(db: DB, id: number): Promise<void> {
   await db.update(schema.notificacoes).set({ lida: true }).where(eq(schema.notificacoes.id, id));
+}
+
+// ---- Config de eventos + envio ao dono (canal "chefe") ----
+
+/** Um evento notifica o dono? Default true quando não há config. */
+export async function eventoAtivo(db: DB, evento: string): Promise<boolean> {
+  const [c] = await db.select().from(schema.notificacaoConfig).where(eq(schema.notificacaoConfig.evento, evento));
+  return c ? c.ativo : true;
+}
+
+/** Liga/desliga a notificação de um evento. */
+export async function definirConfig(db: DB, evento: string, ativo: boolean): Promise<void> {
+  await db
+    .insert(schema.notificacaoConfig)
+    .values({ evento, ativo })
+    .onConflictDoUpdate({ target: schema.notificacaoConfig.evento, set: { ativo } });
+}
+
+/**
+ * Notifica o dono se o evento estiver ativo: grava a notificação in-app E envia
+ * WhatsApp pelo `sender` (mock nos testes, no-op sem credencial). Retorna se enviou.
+ */
+export async function notificarDono(db: DB, sender: WhatsAppSender, telefoneDono: string, evento: string, mensagem: string): Promise<boolean> {
+  if (!(await eventoAtivo(db, evento))) return false;
+  await criarNotificacao(db, evento, mensagem);
+  await sender.enviarTexto(telefoneDono, mensagem);
+  return true;
+}
+
+/** Verifica consumo/compra fora do padrão e, se for anomalia, notifica o dono. */
+export async function verificarAnomaliaConsumo(
+  db: DB,
+  sender: WhatsAppSender,
+  telefoneDono: string,
+  nomeProduto: string,
+  historico: number[],
+  atual: number,
+): Promise<boolean> {
+  if (!ehAnomalia(historico, atual)) return false;
+  return notificarDono(db, sender, telefoneDono, "anomalia_consumo", `Consumo fora do padrão em ${nomeProduto}: ${atual} (histórico ~${Math.round(historico.reduce((a, b) => a + b, 0) / historico.length)})`);
 }
