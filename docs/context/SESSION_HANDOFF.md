@@ -1,5 +1,24 @@
 # SESSION_HANDOFF
 
+## 2026-08-23 — PRODUTO COMPLETO (todas as features implementáveis): 262/262 ACs PASS
+
+Autorizado a rodar o loop até esgotar o que dá pra implementar sem credencial externa. **Feito.** `.specs`: **41 features · 262 ACs · 262 PASS / 0 PENDING** (`tlc-validate: OK`). Testes: **unit 104 · integration 97 · e2e 65 — todos verdes (retries:0)**. Tudo no `origin/master`.
+
+### Cobertura funcional (o produto inteiro)
+Cadastros (serviços/combos/produtos/profissionais/clientes/usuários/horários) · Agenda ao vivo (agendamento, duração por barbeiro, bloqueio, rodízio, horários/feriados) · **Caixa** (comanda, fechar conta, **comissão real por profissional**) · Vales · Metas/relatórios · Painel do dono (faturamento/ranking/churn) · Notificações ao dono (anomalia) · Nota fiscal no fechamento · Pagamento Asaas (cobrança+webhook) · Assinaturas (planos/desconto; atraso bloqueia agenda) · Cobrança recorrente + fila com aprovação do dono · Pote real (pontos de assinante → divisão) · Estoque (mov./contagem/pedido) · Lembretes · **Atendente IA no WhatsApp (âncora)** · TV com upload de mídia.
+
+### O que falta é EXECUÇÃO, não código — depende do Inael (go-live/credenciais):
+As integrações externas estão **prontas atrás de interface e testadas com mock**; ligam com credencial/config:
+1. **WhatsApp (SimplesZap)** — `SIMPLESZAP_URL` + `SIMPLESZAP_TOKEN` (lembretes, notificações, IA).
+2. **Hub de IA** — `HUB_IA_URL` + `HUB_IA_KEY` (atendente responde de verdade).
+3. **Asaas** — `ASAAS_URL` (`https://api.asaas.com/v3`) + `ASAAS_API_KEY` + `ASAAS_WEBHOOK_TOKEN` (cobrança PIX/recorrente).
+4. **Storage do cliente** (S3/Supabase/R2) — bucket + chaves (mídia da TV; hoje dev/e2e usa data URL).
+5. **Emissor NFS-e** do município do Rodrigo (a NF hoje registra o rascunho local).
+6. **Scheduler/cron** pros lembretes dispararem no horário (a lógica de quando está pronta).
+7. **Deploy VPS/Coolify** — `AUTH_SECRET`, banco, `/health` no status.toolpad.cloud; **SEC-04** (fechar Postgres 5432 público + SSH root) antes do 1º deploy.
+
+---
+
 ## Sessão autônoma 2026-08-22 (loop) — CONSTRUÍDO DE VERDADE (Fase 1 + 2 + 3 + DASH)
 
 Autorizado pelo Inael a rodar o loop e tomar decisões. Construído com o harness (spec → TDD → gate → **linkado/clicável** → commit). **11 features novas, todas verdes e no `origin/master`.** Estado final: **41 features · 260 ACs · 195 PASS / 65 PENDING**; unit 75, integration 70, e2e 56 — todos passando; typecheck/lint limpos. **Loop operacional completo: cadastro → agenda → caixa → comissão real → painel do dono.**
