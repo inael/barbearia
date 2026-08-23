@@ -173,8 +173,94 @@ export const agendamentos = pgTable("agendamentos", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Vales que o barbeiro pega com 30% de desconto. tipo: produto_cliente | retirado_barbeiro. */
+export const vales = pgTable("vales", {
+  id: serial("id").primaryKey(),
+  profissionalId: integer("profissional_id")
+    .notNull()
+    .references(() => profissionais.id, { onDelete: "restrict" }),
+  tipo: text("tipo").notNull(),
+  descricao: text("descricao").notNull(),
+  precoCentavos: integer("preco_centavos").notNull(),
+  valorCentavos: integer("valor_centavos").notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Metas (semanais) por profissional. realizado = faturamento em [inicio, fim). */
+export const metas = pgTable(
+  "metas",
+  {
+    id: serial("id").primaryKey(),
+    profissionalId: integer("profissional_id")
+      .notNull()
+      .references(() => profissionais.id, { onDelete: "cascade" }),
+    inicio: timestamp("inicio", { withTimezone: true }).notNull(),
+    fim: timestamp("fim", { withTimezone: true }).notNull(),
+    alvoCentavos: integer("alvo_centavos").notNull(),
+  },
+  (t) => [uniqueIndex("uniq_meta_prof_inicio").on(t.profissionalId, t.inicio)],
+);
+
+/** Estoque: produto controlado (com saldo). */
+export const produtosEstoque = pgTable("produtos_estoque", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull().unique(),
+  unidade: text("unidade").notNull().default("un"),
+  saldo: integer("saldo").notNull().default(0),
+  ativo: boolean("ativo").notNull().default(true),
+});
+
+/** Movimento de estoque: entrada | saida. */
+export const movimentosEstoque = pgTable("movimentos_estoque", {
+  id: serial("id").primaryKey(),
+  produtoEstoqueId: integer("produto_estoque_id")
+    .notNull()
+    .references(() => produtosEstoque.id, { onDelete: "cascade" }),
+  tipo: text("tipo").notNull(),
+  quantidade: integer("quantidade").notNull(),
+  motivo: text("motivo"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Contagem diária (manha|noite) com divergência vs saldo esperado. */
+export const contagensEstoque = pgTable("contagens_estoque", {
+  id: serial("id").primaryKey(),
+  produtoEstoqueId: integer("produto_estoque_id")
+    .notNull()
+    .references(() => produtosEstoque.id, { onDelete: "cascade" }),
+  periodo: text("periodo").notNull(),
+  contado: integer("contado").notNull(),
+  saldoEsperado: integer("saldo_esperado").notNull(),
+  divergencia: integer("divergencia").notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Pedido de compra (dispara notificação ao dono). */
+export const pedidosCompra = pgTable("pedidos_compra", {
+  id: serial("id").primaryKey(),
+  produtoEstoqueId: integer("produto_estoque_id")
+    .notNull()
+    .references(() => produtosEstoque.id, { onDelete: "cascade" }),
+  quantidade: integer("quantidade").notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Notificações ao dono (canal "chefe"): pedido de produto, anomalia de consumo, etc. */
+export const notificacoes = pgTable("notificacoes", {
+  id: serial("id").primaryKey(),
+  evento: text("evento").notNull(),
+  mensagem: text("mensagem").notNull(),
+  lida: boolean("lida").notNull().default(false),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Servico = typeof servicos.$inferSelect;
 export type Produto = typeof produtos.$inferSelect;
+export type Notificacao = typeof notificacoes.$inferSelect;
+export type Vale = typeof vales.$inferSelect;
+export type Meta = typeof metas.$inferSelect;
+export type ProdutoEstoque = typeof produtosEstoque.$inferSelect;
+export type MovimentoEstoque = typeof movimentosEstoque.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;

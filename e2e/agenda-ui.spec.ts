@@ -20,6 +20,8 @@ test.describe("AGDUI — barbeiro edita a propria minutagem (e2e)", () => {
     await expect(page.getByRole("heading", { name: "Minha minutagem" })).toBeVisible();
     await page.getByTestId("dur-corte").fill("47");
     await page.locator('tr[data-slug="corte"]').getByRole("button", { name: "Salvar" }).click();
+    // espera o server action concluir: a linha passa a mostrar o botão "Padrão" (override setado)
+    await expect(page.locator('tr[data-slug="corte"]').getByRole("button", { name: "Padrão" })).toBeVisible();
     // recarrega e confirma que persistiu no banco
     await page.goto("/minha-agenda/duracoes");
     await expect(page.getByTestId("dur-corte")).toHaveValue("47");

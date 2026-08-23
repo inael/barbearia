@@ -70,8 +70,8 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [x] PRD (produtos-crud) catálogo de produtos de balcão (pré-requisito do caixa). integration 4/4 + e2e.
 - [x] CX (caixa) comanda + lançar serviço/combo/produto + fechar conta; **comissaoDoPeriodo alimenta o motor COM com vendas reais por profissional**. unit 2/2 + integration 3/3 (CX-004 = R$91,75) + e2e 2/2. Tela /caixa.
 - [ ] PAG (pagamento-asaas) cobrança cartão/PIX no fechamento.
-- [ ] VAL (vales) vales com desconto.
-- [ ] MET (metas-relatorios) metas + relatório por profissional.
+- [x] VAL (vales) vales com 30% desconto, por tipo (produto-cliente x retirado). unit 2/2 + integration 2/2 + e2e. /vales.
+- [x] MET (metas-relatorios) meta semanal + relatório (faturamento/comissão/vales/batido) do caixa. unit 2/2 + integration 3/3 + e2e. /metas.
 - [ ] NF (nota-fiscal) NF no fechamento + envio WhatsApp.
 
 ### Fase 4 — Gestão do dono + Âncora IA (EM ANDAMENTO)
@@ -83,7 +83,7 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] ASS (assinaturas) planos/regras/descontos.
 - [ ] COB (assinaturas-cobranca) recorrência cartão + fila de espera.
 - [ ] PTG (pote-gestao) pote real ligado a dados.
-- [ ] EST (estoque) entrada/saída/contagem/pedidos.
+- [x] EST (estoque) cadastro + entrada/saída (não deixa negativo) + contagem 2x/dia + pedido de compra que notifica o dono. unit 1/1 + integration 4/4 + e2e. /estoque.
 - [ ] TVUP (tv-upload) upload real de mídia.
 
 ### Dependem do Inael (não são código)
