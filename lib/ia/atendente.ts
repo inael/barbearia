@@ -50,17 +50,32 @@ export interface IAClient {
   responder(prompt: string): Promise<string>;
 }
 
-/** Resolve o cliente de IA do ambiente (server-only). Sem chave → null (nunca hardcoded). */
+/**
+ * Resolve o cliente de IA do ambiente (server-only). Hub = gateway OpenAI-compatible
+ * (LiteLLM/UseTokia): POST {url}/v1/chat/completions. Sem chave → null (nunca hardcoded).
+ */
 export function getIAClient(): IAClient | null {
   const url = process.env.HUB_IA_URL;
   const key = process.env.HUB_IA_KEY;
+  const model = process.env.HUB_IA_MODEL ?? "deepseek/deepseek-chat";
   if (!url || !key) return null;
   return {
     async responder(prompt: string) {
-      const r = await fetch(url, { method: "POST", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const r = await fetch(`${url.replace(/\/$/, "")}/v1/chat/completions`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          model,
+          max_tokens: 300,
+          messages: [
+            { role: "system", content: "Você é o atendente da Faith Barbearia. Tom formal, mas simpático. Respostas curtas e objetivas em pt-BR." },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
       if (!r.ok) throw new Error(`Hub de IA falhou: ${r.status}`);
-      const j = (await r.json()) as { texto?: string; reply?: string };
-      return j.texto ?? j.reply ?? "";
+      const j = (await r.json()) as { choices?: { message?: { content?: string } }[] };
+      return j?.choices?.[0]?.message?.content ?? "";
     },
   };
 }

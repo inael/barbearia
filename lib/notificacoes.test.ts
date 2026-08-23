@@ -15,19 +15,19 @@ describe("NOT — notificações (puro)", () => {
     expect(ehAnomalia([5, 6, 5, 6], 6)).toBe(false); // não dispara
   });
 
-  it("NOT-005 SimplesZapSender posta em /sendText com Bearer (mock, sem HTTP real)", async () => {
+  it("NOT-005 SimplesZapSender posta em /message/sendText/{instancia} com Bearer (mock)", async () => {
     const calls: { url: string; opts: RequestInit }[] = [];
     const fetchMock = vi.fn(async (url: string, opts: RequestInit) => {
       calls.push({ url, opts });
       return { ok: true, status: 200 } as Response;
     });
     vi.stubGlobal("fetch", fetchMock);
-    const sender = new SimplesZapSender("http://zap.local", "tok123");
+    const sender = new SimplesZapSender("https://back.simpleszap.com/api", "tok123", "inst-1");
     await sender.enviarTexto("5561999990000", "oi");
     expect(fetchMock).toHaveBeenCalledOnce();
-    expect(calls[0].url).toBe("http://zap.local/sendText");
+    expect(calls[0].url).toBe("https://back.simpleszap.com/api/message/sendText/inst-1");
     expect((calls[0].opts.headers as Record<string, string>).authorization).toBe("Bearer tok123");
-    expect(JSON.parse(String(calls[0].opts.body))).toEqual({ telefone: "5561999990000", texto: "oi" });
+    expect(JSON.parse(String(calls[0].opts.body))).toEqual({ number: "5561999990000", text: "oi" });
     vi.unstubAllGlobals();
   });
 });
