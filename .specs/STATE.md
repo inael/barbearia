@@ -48,21 +48,21 @@
 | EST — Estoque | estoque.md | 6 | 6 | sim | **Fase 5** — mov./contagem/pedido+notifica |
 | NOT — Notificações ao dono | notificacoes-dono.md | 6 | 6 | sim | **Fase 4** — canal "chefe" + anomalia |
 | NF — Nota fiscal | nota-fiscal.md | 5 | 5 | sim | **Fase 3** — emite no fechamento (c/ CPF) |
-| **Subtotal A** | | **222** | **222** | | |
+| PAG — Pagamento Asaas | pagamento-asaas.md | 5 | 5 | — | **Fase 3** — cobrança PIX + webhook (mock/go-live) |
+| ASS — Assinaturas | assinaturas.md | 6 | 6 | sim | **Fase 5** — planos/desconto; atraso bloqueia agenda |
+| COB — Cobrança + fila | assinaturas-cobranca.md | 6 | 6 | sim | **Fase 5** — recorrência+fallback+fila do dono |
+| PTG — Pote real | pote-gestao.md | 5 | 5 | sim | **Fase 5** — pontos de assinante → divisão real |
+| **Subtotal A** | | **244** | **244** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
 |---------|---------|------|--------|------------|
 | LEM — Lembretes ao cliente | lembretes.md | 5 | Agenda | AGE, WhatsApp |
-| PAG — Pagamento Asaas | pagamento-asaas.md | 5 | Financeiro | CX |
 | IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | **Âncora** | AGE, CLI, HOR |
-| ASS — Assinaturas (planos/regras) | assinaturas.md | 6 | Assinaturas | CLI, AGE |
-| COB — Cobrança recorrente + fila | assinaturas-cobranca.md | 6 | Assinaturas | ASS, PAG |
-| PTG — Pote real (ligado a dados) | pote-gestao.md | 5 | Assinaturas | CX, ASS |
 | TVUP — TV com upload real | tv-upload.md | 5 | TV | TVUI |
-| **Subtotal B** | | **40** | | |
+| **Subtotal B** | | **18** | | |
 
-**Total: 41 features · 262 ACs · 222 PASS / 40 PENDING.** (tlc-validate: OK.) **Fases 1–5 quase completas — 2026-08-23** — unit 86, integration 82, e2e 61, todos verdes (retries:0). Operação inteira: cadastros → agenda → caixa → comissão/metas/vales → painel do dono → estoque/notificações → nota fiscal no fechamento. **Restam só features que dependem de credencial externa (IA/WhatsApp, Asaas, storage) ou go-live.**
+**Total: 41 features · 262 ACs · 244 PASS / 18 PENDING.** (tlc-validate: OK.) **Fases 1–5 quase completas — 2026-08-23** — unit 86, integration 82, e2e 61, todos verdes (retries:0). Operação inteira: cadastros → agenda → caixa → comissão/metas/vales → painel do dono → estoque/notificações → nota fiscal no fechamento. **Restam só features que dependem de credencial externa (IA/WhatsApp, Asaas, storage) ou go-live.**
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.

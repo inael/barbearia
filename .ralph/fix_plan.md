@@ -69,7 +69,7 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 ### Fase 3 — Caixa + Financeiro (alimenta o motor com dados reais) (EM ANDAMENTO)
 - [x] PRD (produtos-crud) catálogo de produtos de balcão (pré-requisito do caixa). integration 4/4 + e2e.
 - [x] CX (caixa) comanda + lançar serviço/combo/produto + fechar conta; **comissaoDoPeriodo alimenta o motor COM com vendas reais por profissional**. unit 2/2 + integration 3/3 (CX-004 = R$91,75) + e2e 2/2. Tela /caixa.
-- [ ] PAG (pagamento-asaas) cobrança cartão/PIX no fechamento.
+- [x] PAG (pagamento-asaas) cobrança PIX no fechamento (best-effort) + webhook confirma; contrato PROD (User-Agent, /v3). unit 4/4 + integration 1/1. Credencial real = go-live.
 - [x] VAL (vales) vales com 30% desconto, por tipo (produto-cliente x retirado). unit 2/2 + integration 2/2 + e2e. /vales.
 - [x] MET (metas-relatorios) meta semanal + relatório (faturamento/comissão/vales/batido) do caixa. unit 2/2 + integration 3/3 + e2e. /metas.
 - [x] NF (nota-fiscal) monta/valida (CPF)/registra a nota (idempotente por comanda) + envio WhatsApp (mock); emite no fechamento do caixa. unit 3/3 + integration 1/1 + e2e. Emissor NFS-e real = go-live.
@@ -80,9 +80,9 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 - [ ] **IA (atendente-ia) atendente no WhatsApp — feature-âncora, 0% hoje.**
 
 ### Fase 5 — Assinaturas + Estoque + TV upload
-- [ ] ASS (assinaturas) planos/regras/descontos.
-- [ ] COB (assinaturas-cobranca) recorrência cartão + fila de espera.
-- [ ] PTG (pote-gestao) pote real ligado a dados.
+- [x] ASS (assinaturas) planos Flex/Premium, desconto por tipo, reconhece por telefone, atraso bloqueia agenda. unit 2/2 + integration 3/3 + e2e. /assinaturas.
+- [x] COB (assinaturas-cobranca) recorrência cartão + PIX fallback (mock) + fila de espera com aprovação do dono + webhook status. unit 2/2 + integration 3/3 + e2e. Credencial real = go-live.
+- [x] PTG (pote-gestao) pontos de serviços de assinantes → divisão real do pote (40% da receita). integration 3/3 + e2e. /pote (dono total, barbeiro fatia).
 - [x] EST (estoque) cadastro + entrada/saída (não deixa negativo) + contagem 2x/dia + pedido de compra que notifica o dono. unit 1/1 + integration 4/4 + e2e. /estoque.
 - [ ] TVUP (tv-upload) upload real de mídia.
 

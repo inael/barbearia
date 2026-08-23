@@ -6,15 +6,15 @@ Fonte: `docs/produto/REQUISITOS.md` RF29 + BRIEFING (módulo 9). O **motor** do 
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| PTG-001 | Serviço de assinatura fechado no caixa acumula os pontos do barbeiro (por `pontosPote`) | integration | lib/db/pote-gestao.integration.test.ts | PENDING | — |
-| PTG-002 | Total do pote do período = receita de assinaturas paga (fonte real, não digitada) | integration | lib/db/pote-gestao.integration.test.ts | PENDING | — |
-| PTG-003 | Divisão do pote usa `dividirPote` (motor) com os pontos reais acumulados | integration | lib/db/pote-gestao.integration.test.ts | PENDING | — |
-| PTG-004 | Relatório de assinatura separado: serviços por barbeiro + total do pote | e2e | e2e/pote-gestao.spec.ts | PENDING | — |
-| PTG-005 | RBAC: dono vê o pote completo; barbeiro vê a própria fatia | e2e | e2e/pote-gestao.spec.ts | PENDING | — |
+| PTG-001 | Serviço de assinatura fechado no caixa acumula os pontos do barbeiro (por `pontosPote`) | integration | lib/db/pote-gestao.integration.test.ts | PASS | verde (gate) |
+| PTG-002 | Total do pote do período = receita de assinaturas paga (fonte real, não digitada) | integration | lib/db/pote-gestao.integration.test.ts | PASS | verde (gate) |
+| PTG-003 | Divisão do pote usa `dividirPote` (motor) com os pontos reais acumulados | integration | lib/db/pote-gestao.integration.test.ts | PASS | verde (gate) |
+| PTG-004 | Relatório de assinatura separado: serviços por barbeiro + total do pote | e2e | e2e/pote-gestao.spec.ts | PASS | verde (gate) |
+| PTG-005 | RBAC: dono vê o pote completo; barbeiro vê a própria fatia | e2e | e2e/pote-gestao.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (acúmulo + divisão com dados reais) → PTG-001..003 → integration (Postgres) → lib/db/pote-gestao.integration.test.ts → PENDING
-REQUIREMENT (relatório separado + RBAC) → PTG-004,005 → e2e → e2e/pote-gestao.spec.ts → PENDING
+REQUIREMENT (acúmulo + divisão com dados reais) → PTG-001..003 → integration (Postgres) → lib/db/pote-gestao.integration.test.ts → PASS
+REQUIREMENT (relatório separado + RBAC) → PTG-004,005 → e2e → e2e/pote-gestao.spec.ts → PASS
 
 ## Gaps
 - Reaproveita `lib/pote.ts` (não reescrever a matemática, já validada por POTE-*). Depende de CX (vendas), ASS (assinaturas) e PRO.

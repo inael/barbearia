@@ -39,6 +39,12 @@ export default async function NavBar() {
           {papel && podeAcessar(papel, "config") ? (
             <Link href="/notificacoes" className={linkCls}>Avisos</Link>
           ) : null}
+          {papel && (podeAcessar(papel, "config") || podeAcessar(papel, "caixa")) ? (
+            <Link href="/assinaturas" className={linkCls}>Assinaturas</Link>
+          ) : null}
+          {papel && (podeAcessar(papel, "config") || podeAcessar(papel, "comissao")) ? (
+            <Link href="/pote" className={linkCls}>Pote</Link>
+          ) : null}
           {papel && podeAcessar(papel, "agenda_propria") ? (
             <Link href="/minha-agenda" className={linkCls}>Minha agenda</Link>
           ) : null}

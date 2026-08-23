@@ -20,6 +20,7 @@ import {
   totalVendas,
 } from "@/lib/caixa";
 import { emitirNota } from "@/lib/nf";
+import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/caixa";
@@ -76,10 +77,20 @@ async function fechar(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
   const comandaId = Number(formData.get("comandaId"));
+  const forma = String(formData.get("formaPagamento") || "");
   try {
-    await fecharComanda(getDb(), comandaId, String(formData.get("formaPagamento") || ""), new Date());
+    await fecharComanda(getDb(), comandaId, forma, new Date());
   } catch (e) {
     redirect(`${ROTA}?comanda=${comandaId}&erro=${encodeURIComponent(e instanceof Error ? e.message : "erro")}`);
+  }
+  // PAG: cobrança Asaas best-effort no PIX (sem credencial, registra "pendente"; nunca trava).
+  if (forma === "pix") {
+    try {
+      const total = totalComanda(await listarItens(getDb(), comandaId));
+      await cobrarComanda(getDb(), getAsaasClient(), comandaId, total, `Comanda #${comandaId}`, new Date().toISOString().slice(0, 10));
+    } catch {
+      /* best-effort */
+    }
   }
   // Emite a NF automaticamente se o cliente tiver CPF (emissão fiscal real = go-live).
   let nf = false;

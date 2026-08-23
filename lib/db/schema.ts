@@ -119,6 +119,56 @@ export const comandaItens = pgTable("comanda_itens", {
   valorCentavos: integer("valor_centavos").notNull(),
 });
 
+/** Planos de assinatura (Flex/Premium): desconto e dias contratados. */
+export const planos = pgTable("planos", {
+  id: serial("id").primaryKey(),
+  nome: text("nome").notNull(),
+  tipo: text("tipo").notNull(),
+  precoCentavos: integer("preco_centavos").notNull(),
+  descontoServicoPct: integer("desconto_servico_pct").notNull().default(0),
+  descontoProdutoPct: integer("desconto_produto_pct").notNull().default(0),
+  dias: text("dias").notNull().default(""),
+  ativo: boolean("ativo").notNull().default(true),
+});
+
+/** Assinatura de um cliente. status: ativa|atraso|cancelada. */
+export const assinaturas = pgTable("assinaturas", {
+  id: serial("id").primaryKey(),
+  clienteId: integer("cliente_id")
+    .notNull()
+    .references(() => clientes.id, { onDelete: "cascade" }),
+  planoId: integer("plano_id")
+    .notNull()
+    .references(() => planos.id, { onDelete: "restrict" }),
+  status: text("status").notNull().default("ativa"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Fila de espera de assinatura: cliente pede, dono aprova. status: aguardando|aprovado|rejeitado. */
+export const filaAssinatura = pgTable("fila_assinatura", {
+  id: serial("id").primaryKey(),
+  clienteId: integer("cliente_id")
+    .notNull()
+    .references(() => clientes.id, { onDelete: "cascade" }),
+  planoId: integer("plano_id")
+    .notNull()
+    .references(() => planos.id, { onDelete: "restrict" }),
+  status: text("status").notNull().default("aguardando"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Cobrança (Asaas) de uma comanda. status: pendente|confirmado|falha. */
+export const pagamentos = pgTable("pagamentos", {
+  id: serial("id").primaryKey(),
+  comandaId: integer("comanda_id")
+    .notNull()
+    .references(() => comandas.id, { onDelete: "cascade" }),
+  asaasId: text("asaas_id").unique(),
+  status: text("status").notNull().default("pendente"),
+  valorCentavos: integer("valor_centavos").notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** Nota fiscal emitida no fechamento (rascunho local; emissão real na prefeitura é go-live). */
 export const notasFiscais = pgTable("notas_fiscais", {
   id: serial("id").primaryKey(),
@@ -280,6 +330,8 @@ export type Vale = typeof vales.$inferSelect;
 export type Meta = typeof metas.$inferSelect;
 export type ProdutoEstoque = typeof produtosEstoque.$inferSelect;
 export type MovimentoEstoque = typeof movimentosEstoque.$inferSelect;
+export type Plano = typeof planos.$inferSelect;
+export type Assinatura = typeof assinaturas.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;

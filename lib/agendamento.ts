@@ -3,6 +3,7 @@ import { and, asc, eq, gte, lt } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { resolverDuracao } from "./agenda";
 import { escolherBarbeiroRodizio } from "./rodizio";
+import { assinaturaEmAtraso } from "./assinaturas";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -47,6 +48,7 @@ export interface DadosAgendamento {
  */
 export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<number> {
   if (Number.isNaN(d.inicio.getTime())) throw new Error("data invalida");
+  if (await assinaturaEmAtraso(db, d.clienteId)) throw new Error("assinatura em atraso: regularize para agendar");
   const dur = await resolverDuracao(db, d.profissionalId, d.servicoId);
   if (dur == null) throw new Error("servico inexistente");
   const inicioMs = d.inicio.getTime();
