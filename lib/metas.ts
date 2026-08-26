@@ -61,7 +61,7 @@ export async function relatorioProfissional(db: DB, profissionalId: number, de: 
     faturamentoCentavos,
     servicosCentavos: Math.round(servicosReais * 100),
     produtosCentavos: Math.round(c.produtos * 100),
-    valesCentavos: vales.produto_cliente + vales.retirado_barbeiro,
+    valesCentavos: vales.produto_cliente + vales.retirado_barbeiro + vales.servico_barbeiro,
     comissaoTotalReais: c.comissaoTotal,
     alvoCentavos: meta?.alvoCentavos ?? null,
     batido: meta ? metaBatida(faturamentoCentavos, meta.alvoCentavos) : null,

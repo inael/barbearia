@@ -4,13 +4,21 @@ import * as schema from "./db/schema";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
-/** Faturamento total (centavos) das vendas (comandas fechadas) em [de, ate). */
+/** Faturamento total (centavos) das vendas (comandas fechadas) em [de, ate).
+ * Só itens `normal` — cortesia e serviço-do-barbeiro não são dinheiro que entrou (CRT). */
 export async function faturamentoTotal(db: DB, de: Date, ate: Date): Promise<number> {
   const [row] = await db
     .select({ total: sql<number>`coalesce(sum(${schema.comandaItens.valorCentavos}), 0)` })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
-    .where(and(eq(schema.comandas.status, "fechada"), gte(schema.comandas.fechadaEm, de), lt(schema.comandas.fechadaEm, ate)));
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+        eq(schema.comandaItens.lancamento, "normal"),
+      ),
+    );
   return Number(row?.total ?? 0);
 }
 
@@ -31,7 +39,14 @@ export async function faturamentoPorProfissional(db: DB, de: Date, ate: Date): P
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
     .innerJoin(schema.profissionais, eq(schema.profissionais.id, schema.comandaItens.profissionalId))
-    .where(and(eq(schema.comandas.status, "fechada"), gte(schema.comandas.fechadaEm, de), lt(schema.comandas.fechadaEm, ate)))
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+        eq(schema.comandaItens.lancamento, "normal"),
+      ),
+    )
     .groupBy(schema.comandaItens.profissionalId, schema.profissionais.nome)
     .orderBy(desc(sql`sum(${schema.comandaItens.valorCentavos})`));
   return rows.map((r) => ({ profissionalId: r.profissionalId, nome: r.nome, totalCentavos: Number(r.total) }));
@@ -55,7 +70,14 @@ export async function rankingItens(db: DB, de: Date, ate: Date): Promise<Ranking
     })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
-    .where(and(eq(schema.comandas.status, "fechada"), gte(schema.comandas.fechadaEm, de), lt(schema.comandas.fechadaEm, ate)))
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+        eq(schema.comandaItens.lancamento, "normal"),
+      ),
+    )
     .groupBy(schema.comandaItens.descricao, schema.comandaItens.tipo)
     .orderBy(desc(sql`sum(${schema.comandaItens.valorCentavos})`));
   return rows.map((r) => ({ descricao: r.descricao, tipo: r.tipo, qtd: Number(r.qtd), totalCentavos: Number(r.total) }));

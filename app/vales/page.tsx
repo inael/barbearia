@@ -9,7 +9,11 @@ export const dynamic = "force-dynamic";
 const ROTA = "/vales";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const reaisParaCentavos = (v: string) => Math.round(parseFloat(String(v).replace(",", ".")) * 100);
-const tipoLabel: Record<string, string> = { produto_cliente: "Produto p/ cliente", retirado_barbeiro: "Retirado pelo barbeiro" };
+const tipoLabel: Record<string, string> = {
+  produto_cliente: "Produto p/ cliente",
+  retirado_barbeiro: "Retirado pelo barbeiro",
+  servico_barbeiro: "Serviço do barbeiro (caixa)",
+};
 
 async function podeLancarVale() {
   const session = await auth();

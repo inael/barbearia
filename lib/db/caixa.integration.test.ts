@@ -16,7 +16,10 @@ import {
   fecharComanda,
   totalVendas,
   comissaoDoPeriodo,
+  cortesiasDoPeriodo,
 } from "../caixa";
+import { totalValesPorTipo } from "../vales";
+import { faturamentoTotal } from "../dashboard";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -99,5 +102,70 @@ describe("CX — caixa (integration)", () => {
     // total de vendas do dia (centavos) reflete a comanda fechada
     const total = await totalVendas(db, de, ate);
     expect(total).toBe(6000 + 5000 + 14000 + 3500);
+  });
+
+  it("CRT-003 cortesia paga a comissão do valor CHEIO ao barbeiro, sem inflar os buckets de venda", async () => {
+    const id = await criarComanda(db, null);
+    await adicionarServico(db, id, corteId, pedroId); // normal 60
+    await adicionarServico(db, id, corteId, pedroId, "cortesia"); // cortesia 60
+    await fecharComanda(db, id, "dinheiro", new Date("2026-09-20T15:00:00Z"));
+
+    const de = new Date("2026-09-20T00:00:00Z");
+    const ate = new Date("2026-09-21T00:00:00Z");
+    const c = await comissaoDoPeriodo(db, pedroId, de, ate);
+    expect(c.avulsos).toBe(60); // bucket de venda só tem o item cobrado
+    expect(c.cortesias).toBe(60); // valor cheio da cortesia, separado
+    expect(c.comissaoCortesias).toBe(24); // 60 * 40%
+    expect(c.comissaoTotal).toBe(48); // 24 (venda) + 24 (cortesia)
+
+    // itens listam o lançamento (UI mostra badge e R$0)
+    const itens = await listarItens(db, id);
+    expect(itens.map((i) => i.lancamento)).toEqual(["normal", "cortesia"]);
+  });
+
+  it("CRT-004 serviço-do-barbeiro não gera comissão e vira VALE (parte da barbearia) no fechamento", async () => {
+    const id = await criarComanda(db, null);
+    await adicionarServico(db, id, corteId, pedroId); // normal 60
+    await adicionarServico(db, id, detoxId, pedroId, "servico_barbeiro"); // dividido 50 → vale 80% = 40
+    await fecharComanda(db, id, "dinheiro", new Date("2026-09-21T15:00:00Z"));
+
+    const de = new Date("2026-09-21T00:00:00Z");
+    const ate = new Date("2026-09-22T00:00:00Z");
+    const c = await comissaoDoPeriodo(db, pedroId, de, ate);
+    expect(c.avulsos).toBe(60);
+    expect(c.divididos).toBe(0); // serviço-do-barbeiro fora dos buckets
+    expect(c.cortesias).toBe(0);
+    expect(c.comissaoTotal).toBe(24); // só o item cobrado
+
+    // vale registrado no fechamento: preço 5000, parte da barbearia 4000 (80%)
+    const vales = await totalValesPorTipo(db, pedroId, de, ate);
+    expect(vales.servico_barbeiro).toBe(4000);
+    const [vale] = await db.select().from(schema.vales).where(eq(schema.vales.tipo, "servico_barbeiro"));
+    expect(vale.precoCentavos).toBe(5000);
+    expect(vale.valorCentavos).toBe(4000);
+    expect(vale.profissionalId).toBe(pedroId);
+    expect(vale.descricao).toMatch(/detox/i);
+
+    // produto não aceita servico_barbeiro (retirada de produto usa o fluxo VAL)
+    const outra = await criarComanda(db, null);
+    await expect(adicionarProduto(db, outra, produtoId, pedroId, "servico_barbeiro")).rejects.toThrow(/lançamento/i);
+    await expect(adicionarServico(db, outra, corteId, pedroId, "gratis")).rejects.toThrow(/lançamento/i);
+  });
+
+  it("CRT-005 cortesia/serviço-do-barbeiro ficam fora do faturamento; custo de cortesias é reportado", async () => {
+    const de20 = new Date("2026-09-20T00:00:00Z");
+    const ate20 = new Date("2026-09-21T00:00:00Z");
+    // dia 20 (CRT-003): vendeu 60 normal + 60 cortesia → faturou só 60
+    expect(await totalVendas(db, de20, ate20)).toBe(6000);
+    expect(await faturamentoTotal(db, de20, ate20)).toBe(6000);
+    const cort = await cortesiasDoPeriodo(db, de20, ate20);
+    expect(cort.valorCentavos).toBe(6000); // concedido
+    expect(cort.comissaoCentavos).toBe(2400); // 40% a pagar ao barbeiro
+
+    // dia 21 (CRT-004): 60 normal + 50 serviço-do-barbeiro → faturou só 60, sem cortesia
+    const de21 = new Date("2026-09-21T00:00:00Z");
+    const ate21 = new Date("2026-09-22T00:00:00Z");
+    expect(await totalVendas(db, de21, ate21)).toBe(6000);
+    expect((await cortesiasDoPeriodo(db, de21, ate21)).valorCentavos).toBe(0);
   });
 });

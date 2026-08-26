@@ -9,6 +9,7 @@ import {
   ultimaVisitaPorCliente,
   clientesEmChurn,
 } from "@/lib/dashboard";
+import { cortesiasDoPeriodo } from "@/lib/caixa";
 
 export const dynamic = "force-dynamic";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -38,13 +39,14 @@ export default async function PainelDonoPage() {
   const amanha = new Date(hojeInicio.getTime() + 24 * 60 * 60 * 1000);
   const ha30 = new Date(hojeInicio.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [fatHoje, fat30, porProf, ranking, novos, visitas] = await Promise.all([
+  const [fatHoje, fat30, porProf, ranking, novos, visitas, cortesias] = await Promise.all([
     faturamentoTotal(db, hojeInicio, amanha),
     faturamentoTotal(db, ha30, amanha),
     faturamentoPorProfissional(db, ha30, amanha),
     rankingItens(db, ha30, amanha),
     novosClientes(db, ha30, amanha),
     ultimaVisitaPorCliente(db),
+    cortesiasDoPeriodo(db, ha30, amanha),
   ]);
   const churn = clientesEmChurn(visitas, agora, JANELA_CHURN);
 
@@ -70,6 +72,15 @@ export default async function PainelDonoPage() {
           <div className={card}>
             <div className="text-2xl font-bold">{churn.length}</div>
             <div className="mt-1 text-xs text-neutral-600">Clientes sumidos ({JANELA_CHURN}d+)</div>
+          </div>
+        </section>
+
+        <section className="mt-4">
+          <div className={card} data-testid="custo-cortesias">
+            <div className="text-sm font-semibold">Cortesias (30d)</div>
+            <div className="mt-1 text-sm text-neutral-600">
+              {brl(cortesias.valorCentavos)} concedidos · comissão a pagar {brl(cortesias.comissaoCentavos)}
+            </div>
           </div>
         </section>
 

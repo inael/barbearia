@@ -72,6 +72,33 @@ export function valeProdutoBarbeiro(precoProduto: number): number {
 }
 
 /**
+ * Fração da comissão "natural" de um item da comanda (CRT):
+ * serviço avulso usa a faixa do barbeiro, combo é 40% fixo, serviço dividido
+ * paga 20% ao barbeiro, produto usa a faixa de produto.
+ */
+export function fracaoComissaoItem(
+  tipo: "servico" | "combo" | "produto",
+  slug: string | null,
+  faixaServico: FaixaServico = 0.4,
+  faixaProduto: FaixaProduto = 0.05,
+): number {
+  if (tipo === "produto") return faixaProduto;
+  if (tipo === "combo") return 0.4;
+  if (slug && isServicoDividido(slug)) return 0.2;
+  return faixaServico;
+}
+
+/**
+ * Vale do serviço consumido pelo próprio barbeiro (CRT/R-SVCB), em centavos:
+ * a parte da BARBEARIA = preço − comissão natural na faixa base
+ * (avulso/combo → vale de 60%; dividido → 80%). A parte do barbeiro é o desconto dele.
+ */
+export function valeServicoBarbeiroCentavos(valorCentavos: number, tipo: "servico" | "combo", slug: string | null): number {
+  const fracao = fracaoComissaoItem(tipo, slug);
+  return valorCentavos - Math.round(valorCentavos * fracao);
+}
+
+/**
  * Comissão da recepcionista por hidratações de cabelo no mês.
  * R$ 5 por hidratação; acima de 10 no mês, R$ 10 por cada.
  */

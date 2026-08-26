@@ -8,6 +8,8 @@ import {
   isServicoDividido,
   valeProdutoBarbeiro,
   comissaoHidratacaoRecepcionista,
+  fracaoComissaoItem,
+  valeServicoBarbeiroCentavos,
 } from "./comissao";
 
 describe("faixaComissaoServico (escalonada pelo mes anterior)", () => {
@@ -63,6 +65,29 @@ describe("vale de produto do barbeiro (30% de desconto)", () => {
   it("o barbeiro paga 70% do preco", () => {
     expect(valeProdutoBarbeiro(50)).toBe(35);
     expect(valeProdutoBarbeiro(100)).toBe(70);
+  });
+});
+
+describe("CRT — comissao natural por item e vale do servico do barbeiro", () => {
+  it("CRT-002 fracao natural: avulso pela faixa, combo 40% fixo, dividido 20%, produto pela faixa de produto", () => {
+    expect(fracaoComissaoItem("servico", "corte")).toBe(0.4);
+    expect(fracaoComissaoItem("servico", "corte", 0.5)).toBe(0.5); // avulso escala com a faixa
+    expect(fracaoComissaoItem("servico", null)).toBe(0.4);
+    expect(fracaoComissaoItem("combo", "ouro")).toBe(0.4);
+    expect(fracaoComissaoItem("combo", "ouro", 0.5)).toBe(0.4); // combo NAO escala
+    expect(fracaoComissaoItem("servico", "limpeza_detox")).toBe(0.2);
+    expect(fracaoComissaoItem("servico", "acidificacao", 0.5)).toBe(0.2); // dividido fixo
+    expect(fracaoComissaoItem("produto", "pomada")).toBe(0.05);
+    expect(fracaoComissaoItem("produto", "pomada", 0.4, 0.1)).toBe(0.1);
+  });
+
+  it("CRT-002 vale do servico-do-barbeiro = preco - comissao natural (60% avulso/combo, 80% dividido)", () => {
+    expect(valeServicoBarbeiroCentavos(6000, "servico", "corte")).toBe(3600); // 60% de 60
+    expect(valeServicoBarbeiroCentavos(14000, "combo", "ouro")).toBe(8400); // 60% de 140
+    expect(valeServicoBarbeiroCentavos(5000, "servico", "limpeza_detox")).toBe(4000); // 80% de 50
+    expect(valeServicoBarbeiroCentavos(0, "servico", "corte")).toBe(0);
+    // arredondamento em centavos: 3333 - round(3333*0.4=1333.2) = 2000
+    expect(valeServicoBarbeiroCentavos(3333, "servico", "corte")).toBe(2000);
   });
 });
 

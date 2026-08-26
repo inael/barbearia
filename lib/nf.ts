@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { cpfValido } from "./clientes";
 import type { WhatsAppSender } from "./whatsapp";
@@ -35,10 +35,12 @@ export async function emitirNota(db: DB, comandaId: number): Promise<number> {
   if (!c.clienteId) throw new Error("comanda sem cliente (CPF necessário para nota)");
   const [cli] = await db.select().from(schema.clientes).where(eq(schema.clientes.id, c.clienteId));
   if (!cli) throw new Error("cliente inexistente");
+  // CRT: a nota fatura só o que foi COBRADO — cortesia e serviço-do-barbeiro ficam fora.
   const itens = await db
     .select({ descricao: schema.comandaItens.descricao, valorCentavos: schema.comandaItens.valorCentavos })
     .from(schema.comandaItens)
-    .where(eq(schema.comandaItens.comandaId, comandaId));
+    .where(and(eq(schema.comandaItens.comandaId, comandaId), eq(schema.comandaItens.lancamento, "normal")));
+  if (itens.length === 0) throw new Error("comanda sem itens faturáveis (só cortesia/serviço do barbeiro)");
   const nota = montarNota(itens, cli.nome, cli.cpf);
   const [row] = await db
     .insert(schema.notasFiscais)

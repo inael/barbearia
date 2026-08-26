@@ -103,7 +103,8 @@ export const comandas = pgTable("comandas", {
   fechadaEm: timestamp("fechada_em", { withTimezone: true }),
 });
 
-/** Item de uma comanda. tipo: servico|combo|produto. slug do serviço p/ detectar dividido. */
+/** Item de uma comanda. tipo: servico|combo|produto. slug do serviço p/ detectar dividido.
+ * lancamento: normal|cortesia|servico_barbeiro (CRT — cortesia e serviço do barbeiro). */
 export const comandaItens = pgTable("comanda_itens", {
   id: serial("id").primaryKey(),
   comandaId: integer("comanda_id")
@@ -117,6 +118,7 @@ export const comandaItens = pgTable("comanda_itens", {
     .references(() => profissionais.id, { onDelete: "restrict" }),
   descricao: text("descricao").notNull(),
   valorCentavos: integer("valor_centavos").notNull(),
+  lancamento: text("lancamento").notNull().default("normal"),
 });
 
 /** Planos de assinatura (Flex/Premium): desconto e dias contratados. */

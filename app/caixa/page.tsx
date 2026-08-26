@@ -44,7 +44,7 @@ async function addServico(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
   const comandaId = Number(formData.get("comandaId"));
-  await adicionarServico(getDb(), comandaId, Number(formData.get("servicoId")), Number(formData.get("profissionalId")));
+  await adicionarServico(getDb(), comandaId, Number(formData.get("servicoId")), Number(formData.get("profissionalId")), String(formData.get("lancamento") || "normal"));
   revalidatePath(ROTA);
   redirect(`${ROTA}?comanda=${comandaId}`);
 }
@@ -53,7 +53,7 @@ async function addCombo(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
   const comandaId = Number(formData.get("comandaId"));
-  await adicionarCombo(getDb(), comandaId, Number(formData.get("comboId")), Number(formData.get("profissionalId")));
+  await adicionarCombo(getDb(), comandaId, Number(formData.get("comboId")), Number(formData.get("profissionalId")), String(formData.get("lancamento") || "normal"));
   redirect(`${ROTA}?comanda=${comandaId}`);
 }
 
@@ -61,7 +61,7 @@ async function addProduto(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
   const comandaId = Number(formData.get("comandaId"));
-  await adicionarProduto(getDb(), comandaId, Number(formData.get("produtoId")), Number(formData.get("profissionalId")));
+  await adicionarProduto(getDb(), comandaId, Number(formData.get("produtoId")), Number(formData.get("profissionalId")), String(formData.get("lancamento") || "normal"));
   redirect(`${ROTA}?comanda=${comandaId}`);
 }
 
@@ -177,8 +177,16 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                 <li key={i.id} className="flex items-center gap-3 text-sm">
                   <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">{i.tipo}</span>
                   <span>{i.descricao}</span>
+                  {i.lancamento === "cortesia" ? (
+                    <span data-testid="badge-cortesia" className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">cortesia</span>
+                  ) : null}
+                  {i.lancamento === "servico_barbeiro" ? (
+                    <span data-testid="badge-barbeiro" className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">do barbeiro</span>
+                  ) : null}
                   <span className="text-neutral-500">({i.profissionalNome})</span>
-                  <span className="ml-auto">{brl(i.valorCentavos)}</span>
+                  <span className="ml-auto">
+                    {i.lancamento === "normal" ? brl(i.valorCentavos) : <><s className="text-neutral-400">{brl(i.valorCentavos)}</s> {brl(0)}</>}
+                  </span>
                   <form action={remover}>
                     <input type="hidden" name="comandaId" value={comandaAberta.id} />
                     <input type="hidden" name="itemId" value={i.id} />
@@ -194,6 +202,11 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                 <span className="text-xs font-medium">Serviço</span>
                 <select name="servicoId" aria-label="Serviço" data-testid="cx-servico" className={input}>{servicos.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}</select>
                 <select name="profissionalId" aria-label="Profissional do serviço" data-testid="cx-servico-prof" className={input}>{profOptions}</select>
+                <select name="lancamento" aria-label="Lançamento do serviço" data-testid="cx-servico-lancamento" className={input}>
+                  <option value="normal">Cobrar do cliente</option>
+                  <option value="cortesia">Cortesia (casa paga)</option>
+                  <option value="servico_barbeiro">Serviço do barbeiro (vira vale)</option>
+                </select>
                 <button type="submit" className={btnGhost}>Adicionar serviço</button>
               </form>
               <form action={addCombo} className="flex flex-col gap-1 rounded-lg border border-neutral-200 p-2 dark:border-neutral-800">
@@ -201,6 +214,11 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                 <span className="text-xs font-medium">Combo</span>
                 <select name="comboId" aria-label="Combo" className={input}>{combos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}</select>
                 <select name="profissionalId" aria-label="Profissional do combo" className={input}>{profOptions}</select>
+                <select name="lancamento" aria-label="Lançamento do combo" className={input}>
+                  <option value="normal">Cobrar do cliente</option>
+                  <option value="cortesia">Cortesia (casa paga)</option>
+                  <option value="servico_barbeiro">Serviço do barbeiro (vira vale)</option>
+                </select>
                 <button type="submit" className={btnGhost}>Adicionar combo</button>
               </form>
               <form action={addProduto} className="flex flex-col gap-1 rounded-lg border border-neutral-200 p-2 dark:border-neutral-800">
@@ -208,6 +226,10 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                 <span className="text-xs font-medium">Produto</span>
                 <select name="produtoId" aria-label="Produto" className={input}>{produtos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}</select>
                 <select name="profissionalId" aria-label="Profissional do produto" className={input}>{profOptions}</select>
+                <select name="lancamento" aria-label="Lançamento do produto" className={input}>
+                  <option value="normal">Cobrar do cliente</option>
+                  <option value="cortesia">Cortesia (casa paga)</option>
+                </select>
                 <button type="submit" className={btnGhost}>Adicionar produto</button>
               </form>
             </div>

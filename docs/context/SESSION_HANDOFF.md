@@ -1,5 +1,42 @@
 # SESSION_HANDOFF
 
+## 2026-08-25 — CRT: cortesia + serviço do barbeiro (requisito novo do Rodrigo) IMPLEMENTADO
+
+Escopo novo aprovado pelo Inael (goal LoopX `barbearia-goal`, fonte
+`docs/produto/REQUISITOS-NOVOS-2026-08-22.md`, áudio do Rodrigo 22/08). Feito via
+processo do repo: spec TLC → TDD → gate verde → tela linkada.
+
+### O que entrou
+- **Cortesia** (`lancamento=cortesia` em `comanda_itens`): cliente paga R$0 no item;
+  barbeiro recebe a comissão natural sobre o valor CHEIO (`comissaoCortesias`, campo
+  separado incluído no total); painel do dono ganhou card "Cortesias (30d)" (valor
+  concedido + comissão a pagar, `cortesiasDoPeriodo`).
+- **Serviço do barbeiro** (`lancamento=servico_barbeiro`, só serviço/combo): não cobra,
+  não comissiona, e o fechamento gera VALE tipo `servico_barbeiro` = parte da barbearia
+  (60% avulso/combo, 80% dividido; `valeServicoBarbeiroCentavos`), com `criadoEm` = data
+  do fechamento. Produto retirado continua no fluxo VAL (30% off).
+- **Fora do faturamento**: totalVendas/painel/ranking/metas/NF contam só itens `normal`;
+  NF sem item faturável não emite. UI do caixa: seletor de lançamento + badges + valor
+  riscado → R$0.
+
+### Evidência (gate)
+Spec `.specs/features/caixa-cortesia.md` (CRT, 8 ACs PASS). STATE.md: **42 features ·
+270 ACs · 270 PASS**, tlc OK. unit 108 · integration 101 · e2e 66 (caixa.spec 3/3 com
+CRT-008) · coverage 100% · mutation 99.01% (1 sobrevivente pré-existente na
+hidratação, linha 106 — não é do código novo).
+
+### Premissas a confirmar com o Rodrigo (P1–P3 no ACTIVE_PLAN)
+Cortesia usa a faixa do barbeiro (base=40%)? Vale = preço − comissão natural?
+Cortesia fora do faturamento/meta? Rascunho de mensagem WhatsApp pronto — **NÃO
+enviado** (aguarda aprovação do Inael). A conta fica em helpers puros de
+`lib/comissao.ts`: mudar regra = 1 função + testes.
+
+### Próximo (deploy)
+Prod (Coolify) ainda roda a versão anterior: precisa `drizzle-kit push` no banco de
+prod (coluna nova tem DEFAULT 'normal', migração segura) + redeploy. Pendências
+manuais da sessão 2026-08-23 continuam valendo (QR SimplesZap, SEC-04, status
+dashboard, senhas demo).
+
 ## 2026-08-23 (tarde) — NO AR EM PRODUÇÃO + integrações ligadas
 
 **App deployado e funcionando:** http://179.198.113.115.sslip.io (VPS do Rodrigo, Coolify, build nixpacks). `/health` 200; home renderiza o catálogo real do banco de produção. DB `barbearia-db` (postgres:16) com schema + seed (19 serviços/6 combos/4 profissionais) + logins demo (dono@faith.com/dono123, recepcao@faith.com/recep123, barbeiro@faith.com/barb123). Env de prod (Coolify) configurada: DATABASE_URL, AUTH_SECRET (novo, no vault `BARBEARIA_PROD_AUTH_SECRET`), AUTH_TRUST_HOST, HUB_IA_*, ASAAS_* (sandbox), SIMPLESZAP_*.

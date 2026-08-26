@@ -35,4 +35,33 @@ test.describe("CX — caixa (e2e)", () => {
     await expect(page.getByText("Conta fechada.")).toBeVisible();
     await expect(page.getByTestId("total-dia")).toContainText("60,00");
   });
+
+  test("CRT-008 cortesia: total a pagar fica R$0, badge aparece e o total do dia não sobe", async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
+    await page.goto("/caixa");
+    const totalDiaAntes = (await page.getByTestId("total-dia").innerText()).trim();
+
+    await page.getByRole("button", { name: "Abrir comanda" }).click();
+    await expect(page.getByTestId("comanda")).toBeVisible();
+
+    await page.getByTestId("cx-servico").selectOption({ label: "Corte" });
+    await page.getByTestId("cx-servico-prof").selectOption({ label: "Pedro" });
+    await page.getByTestId("cx-servico-lancamento").selectOption("cortesia");
+    await page.getByRole("button", { name: "Adicionar serviço" }).click();
+
+    await expect(page.getByTestId("badge-cortesia")).toBeVisible();
+    await expect(page.getByTestId("total-comanda")).toContainText("0,00");
+
+    await page.getByTestId("cx-pagamento").selectOption("dinheiro");
+    await page.getByRole("button", { name: "Fechar conta" }).click();
+    await expect(page.getByText("Conta fechada.")).toBeVisible();
+    expect((await page.getByTestId("total-dia").innerText()).trim()).toBe(totalDiaAntes);
+
+    // painel do dono mostra o custo de cortesias (valor concedido no período)
+    await page.locator("nav").getByRole("button", { name: "Sair" }).click();
+    await expect(page.locator("nav").getByRole("link", { name: "Entrar" })).toBeVisible();
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/painel");
+    await expect(page.getByTestId("custo-cortesias")).toContainText("60,00");
+  });
 });

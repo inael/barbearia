@@ -55,4 +55,21 @@ describe("NF — nota fiscal (integration)", () => {
     // idempotente: 2a emissão da mesma comanda é rejeitada (UNIQUE)
     await expect(emitirNota(db, c2)).rejects.toThrow();
   });
+
+  it("CRT-006 nota fatura só itens normais; comanda sem item faturável não emite", async () => {
+    const cli = await criarCliente(db, { nome: "Cortesia CPF", telefone: "61999990302" });
+    await completarCadastro(db, cli, "11144477735"); // CPF válido distinto (coluna é UNIQUE)
+    const c1 = await criarComanda(db, cli);
+    await adicionarServico(db, c1, corteId, pedroId); // normal 6000
+    await adicionarServico(db, c1, corteId, pedroId, "cortesia"); // fora da nota
+    await fecharComanda(db, c1, "dinheiro", new Date());
+    const notaId = await emitirNota(db, c1);
+    const [nota] = await db.select().from(schema.notasFiscais).where(eq(schema.notasFiscais.id, notaId));
+    expect(nota.valorCentavos).toBe(6000); // só o item cobrado
+
+    const c2 = await criarComanda(db, cli);
+    await adicionarServico(db, c2, corteId, pedroId, "cortesia");
+    await fecharComanda(db, c2, "dinheiro", new Date());
+    await expect(emitirNota(db, c2)).rejects.toThrow(/faturáveis/i);
+  });
 });
