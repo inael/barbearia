@@ -6,6 +6,21 @@ import { criarNotificacao } from "./notificacoes";
 type DB = PostgresJsDatabase<typeof schema>;
 export type TipoMovimento = "entrada" | "saida";
 
+/** Unidades pré-configuradas (feedback UX 2026-08-26: unidade não é texto livre). */
+export const UNIDADES_ESTOQUE = [
+  { sigla: "un", nome: "unidade" },
+  { sigla: "ml", nome: "mililitro" },
+  { sigla: "L", nome: "litro" },
+  { sigla: "g", nome: "grama" },
+  { sigla: "kg", nome: "quilo" },
+  { sigla: "cx", nome: "caixa" },
+  { sigla: "pct", nome: "pacote" },
+] as const;
+
+export function unidadeValida(sigla: string): boolean {
+  return UNIDADES_ESTOQUE.some((u) => u.sigla === sigla);
+}
+
 /** Saldo = entradas − saídas (função pura). */
 export function saldoAtual(movimentos: { tipo: string; quantidade: number }[]): number {
   return movimentos.reduce((s, m) => s + (m.tipo === "entrada" ? m.quantidade : -m.quantidade), 0);
@@ -14,10 +29,11 @@ export function saldoAtual(movimentos: { tipo: string; quantidade: number }[]): 
 /** Cadastra um produto de estoque com saldo inicial. Retorna o id. */
 export async function cadastrarProdutoEstoque(db: DB, nome: string, unidade: string, saldoInicial: number): Promise<number> {
   if (!nome || !nome.trim()) throw new Error("nome obrigatório");
+  if (!unidadeValida(unidade?.trim() || "")) throw new Error("unidade inválida");
   if (!Number.isInteger(saldoInicial) || saldoInicial < 0) throw new Error("saldo inicial inválido");
   const [row] = await db
     .insert(schema.produtosEstoque)
-    .values({ nome: nome.trim(), unidade: unidade?.trim() || "un", saldo: saldoInicial })
+    .values({ nome: nome.trim(), unidade: unidade.trim(), saldo: saldoInicial })
     .returning({ id: schema.produtosEstoque.id });
   return row.id;
 }

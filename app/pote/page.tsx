@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { relatorioPote } from "@/lib/pote-gestao";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,8 +35,18 @@ export default async function PotePage() {
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">{dono ? "Pote das assinaturas" : "Meu pote"}</h1>
-        <p className="mt-1 text-sm text-neutral-600">Serviços de assinatura (pote) dos últimos 30 dias.</p>
+        <PageHeader
+          titulo={dono ? "Pote das assinaturas" : "Meu pote"}
+          descricao="O 'pote' é como o dinheiro das assinaturas é dividido com a equipe: os serviços de assinante não pagam comissão direta — eles somam pontos, e o pote é repartido pelos pontos de cada barbeiro."
+          ajuda={
+            <>
+              <p>1. Cliente assinante corta pelo plano (não paga avulso). Cada serviço de assinatura vale <strong>pontos</strong> (configurados em Cadastros → Serviços).</p>
+              <p>2. Da receita das assinaturas do período, a barbearia retém <strong>60%</strong>; os outros <strong>40% viram o pote</strong>.</p>
+              <p>3. O pote é dividido proporcionalmente aos pontos que cada barbeiro fez no período. Quem atendeu mais assinante, leva mais.</p>
+              <p>Exemplo: receita de R$ 1.000 → pote de R$ 400. Se Pedro fez 60 pts e Lucas 40 pts, Pedro leva R$ 240 e Lucas R$ 160.</p>
+            </>
+          }
+        />
 
         {dono ? (
           <section className="mt-6 grid grid-cols-2 gap-4">

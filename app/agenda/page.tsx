@@ -7,6 +7,8 @@ import { listarClientes } from "@/lib/clientes";
 import { listarServicos } from "@/lib/catalogo";
 import { listarProfissionais } from "@/lib/profissionais";
 import { criarAgendamento, cancelarAgendamento, listarAgendamentos } from "@/lib/agendamento";
+import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/agenda";
@@ -79,8 +81,17 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-4xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Agenda</h1>
-        <p className="mt-1 text-sm text-neutral-600">Marque um horário: o sistema usa a duração do barbeiro e bloqueia conflitos.</p>
+        <PageHeader
+          titulo="Agenda"
+          descricao="Os horários marcados de todos os barbeiros. Marque aqui quando o cliente ligar ou chamar no WhatsApp — o sistema calcula a duração pelo barbeiro escolhido e não deixa marcar em cima de outro horário."
+          ajuda={
+            <>
+              <p>1. Escolha <strong>cliente + serviço + profissional + horário</strong> e clique em Agendar. Se o horário conflitar com outro agendamento, bloqueio ou dia fechado, o sistema avisa.</p>
+              <p>2. A duração vem da minutagem que cada barbeiro configurou em “Minha agenda”.</p>
+              <p>3. Cancelou? O horário volta a ficar livre na hora.</p>
+            </>
+          }
+        />
 
         {sp?.erro ? (
           <p role="alert" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
@@ -96,7 +107,16 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">Novo agendamento</h2>
           {clientes.length === 0 ? (
-            <p className="text-sm text-neutral-600">Cadastre um cliente antes (Cadastros -&gt; Clientes).</p>
+            <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900" data-testid="agenda-vazia">
+              <p className="text-sm font-medium">Pra agendar, primeiro cadastre um cliente.</p>
+              <p className="mt-1 text-sm text-neutral-600">Leva menos de um minuto: só nome e telefone.</p>
+              <Link
+                href="/cadastros/clientes"
+                className="mt-3 inline-block rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+              >
+                Cadastrar cliente agora
+              </Link>
+            </div>
           ) : (
             <form action={agendar} className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
               <label className="flex flex-col gap-1 text-xs font-medium">Cliente

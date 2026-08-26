@@ -41,6 +41,24 @@ export const PROFISSIONAIS = [
   { nome: "Recepcao", papel: "recepcionista" as const },
 ];
 
+// Planos que o Rodrigo definiu (docs/produto/RESPOSTAS.md, perguntas 10 e 28):
+// Flex vale ter-qui com 10%/5% de desconto extra; Premium vale todos os dias com 20%/10%.
+export const PLANOS = [
+  { nome: "Flex — Corte/barba/pezinho/sobrancelha", tipo: "flex", precoCentavos: 22000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "ter-qui" },
+  { nome: "Flex — Corte/sobrancelha", tipo: "flex", precoCentavos: 12000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "ter-qui" },
+  { nome: "Flex — Barba/pezinho", tipo: "flex", precoCentavos: 14000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "ter-qui" },
+  { nome: "Premium — Corte/barba/pezinho/sobrancelha", tipo: "premium", precoCentavos: 25000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "todos" },
+  { nome: "Premium — Corte/sobrancelha", tipo: "premium", precoCentavos: 15000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "todos" },
+  { nome: "Premium — Barba/pezinho", tipo: "premium", precoCentavos: 17000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "todos" },
+];
+
+/** Semeia os planos do Rodrigo só quando a tabela está VAZIA (assinaturas referenciam
+ * planos, então não dá pra apagar/reinserir; e o dono pode editar os dele). Idempotente. */
+export async function seedPlanos(db: PostgresJsDatabase<typeof schema>): Promise<void> {
+  const existentes = await db.select({ id: schema.planos.id }).from(schema.planos).limit(1);
+  if (existentes.length === 0) await db.insert(schema.planos).values(PLANOS);
+}
+
 /**
  * Semeia o catalogo de forma determinística e idempotente:
  * limpa as tabelas e reinsere o catalogo canonico. Rodar 2x resulta no
@@ -53,4 +71,5 @@ export async function seedCatalog(db: PostgresJsDatabase<typeof schema>): Promis
   await db.insert(servicos).values(SERVICOS);
   await db.insert(combos).values(COMBOS);
   await db.insert(profissionais).values(PROFISSIONAIS);
+  await seedPlanos(db);
 }

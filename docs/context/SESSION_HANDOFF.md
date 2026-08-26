@@ -1,5 +1,33 @@
 # SESSION_HANDOFF
 
+## 2026-08-26 — UXS: reforma "cara de sistema" (feedback do Inael)
+
+Punch list de 12 pontos em `docs/produto/FEEDBACK-UX-2026-08-26.md`. Spec
+`.specs/features/ux-shell-v2.md` (UXS, 11 ACs). Goal LoopX `barbearia-goal`.
+
+### O que mudou
+- **Shell SaaS**: sidebar escura à esquerda (grupos Visão geral/Operação/Cadastros/
+  Gestão/TV por papel, colapsáveis, item ativo) + conteúdo claro; drawer no mobile.
+  `components/AppFrame.tsx` + `lib/nav.ts` (puro, testado). Navbar horizontal morreu.
+  Player da TV (`/tv/[id]`) segue sem shell. Labels renomeados: `/`="Catálogo",
+  `/painel`="Painel do dono".
+- **Onboarding**: card "Primeiros passos" na `/conta` (6 passos com progresso REAL do
+  banco + botão "Fazer agora"; some quando completo). `lib/onboarding.ts`.
+- **Toda tela explica o que é**: `components/PageHeader.tsx` (descrição + "Como
+  funciona esta tela?") aplicado em caixa, painel, pote, TV, estoque, metas, vales,
+  assinaturas, agenda, avisos, conta; catálogo e comissão com headers próprios.
+- **Fixes**: painel do dono com filtro de período (7/30/90/365d); catálogo com busca;
+  estoque com unidades pré-configuradas (select un/ml/L/g/kg/cx/pct, motor valida);
+  metas por VALOR ou QUANTIDADE de atendimentos (schema metas.tipoAlvo/alvoQuantidade
+  + atendimentosDoPeriodo); planos Flex/Premium do Rodrigo semeados (preços das
+  respostas dele: 220/120/140 e 250/150/170, descontos 10/5 e 20/10, seed idempotente);
+  TV com fluxo claro (upload OU link + botão "Abrir player" + explicação da Smart TV);
+  simulador de comissão agrupado (1·entrada → 2·resultado) com aviso "nada é salvo";
+  agenda com empty-state CTA de cadastrar cliente.
+- e2e atualizados junto: shell.spec (labels novos), painel.spec (PNL-001/006) + novo
+  ux-shell.spec.ts. Deploy em prod pendente (drizzle push + redeploy) — inclui o CRT
+  de 2026-08-25 que também ainda não subiu.
+
 ## 2026-08-25 — CRT: cortesia + serviço do barbeiro (requisito novo do Rodrigo) IMPLEMENTADO
 
 Escopo novo aprovado pelo Inael (goal LoopX `barbearia-goal`, fonte

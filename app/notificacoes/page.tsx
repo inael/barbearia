@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarNotificacoes, marcarLida, definirConfig, eventoAtivo } from "@/lib/notificacoes";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/notificacoes";
@@ -54,8 +55,16 @@ export default async function NotificacoesPage() {
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Notificações do dono</h1>
-        <p className="mt-1 text-sm text-neutral-600">Canal &quot;chefe&quot;: pedidos de compra e alertas de consumo.</p>
+        <PageHeader
+          titulo="Notificações do dono"
+          descricao="O canal do chefe: avisos que o sistema gera sozinho (pedido de compra, consumo fora do padrão) pra você agir sem precisar caçar tela por tela."
+          ajuda={
+            <>
+              <p>Ligue/desligue cada tipo de aviso na lista “O que me notifica”.</p>
+              <p>Com o WhatsApp conectado, esses avisos também chegam no seu número.</p>
+            </>
+          }
+        />
 
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">O que me notifica</h2>

@@ -6,7 +6,7 @@ test.describe("SUP — Suporte via WhatsApp", () => {
       await page.goto(path);
       const ajuda = page.getByRole("link", { name: "Abrir suporte no WhatsApp" });
       await expect(ajuda).toBeVisible(); // SUP-001 visivel
-      await expect(ajuda).toHaveText("Ajuda");
+      await expect(ajuda).toHaveText("Ajuda no WhatsApp");
       const href = await ajuda.getAttribute("href"); // SUP-002 aponta pro WhatsApp IT Booster
       expect(href).toContain("https://wa.me/556191196730");
       expect(href).toContain("text=");

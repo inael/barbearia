@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
 import { registrarVale, listarVales, TIPOS_VALE, type TipoVale } from "@/lib/vales";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/vales";
@@ -63,8 +64,17 @@ export default async function ValesPage() {
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Vales</h1>
-        <p className="mt-1 text-sm text-neutral-600">Produtos retirados com 30% de desconto. {podeLancar ? "" : "Você vê os seus vales."}</p>
+        <PageHeader
+          titulo="Vales"
+          descricao={`O que cada barbeiro deve pra barbearia, pra descontar no acerto da comissão. ${podeLancar ? "" : "Você vê os seus vales."}`}
+          ajuda={
+            <>
+              <p><strong>Produto p/ cliente</strong> e <strong>Retirado pelo barbeiro</strong> — produto que o barbeiro levou, com 30% de desconto sobre o preço (lançados aqui).</p>
+              <p><strong>Serviço do barbeiro (caixa)</strong> — quando ele faz um serviço nele mesmo, o caixa lança automaticamente um vale com a parte da barbearia. Não precisa lançar aqui.</p>
+              <p>No fim do período, os vales entram no relatório de Metas junto com a comissão.</p>
+            </>
+          }
+        />
 
         {podeLancar ? (
           <section className="mt-6">

@@ -7,6 +7,7 @@ import { podeAcessar } from "@/lib/auth/rbac";
 import { listarClientes } from "@/lib/clientes";
 import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, type TipoPlano } from "@/lib/assinaturas";
 import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/cobranca";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/assinaturas";
@@ -102,8 +103,18 @@ export default async function AssinaturasPage() {
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Assinaturas</h1>
-        <p className="mt-1 text-sm text-neutral-600">Planos Flex/Premium e status dos assinantes.</p>
+        <PageHeader
+          titulo="Assinaturas"
+          descricao="Clientes que pagam mensalidade pra cortar sempre: planos Flex (ter–qui) e Premium (todo dia), fila de espera e status de cada assinante."
+          ajuda={
+            <>
+              <p><strong>Planos</strong> — Flex vale de terça a quinta e dá 10%/5% de desconto em serviços extras/produtos; Premium vale todo dia e dá 20%/10%.</p>
+              <p><strong>Fila de espera</strong> — o cliente pede a assinatura (ou a recepção pede por ele) e o dono aprova aqui.</p>
+              <p><strong>Atraso</strong> — assinante em atraso fica bloqueado de agendar até regularizar.</p>
+              <p>O dinheiro das assinaturas não paga comissão direta: vira o <strong>Pote</strong> (menu Gestão → Pote).</p>
+            </>
+          }
+        />
 
         {gerenciar ? (
           <section className="mt-6">

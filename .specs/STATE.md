@@ -56,7 +56,8 @@
 | IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | 8 | — | **ÂNCORA** — webhook/parse/agenda por conversa/escala (Hub mock) |
 | TVUP — TV com upload real | tv-upload.md | 5 | 5 | sim | **Fase 5** — upload → playlist → player |
 | CRT — Cortesia + serviço do barbeiro | caixa-cortesia.md | 8 | 8 | sim | **Escopo novo 2026-08-25** — cliente paga R$0, barbeiro comissiona valor cheio; serviço-do-barbeiro vira vale |
-| **Subtotal A** | | **270** | **270** | | |
+| UXS — Shell SaaS v2 + onboarding + explicações | ux-shell-v2.md | 11 | 11 | sim | **Feedback UX 2026-08-26** — sidebar escura por papel, onboarding real, toda tela explica, filtros/unidades/metas-qtd/planos seed |
+| **Subtotal A** | | **281** | **281** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
@@ -64,7 +65,7 @@
 | _(vazio — tudo implementado)_ | | 0 | | |
 | **Subtotal B** | | **0** | | |
 
-**Total: 42 features · 270 ACs · 270 PASS / 0 PENDING.** unit 108, integration 101, e2e 66 — todos verdes. **Todas as features implementáveis sem credencial externa estão prontas e testadas.** O que falta é EXECUÇÃO (go-live/credenciais), não código — ver abaixo. (tlc-validate: OK.) **Fases 1–5 quase completas — 2026-08-23** — unit 86, integration 82, e2e 61, todos verdes (retries:0). Operação inteira: cadastros → agenda → caixa → comissão/metas/vales → painel do dono → estoque/notificações → nota fiscal no fechamento. **Restam só features que dependem de credencial externa (IA/WhatsApp, Asaas, storage) ou go-live.**
+**Total: 43 features · 281 ACs · 281 PASS / 0 PENDING.** unit 112, integration 104, e2e 73 — todos verdes. **Todas as features implementáveis sem credencial externa estão prontas e testadas.** O que falta é EXECUÇÃO (go-live/credenciais), não código — ver abaixo. (tlc-validate: OK.) **Fases 1–5 quase completas — 2026-08-23** — unit 86, integration 82, e2e 61, todos verdes (retries:0). Operação inteira: cadastros → agenda → caixa → comissão/metas/vales → painel do dono → estoque/notificações → nota fiscal no fechamento. **Restam só features que dependem de credencial externa (IA/WhatsApp, Asaas, storage) ou go-live.**
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.

@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
-import { definirMeta, relatorioProfissional, semanaAtual, type RelatorioProfissional } from "@/lib/metas";
+import { definirMeta, definirMetaQuantidade, relatorioProfissional, semanaAtual, type RelatorioProfissional } from "@/lib/metas";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/metas";
@@ -19,7 +20,13 @@ async function salvarMeta(formData: FormData) {
   "use server";
   if (!(await podeEditar())) return;
   const { inicio, fim } = semanaAtual(new Date());
-  await definirMeta(getDb(), Number(formData.get("profissionalId")), inicio, fim, reaisParaCentavos(String(formData.get("alvo") || "0")));
+  const pid = Number(formData.get("profissionalId"));
+  const tipo = String(formData.get("tipoAlvo") || "valor");
+  if (tipo === "quantidade") {
+    await definirMetaQuantidade(getDb(), pid, inicio, fim, Math.trunc(Number(formData.get("alvo"))));
+  } else {
+    await definirMeta(getDb(), pid, inicio, fim, reaisParaCentavos(String(formData.get("alvo") || "0")));
+  }
   revalidatePath(ROTA);
 }
 
@@ -35,7 +42,15 @@ function LinhaRelatorio({ nome, rel }: { nome: string; rel: RelatorioProfissiona
       <span className="text-neutral-600">Fat: <strong>{brl(rel.faturamentoCentavos)}</strong></span>
       <span className="text-neutral-600">Comissão: {rel.comissaoTotalReais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
       <span className="text-neutral-600">Vales: {brl(rel.valesCentavos)}</span>
-      <span className="text-neutral-600">Meta: {rel.alvoCentavos != null ? brl(rel.alvoCentavos) : "—"}</span>
+      <span className="text-neutral-600">Atendimentos: <strong>{rel.atendimentos}</strong></span>
+      <span className="text-neutral-600">
+        Meta:{" "}
+        {rel.tipoAlvo === "quantidade"
+          ? `${rel.alvoQuantidade} atendimentos`
+          : rel.alvoCentavos != null
+            ? brl(rel.alvoCentavos)
+            : "—"}
+      </span>
       {rel.batido == null ? null : rel.batido ? (
         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">meta batida</span>
       ) : (
@@ -73,8 +88,17 @@ export default async function MetasPage() {
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Metas & relatórios</h1>
-        <p className="mt-1 text-sm text-neutral-600">Semana de {inicio.toLocaleDateString("pt-BR")} a {new Date(fim.getTime() - 1).toLocaleDateString("pt-BR")}.</p>
+        <PageHeader
+          titulo="Metas & relatórios"
+          descricao={`A semana de cada profissional num lugar só: faturamento, comissão, vales e se a meta foi batida. Semana de ${inicio.toLocaleDateString("pt-BR")} a ${new Date(fim.getTime() - 1).toLocaleDateString("pt-BR")}.`}
+          ajuda={
+            <>
+              <p><strong>Meta</strong> — o dono define um alvo semanal por profissional. O “realizado” vem sozinho das contas fechadas no caixa.</p>
+              <p><strong>Comissão</strong> — calculada das vendas reais (avulso pela faixa, combo 40%, dividido 20%, produto pela faixa de produto), mais a comissão de cortesias.</p>
+              <p><strong>Vales</strong> — o que descontar no acerto (produtos retirados e serviços que o barbeiro fez nele mesmo).</p>
+            </>
+          }
+        />
 
         {editar ? (
           <section className="mt-6">
@@ -85,8 +109,14 @@ export default async function MetasPage() {
                   {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs font-medium">Meta (R$)
-                <input name="alvo" required inputMode="decimal" aria-label="Meta em reais" data-testid="met-alvo" className={`${input} w-28`} />
+              <label className="flex flex-col gap-1 text-xs font-medium">Meta em
+                <select name="tipoAlvo" aria-label="Tipo de meta" data-testid="met-tipo" className={input}>
+                  <option value="valor">R$ (faturamento)</option>
+                  <option value="quantidade">Atendimentos (qtd)</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium">Alvo
+                <input name="alvo" required inputMode="decimal" aria-label="Alvo da meta" data-testid="met-alvo" className={`${input} w-28`} />
               </label>
               <button type="submit" className={btn}>Salvar meta</button>
             </form>

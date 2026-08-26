@@ -8,7 +8,7 @@ import * as schema from "./schema";
 import { seedCatalog } from "./seed";
 import { criarComanda, adicionarServico, fecharComanda } from "../caixa";
 import { registrarVale } from "../vales";
-import { definirMeta, metaDoPeriodo, relatorioProfissional } from "../metas";
+import { definirMeta, definirMetaQuantidade, metaDoPeriodo, relatorioProfissional, atendimentosDoPeriodo } from "../metas";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -66,5 +66,31 @@ describe("MET — metas + relatório (integration)", () => {
     expect((await relatorioProfissional(db, pedroId, de, ate)).batido).toBe(true);
     await definirMeta(db, pedroId, de, ate, 7000); // alvo > faturamento
     expect((await relatorioProfissional(db, pedroId, de, ate)).batido).toBe(false);
+  });
+
+  it("UXS-007 meta por QUANTIDADE de atendimentos: conta serviços/combos fechados e bate pela quantidade", async () => {
+    // MET-003 fechou 1 corte de Pedro no período → 1 atendimento até aqui
+    const antes = await atendimentosDoPeriodo(db, pedroId, de, ate);
+    expect(antes).toBeGreaterThanOrEqual(1);
+
+    // serviço-do-barbeiro NÃO conta como atendimento
+    const c = await criarComanda(db, null);
+    await adicionarServico(db, c, corteId, pedroId); // atendimento real
+    await adicionarServico(db, c, corteId, pedroId, "servico_barbeiro"); // consumo próprio
+    await fecharComanda(db, c, "dinheiro", new Date());
+    const depois = await atendimentosDoPeriodo(db, pedroId, de, ate);
+    expect(depois).toBe(antes + 1);
+
+    await definirMetaQuantidade(db, pedroId, de, ate, depois); // alvo == realizado → batida
+    let rel = await relatorioProfissional(db, pedroId, de, ate);
+    expect(rel.tipoAlvo).toBe("quantidade");
+    expect(rel.alvoQuantidade).toBe(depois);
+    expect(rel.atendimentos).toBe(depois);
+    expect(rel.batido).toBe(true);
+
+    await definirMetaQuantidade(db, pedroId, de, ate, depois + 5); // alvo acima → não batida
+    rel = await relatorioProfissional(db, pedroId, de, ate);
+    expect(rel.batido).toBe(false);
+    await expect(definirMetaQuantidade(db, pedroId, de, ate, 0)).rejects.toThrow();
   });
 });

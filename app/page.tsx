@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getDb, schema } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +12,10 @@ const papelLabel: Record<string, string> = {
   barbeiro: "Barbeiro",
 };
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const db = getDb();
+  const { q } = await searchParams;
+  const busca = (q ?? "").trim().toLocaleLowerCase("pt-BR");
   const [servicos, combos, profissionais] = await Promise.all([
     db.select().from(schema.servicos),
     db.select().from(schema.combos),
@@ -20,6 +23,9 @@ export default async function Home() {
   ]);
   servicos.sort((a, b) => a.nome.localeCompare(b.nome));
   combos.sort((a, b) => a.nome.localeCompare(b.nome));
+  const servicosVisiveis = busca
+    ? servicos.filter((s) => s.nome.toLocaleLowerCase("pt-BR").includes(busca))
+    : servicos;
 
   const stats = [
     { label: "Servicos", valor: servicos.length },
@@ -30,14 +36,13 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       <div className="mx-auto max-w-5xl px-5 py-10">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 pb-6 dark:border-neutral-800">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Faith Barbearia</h1>
-            <p className="mt-1 text-sm text-neutral-600">Sistema de gestao + atendente de IA</p>
-          </div>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-            Ambiente de desenvolvimento
-          </span>
+        <header className="mb-8 border-b border-neutral-200 pb-6 dark:border-neutral-800">
+          <h1 className="text-3xl font-bold tracking-tight">Catálogo de serviços</h1>
+          <p className="mt-1 max-w-2xl text-sm text-neutral-600">
+            A vitrine da Faith Barbearia: todos os serviços, combos e a equipe, com preço e
+            duração. É daqui que a agenda e o caixa puxam os dados — pra mudar um preço, use{" "}
+            <span className="font-medium">Cadastros → Serviços e combos</span> no menu.
+          </p>
         </header>
 
         <section className="mb-10 grid grid-cols-3 gap-4">
@@ -53,7 +58,27 @@ export default async function Home() {
         </section>
 
         <section className="mb-10">
-          <h2 className="mb-3 text-lg font-semibold">Servicos</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Servicos</h2>
+            <form method="get" className="flex items-center gap-2">
+              <input
+                type="search"
+                name="q"
+                defaultValue={q ?? ""}
+                placeholder="Buscar serviço…"
+                aria-label="Buscar serviço"
+                className="w-48 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900"
+              />
+              <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900">
+                Buscar
+              </button>
+            </form>
+          </div>
+          {busca ? (
+            <p className="mb-2 text-xs text-neutral-600">
+              {servicosVisiveis.length} resultado(s) para “{q}” — <Link href="/" className="underline">limpar busca</Link>
+            </p>
+          ) : null}
           <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
             <table className="w-full text-sm">
               <thead className="bg-neutral-100 text-left text-xs uppercase tracking-wide text-neutral-600 dark:bg-neutral-900">
@@ -65,7 +90,7 @@ export default async function Home() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 bg-white dark:divide-neutral-800 dark:bg-neutral-950">
-                {servicos.map((s) => (
+                {servicosVisiveis.map((s) => (
                   <tr key={s.id}>
                     <td className="px-4 py-3 font-medium">{s.nome}</td>
                     <td className="px-4 py-3">{brl(s.precoCentavos)}</td>

@@ -21,6 +21,7 @@ import {
 } from "@/lib/caixa";
 import { emitirNota } from "@/lib/nf";
 import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/caixa";
@@ -151,10 +152,22 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-4xl px-5 py-10">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Caixa</h1>
-          <span className="text-sm text-neutral-600" data-testid="total-dia">Total do dia: <strong>{brl(totalDia)}</strong></span>
-        </div>
+        <PageHeader
+          titulo="Caixa"
+          descricao="A conta de cada cliente vira uma comanda: abra, lance os serviços e produtos, e feche quando ele pagar. É o fechamento que alimenta comissão, metas e o painel do dono."
+          acoes={
+            <span className="text-sm text-neutral-600" data-testid="total-dia">
+              Total do dia: <strong>{brl(totalDia)}</strong>
+            </span>
+          }
+          ajuda={
+            <>
+              <p>1. <strong>Abrir comanda</strong> — escolha o cliente (ou deixe “Balcão” pra venda avulsa, sem cadastro).</p>
+              <p>2. <strong>Lançar itens</strong> — cada item tem o profissional que atendeu (é assim que a comissão sabe de quem é) e o lançamento: <em>Cobrar do cliente</em> (normal), <em>Cortesia</em> (a casa paga e o barbeiro recebe a comissão) ou <em>Serviço do barbeiro</em> (ele fez nele mesmo; vira vale).</p>
+              <p>3. <strong>Fechar conta</strong> — escolha a forma de pagamento. No PIX, a cobrança sai pelo Asaas; se o cliente tiver CPF no cadastro, a nota é emitida sozinha.</p>
+            </>
+          }
+        />
 
         {sp.fechada ? (
           <p className="mt-4 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">

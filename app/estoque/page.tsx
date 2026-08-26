@@ -2,7 +2,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
-import { cadastrarProdutoEstoque, registrarMovimento, registrarContagem, registrarPedidoCompra, listarProdutosEstoque } from "@/lib/estoque";
+import { cadastrarProdutoEstoque, registrarMovimento, registrarContagem, registrarPedidoCompra, listarProdutosEstoque, UNIDADES_ESTOQUE } from "@/lib/estoque";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/estoque";
@@ -64,8 +65,17 @@ export default async function EstoquePage() {
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Estoque</h1>
-        <p className="mt-1 text-sm text-neutral-600">Entradas/saídas, contagem diária e pedidos de compra.</p>
+        <PageHeader
+          titulo="Estoque"
+          descricao="Controle do que a barbearia consome e vende: entradas e saídas, contagem diária (manhã/noite) e pedido de compra quando está acabando."
+          ajuda={
+            <>
+              <p><strong>Mover</strong> — registre entrada (compra chegou) ou saída (uso/venda). O saldo atualiza na hora.</p>
+              <p><strong>Contar</strong> — a contagem diária compara o físico com o sistema; divergência aparece pro dono.</p>
+              <p><strong>Pedir compra</strong> — gera o pedido pro fornecedor sem mexer no saldo.</p>
+            </>
+          }
+        />
 
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">Novo produto de estoque</h2>
@@ -74,7 +84,11 @@ export default async function EstoquePage() {
               <input name="nome" required aria-label="Nome do produto" data-testid="est-nome" className={input} />
             </label>
             <label className="flex flex-col gap-1 text-xs font-medium">Unidade
-              <input name="unidade" defaultValue="un" aria-label="Unidade" className={`${input} w-20`} />
+              <select name="unidade" defaultValue="un" aria-label="Unidade" data-testid="est-unidade" className={input}>
+                {UNIDADES_ESTOQUE.map((u) => (
+                  <option key={u.sigla} value={u.sigla}>{u.sigla} — {u.nome}</option>
+                ))}
+              </select>
             </label>
             <label className="flex flex-col gap-1 text-xs font-medium">Saldo inicial
               <input name="saldo" type="number" min={0} defaultValue={0} aria-label="Saldo inicial" data-testid="est-saldo" className={`${input} w-24`} />

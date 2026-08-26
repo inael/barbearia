@@ -143,11 +143,18 @@ export default function ComissaoPage() {
       <div className="mx-auto max-w-5xl px-5 py-10">
         <header className="mb-8 border-b border-neutral-200 pb-6 dark:border-neutral-800">
           <h1 className="text-3xl font-bold tracking-tight">Comissao & Pote</h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Simulador do fechamento, usando as regras oficiais da Faith Barbearia.
+          <p className="mt-1 max-w-2xl text-sm text-neutral-600">
+            Simulador do fechamento, usando as regras oficiais da Faith Barbearia: digite os
+            números de um mês e veja quanto cada um receberia.
+          </p>
+          <p className="mt-3 max-w-2xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+            Isto é uma simulação — nada digitado aqui é salvo. Os valores REAIS saem das
+            contas fechadas no Caixa e aparecem em Metas &amp; relatórios; as regras (preços,
+            pontos de pote) são configuradas em Cadastros.
           </p>
         </header>
 
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">1 · O que você informa</h2>
         <div className="grid gap-6 lg:grid-cols-2">
           <Card titulo="Faixa do mes (pelo mes anterior)">
             <div className="grid gap-3">
@@ -172,6 +179,28 @@ export default function ComissaoPage() {
             </div>
           </Card>
 
+          <Card titulo="Pote das assinaturas">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Campo label="Receita de assinaturas" value={receitaAssin} onChange={setReceitaAssin} suffix="R$" />
+              <Campo label="Pontos Rodrigo" value={pontosRodrigo} onChange={setPontosRodrigo} suffix="pts" />
+              <Campo label="Pontos Pedro" value={pontosPedro} onChange={setPontosPedro} suffix="pts" />
+              <Campo label="Pontos Joao" value={pontosJoao} onChange={setPontosJoao} suffix="pts" />
+            </div>
+            <p className="mt-3 text-xs text-neutral-600">
+              A barbearia retem 60%; 40% viram o pote, dividido proporcional aos pontos.
+            </p>
+          </Card>
+
+          <Card titulo="Hidratacoes da recepcao">
+            <Campo label="Hidratacoes de cabelo no mes (qtd)" value={hidratacoes} onChange={setHidratacoes} suffix="un" />
+            <p className="mt-3 text-xs text-neutral-600">
+              A recepcao ganha por hidratacao (R$5/un; R$10/un acima de 10 no mes) + 20% dos servicos divididos.
+            </p>
+          </Card>
+        </div>
+
+        <h2 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wide text-neutral-500">2 · O que o sistema calcula</h2>
+        <div className="grid gap-6 lg:grid-cols-2">
           <Card titulo="Comissao do barbeiro">
             <Linha label={`Avulsos (${pct(r.faixaServ)})`} valor={brl(r.comAvulsos)} />
             <Linha label="Combos (40%)" valor={brl(r.comCombos)} />
@@ -183,9 +212,6 @@ export default function ComissaoPage() {
           </Card>
 
           <Card titulo="Recepcionista">
-            <div className="mb-3">
-              <Campo label="Hidratacoes de cabelo no mes (qtd)" value={hidratacoes} onChange={setHidratacoes} suffix="un" />
-            </div>
             <Linha label="Divididos (20% da recepcao)" valor={brl(r.divisao.recepcionista)} />
             <Linha
               label={`Hidratacoes (${Math.trunc(num(hidratacoes)) > 10 ? "R$10" : "R$5"}/un)`}
@@ -194,18 +220,6 @@ export default function ComissaoPage() {
             <div className="mt-2 rounded-lg bg-sky-50 px-3 py-2 dark:bg-sky-900/30">
               <Linha label="Total da recepcao" valor={brl(r.divisao.recepcionista + r.comHidrat)} forte />
             </div>
-          </Card>
-
-          <Card titulo="Pote das assinaturas">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Campo label="Receita de assinaturas" value={receitaAssin} onChange={setReceitaAssin} suffix="R$" />
-              <Campo label="Pontos Rodrigo" value={pontosRodrigo} onChange={setPontosRodrigo} suffix="pts" />
-              <Campo label="Pontos Pedro" value={pontosPedro} onChange={setPontosPedro} suffix="pts" />
-              <Campo label="Pontos Joao" value={pontosJoao} onChange={setPontosJoao} suffix="pts" />
-            </div>
-            <p className="mt-3 text-xs text-neutral-600">
-              A barbearia retem 60%; 40% viram o pote, dividido proporcional aos pontos.
-            </p>
           </Card>
 
           <Card titulo="Divisao do pote">

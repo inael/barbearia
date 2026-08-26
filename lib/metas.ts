@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { comissaoDoPeriodo } from "./caixa";
 import { totalValesPorTipo } from "./vales";
@@ -22,13 +22,48 @@ export function semanaAtual(hoje: Date): { inicio: Date; fim: Date } {
   return { inicio, fim };
 }
 
-/** Define (upsert) a meta de um profissional para a semana que começa em `inicio`. */
+/** Define (upsert) a meta em R$ de um profissional para a semana que começa em `inicio`. */
 export async function definirMeta(db: DB, profissionalId: number, inicio: Date, fim: Date, alvoCentavos: number): Promise<void> {
   if (!Number.isInteger(alvoCentavos) || alvoCentavos <= 0) throw new Error("alvo inválido");
   await db
     .insert(schema.metas)
-    .values({ profissionalId, inicio, fim, alvoCentavos })
-    .onConflictDoUpdate({ target: [schema.metas.profissionalId, schema.metas.inicio], set: { fim, alvoCentavos } });
+    .values({ profissionalId, inicio, fim, alvoCentavos, tipoAlvo: "valor", alvoQuantidade: null })
+    .onConflictDoUpdate({
+      target: [schema.metas.profissionalId, schema.metas.inicio],
+      set: { fim, alvoCentavos, tipoAlvo: "valor", alvoQuantidade: null },
+    });
+}
+
+/** Define (upsert) a meta em QUANTIDADE de atendimentos (feedback UX 2026-08-26). */
+export async function definirMetaQuantidade(db: DB, profissionalId: number, inicio: Date, fim: Date, alvoQuantidade: number): Promise<void> {
+  if (!Number.isInteger(alvoQuantidade) || alvoQuantidade <= 0) throw new Error("alvo inválido");
+  await db
+    .insert(schema.metas)
+    .values({ profissionalId, inicio, fim, alvoCentavos: 0, tipoAlvo: "quantidade", alvoQuantidade })
+    .onConflictDoUpdate({
+      target: [schema.metas.profissionalId, schema.metas.inicio],
+      set: { fim, alvoCentavos: 0, tipoAlvo: "quantidade", alvoQuantidade },
+    });
+}
+
+/** Nº de atendimentos (itens de serviço/combo em comandas fechadas) do profissional em [de, ate).
+ * Cortesia conta como atendimento; serviço-do-barbeiro (consumo próprio) não. */
+export async function atendimentosDoPeriodo(db: DB, profissionalId: number, de: Date, ate: Date): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.comandaItens)
+    .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+        eq(schema.comandaItens.profissionalId, profissionalId),
+        inArray(schema.comandaItens.tipo, ["servico", "combo"]),
+        ne(schema.comandaItens.lancamento, "servico_barbeiro"),
+      ),
+    );
+  return Number(row?.n ?? 0);
 }
 
 export async function metaDoPeriodo(db: DB, profissionalId: number, inicio: Date): Promise<schema.Meta | null> {
@@ -45,25 +80,40 @@ export interface RelatorioProfissional {
   produtosCentavos: number;
   valesCentavos: number;
   comissaoTotalReais: number;
+  atendimentos: number;
   alvoCentavos: number | null;
+  tipoAlvo: "valor" | "quantidade" | null;
+  alvoQuantidade: number | null;
   batido: boolean | null;
 }
 
-/** Relatório do profissional no período: faturamento, comissão, vales e meta (batido/não). */
+/** Relatório do profissional no período: faturamento, comissão, vales, atendimentos e meta (batido/não). */
 export async function relatorioProfissional(db: DB, profissionalId: number, de: Date, ate: Date): Promise<RelatorioProfissional> {
   const c = await comissaoDoPeriodo(db, profissionalId, de, ate);
   const servicosReais = c.avulsos + c.combos + c.divididos;
   const faturamentoReais = servicosReais + c.produtos;
   const faturamentoCentavos = Math.round(faturamentoReais * 100);
-  const vales = await totalValesPorTipo(db, profissionalId, de, ate);
-  const meta = await metaDoPeriodo(db, profissionalId, de);
+  const [vales, meta, atendimentos] = await Promise.all([
+    totalValesPorTipo(db, profissionalId, de, ate),
+    metaDoPeriodo(db, profissionalId, de),
+    atendimentosDoPeriodo(db, profissionalId, de, ate),
+  ]);
+  const tipoAlvo = meta ? ((meta.tipoAlvo === "quantidade" ? "quantidade" : "valor") as "valor" | "quantidade") : null;
+  const batido = !meta
+    ? null
+    : tipoAlvo === "quantidade"
+      ? metaBatida(atendimentos, meta.alvoQuantidade ?? 0)
+      : metaBatida(faturamentoCentavos, meta.alvoCentavos);
   return {
     faturamentoCentavos,
     servicosCentavos: Math.round(servicosReais * 100),
     produtosCentavos: Math.round(c.produtos * 100),
     valesCentavos: vales.produto_cliente + vales.retirado_barbeiro + vales.servico_barbeiro,
     comissaoTotalReais: c.comissaoTotal,
-    alvoCentavos: meta?.alvoCentavos ?? null,
-    batido: meta ? metaBatida(faturamentoCentavos, meta.alvoCentavos) : null,
+    atendimentos,
+    alvoCentavos: meta && tipoAlvo === "valor" ? meta.alvoCentavos : null,
+    tipoAlvo,
+    alvoQuantidade: meta?.alvoQuantidade ?? null,
+    batido,
   };
 }

@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("PNL — Painel do catalogo", () => {
-  test("PNL-001 / responde 200 e mostra 'Faith Barbearia'", { tag: "@critical" }, async ({ page }) => {
+  test("PNL-001 / responde 200 e mostra o catálogo", { tag: "@critical" }, async ({ page }) => {
     const resp = await page.goto("/");
     expect(resp?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: "Faith Barbearia", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Catálogo de serviços", level: 1 })).toBeVisible();
   });
 
   test("PNL-002 tabela de servicos lista dados do banco (Corte / R$ 60,00)", { tag: "@critical" }, async ({ page }) => {
@@ -39,9 +39,9 @@ test.describe("PNL — Painel do catalogo", () => {
     await expect(page.getByText("extra").first()).toBeVisible(); // servico fora do pote
   });
 
-  test("PNL-006 navegacao Painel / Comissao", { tag: "@critical" }, async ({ page }) => {
+  test("PNL-006 navegacao Catálogo / Comissão no menu", { tag: "@critical" }, async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("link", { name: "Painel" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Comissao" })).toBeVisible();
+    await expect(page.locator("nav").getByRole("link", { name: "Catálogo", exact: true })).toBeVisible();
+    await expect(page.locator("nav").getByRole("link", { name: "Comissão", exact: true })).toBeVisible();
   });
 });

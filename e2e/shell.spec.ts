@@ -26,15 +26,15 @@ test.describe("SHELL — navegação por papel + login/logout", () => {
     await expect(nav(page).getByRole("link", { name: "Entrar" })).toBeVisible();
   });
 
-  test("SHELL-002 dono vê Painel/Comissao/Minha agenda/Cadastros/TVs/Conta e navega", { tag: "@critical" }, async ({ page }) => {
+  test("SHELL-002 dono vê Painel do dono/Catálogo/Comissão/Minha agenda/Cadastros/TVs/Conta e navega", { tag: "@critical" }, async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto("/");
-    for (const nome of ["Painel", "Comissao", "Minha agenda", "Cadastros", "TVs", "Conta"]) {
-      await expect(nav(page).getByRole("link", { name: nome })).toBeVisible();
+    for (const nome of ["Painel do dono", "Catálogo", "Comissão", "Minha agenda", "Cadastros", "TVs", "Conta"]) {
+      await expect(nav(page).getByRole("link", { name: nome, exact: true })).toBeVisible();
     }
-    await nav(page).getByRole("link", { name: "Cadastros" }).click();
+    await nav(page).getByRole("link", { name: "Cadastros", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Cadastros" })).toBeVisible();
-    await nav(page).getByRole("link", { name: "TVs" }).click();
+    await nav(page).getByRole("link", { name: "TVs", exact: true }).click();
     await expect(page.getByRole("heading", { name: "TVs / mídia indoor" })).toBeVisible();
   });
 
@@ -56,8 +56,8 @@ test.describe("SHELL — navegação por papel + login/logout", () => {
   test("SHELL-005 sem páginas órfãs: dono chega em Profissionais, barbeiro chega na Grade", { tag: "@critical" }, async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto("/");
-    await nav(page).getByRole("link", { name: "Cadastros" }).click();
-    await page.getByRole("link", { name: "Profissionais" }).click();
+    await nav(page).getByRole("link", { name: "Cadastros", exact: true }).click();
+    await page.locator("main").getByRole("link", { name: "Profissionais" }).click();
     await expect(page).toHaveURL(/\/cadastros\/profissionais/);
     await expect(page.getByRole("heading", { name: "Equipe / profissionais" })).toBeVisible();
 

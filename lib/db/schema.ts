@@ -250,7 +250,8 @@ export const vales = pgTable("vales", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Metas (semanais) por profissional. realizado = faturamento em [inicio, fim). */
+/** Metas (semanais) por profissional. tipoAlvo: valor (R$, realizado = faturamento)
+ * ou quantidade (nº de atendimentos) em [inicio, fim). */
 export const metas = pgTable(
   "metas",
   {
@@ -261,6 +262,8 @@ export const metas = pgTable(
     inicio: timestamp("inicio", { withTimezone: true }).notNull(),
     fim: timestamp("fim", { withTimezone: true }).notNull(),
     alvoCentavos: integer("alvo_centavos").notNull(),
+    tipoAlvo: text("tipo_alvo").notNull().default("valor"),
+    alvoQuantidade: integer("alvo_quantidade"),
   },
   (t) => [uniqueIndex("uniq_meta_prof_inicio").on(t.profissionalId, t.inicio)],
 );
