@@ -1,5 +1,36 @@
 # SESSION_HANDOFF
 
+## 2026-08-26 (noite) — DEPLOY EM PRODUÇÃO (CRT + UXS + OPR no ar)
+
+Autorizado pelo Inael. **http://179.198.113.115.sslip.io** agora roda o commit
+`e6f7913` (subiu de uma vez CRT + UXS + OPR — 3 commits que estavam pendentes).
+
+### Como foi feito
+1. `drizzle-kit push` no banco de produção (externo `179.198.113.115:5432`) — as 4
+   colunas novas entraram com DEFAULT, sem downtime nem perda: `comanda_itens.lancamento`,
+   `comanda_itens.desconto_pct`, `metas.tipo_alvo`, `metas.alvo_quantidade` (confirmadas
+   por query no `information_schema`).
+2. `seedPlanos` em produção: os **6 planos do Rodrigo** entraram com os preços das
+   respostas dele (Flex 220/120/140 ter-qui 10%/5%; Premium 250/150/170 todo dia 20%/10%).
+   Idempotente — a tabela estava vazia; rodar de novo não duplica.
+3. Redeploy pela API do Coolify (app `cxr38w7p8ywp5vqpiqzmv45r`, deployment
+   `acs56gyk7t1amsfomdi5n6t1`) → status `finished` (~7 min de build no 1 vCPU).
+
+### Validação em produção (browser real, logado como dono)
+- `/health` 200 · `/` e `/painel` redirecionam pro `/login` (UXS-012) · `/tv` público 200.
+- **`/login` NÃO tem o seletor de perfil de teste** (`NEXT_PUBLIC_DEMO_LOGINS` não existe
+  em prod — confirmado na API de envs e no HTML servido). O atalho é só dev.
+- Logado: onboarding "Primeiros passos 2 de 6" visível, sidebar com 22 itens, e todas
+  as telas 200 sem "Sem acesso": painel (com filtro de período), agenda (com grade do
+  dia), caixa (com ajuda), metas, assinaturas (com os planos do Rodrigo), estoque
+  (unidades pré-configuradas), TVs, pote.
+
+### Pendências que continuam (não são código)
+QR do SimplesZap (`SIMPLESZAP_INSTANCE` vazio), Asaas ainda em SANDBOX, emissor NFS-e
+do MEI, scheduler dos lembretes, storage da TV, **SEC-04** (Postgres 5432 público),
+cadastrar a URL no status.toolpad.cloud + domínio próprio, e **trocar as senhas demo**
+pelas reais do Rodrigo antes de entregar.
+
 ## 2026-08-26 (noite) — OPR: auditoria integral dos pedidos do Rodrigo + simulação de 1 mês
 
 Pedido do Inael: reler TUDO que o Rodrigo mandou, conferir se está implementado, e
