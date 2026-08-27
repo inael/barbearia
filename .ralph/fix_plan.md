@@ -30,9 +30,9 @@ Ordem por prioridade: infra do harness → provar ACs PENDING por evidência →
 
 ## P2 — Security review  (executado 2026-08-13 — GATE: CLEAR, nenhum CRITICAL/HIGH alcançável no código)
 - [x] SEC-01 `npm audit` + segredos + bundle client + injeção — triado. Resultado: 2 crit são **dev-only** (vitest, @vitest/coverage-v8 — nunca no bundle); segredos limpos (só `.env.example`); `/comissao` (client) não importa `lib/db`/segredo; queries 100% estáticas (sem sink de user input).
-- [ ] SEC-03 [MEDIUM] Bumpar `drizzle-orm` de ^0.36.4 p/ >=0.45.2 (advisory HIGH GHSA-gpj5-g38j-94v9, SQL-injection via identificadores) **ANTES** de introduzir qualquer query dinâmica / nome de tabela-coluna vindo de input. Hoje NÃO há sink alcançável. Requer bump do `drizzle-kit` + regen.
-- [ ] SEC-04 [HIGH][infra, fora do repo] Fechar Postgres público 5432 (bind localhost/Tailscale) + desabilitar login SSH root por senha (key-only) na VPS do cliente **antes do 1º deploy**. Não bloqueia o gate de código (app ainda não deployada).
-- [ ] SEC-05 [LOW] `npm audit fix` (nanoid transitive, build-time) quando conveniente; `audit fix --force` p/ dev tooling (breaking) fora do caminho crítico.
+- [x] SEC-03 [FEITO 2026-08-27: drizzle-orm ^0.36.4 -> ^0.45.2 + drizzle-kit ^0.31.10; lint/typecheck/unit 115/integration 109 verdes] Bumpar `drizzle-orm` de ^0.36.4 p/ >=0.45.2 (advisory HIGH GHSA-gpj5-g38j-94v9, SQL-injection via identificadores) **ANTES** de introduzir qualquer query dinâmica / nome de tabela-coluna vindo de input. Hoje NÃO há sink alcançável. Requer bump do `drizzle-kit` + regen.
+- [x] SEC-04 [FEITO 2026-08-27: 5432 bloqueada na chain DOCKER-USER + servico barbearia-firewall.service (persiste no boot); SSH root key-only via 00-barbearia-hardening.conf. Validado: porta externa em timeout, app 200, senha recusada. Runbook: docs/runbooks/deploy-producao.md] Fechar Postgres público 5432 (bind localhost/Tailscale) + desabilitar login SSH root por senha (key-only) na VPS do cliente **antes do 1º deploy**. Não bloqueia o gate de código (app ainda não deployada).
+- [x] SEC-05 [FEITO 2026-08-27: npm audit --omit=dev = 0 vulnerabilidades] `npm audit fix` (nanoid transitive, build-time) quando conveniente; `audit fix --force` p/ dev tooling (breaking) fora do caminho crítico.
 
 ## Notas
 - Nada de instance-health/billing/Clerk/Prisma (não existem neste projeto).

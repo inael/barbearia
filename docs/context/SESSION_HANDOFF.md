@@ -1,5 +1,41 @@
 # SESSION_HANDOFF
 
+## 2026-08-27 (tarde) — SEC-03/04/05: as 3 pendências de segurança fechadas
+
+O Inael mandou "implementar todas as specs". **Não havia spec de produto pendente**
+(293/293 PASS) — o que restava era o backlog de segurança do `.ralph/fix_plan.md`.
+Os três foram fechados e validados.
+
+### SEC-03 — advisory HIGH no ORM (código)
+`drizzle-orm` ^0.36.4 → **^0.45.2** e `drizzle-kit` ^0.30.1 → **^0.31.10**, saindo do
+GHSA-gpj5-g38j-94v9 (SQL-injection via identificadores). Bump de ORM é arriscado, então
+foi validado no gate inteiro: lint, typecheck, **115 unit**, **109 integration** (Postgres
+real) e e2e — tudo verde, sem ajuste de código.
+
+### SEC-04 — o banco do cliente estava aberto na internet (infra) ⚠️
+Diagnóstico: `docker-proxy` escutando em **0.0.0.0:5432** e `ufw inactive` — qualquer um
+podia bater no Postgres do Rodrigo. Correção:
+- Regra na chain **`DOCKER-USER`** (`! -s 172.16.0.0/12 -j DROP` na 5432). Foi preciso ser
+  nessa chain porque **o Docker ignora o ufw** — regra no ufw não teria efeito nenhum.
+- Persistida por `barbearia-firewall.service` (systemd, `After=docker.service`, script
+  idempotente em `/usr/local/sbin/barbearia-firewall.sh`), então sobrevive a reboot.
+- **SSH**: root agora só entra por chave (`00-barbearia-hardening.conf`). O prefixo `00-`
+  é obrigatório: o sshd usa a **primeira** ocorrência de cada opção e o `50-cloud-init.conf`
+  trazia `PasswordAuthentication yes` — com `99-` o hardening não pegava.
+- Feito com **rollback automático armado** (reverteria sozinho em 5 min) e só desarmado
+  depois de provar login por chave numa conexão nova.
+- Validação: porta 5432 externa em **timeout**, senha SSH **recusada** (`publickey`),
+  e app 100% no ar (`/health`, `/login` e `/tv` — que lê do banco — todos 200).
+- Backup das regras antigas em `/root/iptables-backup-*.rules`.
+
+### SEC-05 — dependências
+`npm audit --omit=dev`: de 1 high para **0 vulnerabilidades**.
+
+### Efeito colateral que MUDA o procedimento de deploy
+Como a 5432 fechou, **schema em produção agora exige túnel SSH**
+(`ssh -N -L 5433:localhost:5432` e apontar o `DATABASE_URL` para `localhost:5433`).
+Isso e o resto do fluxo estão em **`docs/runbooks/deploy-producao.md`** (novo).
+
 ## 2026-08-27 — Fechando 2 lacunas de rastreabilidade (pergunta do Inael)
 
 O Inael perguntou se o seletor de login tinha ficado como pedido e se sobrou spec
