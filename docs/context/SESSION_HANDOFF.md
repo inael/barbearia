@@ -1,5 +1,45 @@
 # SESSION_HANDOFF
 
+## 2026-08-27 (fim do dia) — Modo teste + 3 correções de UX (feedback do Inael no ar)
+
+O Inael testou em produção como **recepção** e apontou problemas reais. Tudo
+corrigido, testado e no ar (commit `c04baca`, deploy `tqmhsioi9lenahdthitpfv4e`).
+
+### 1. Identidade visual (UXS-017)
+O Tailwind ligava as variantes `dark:` pelo tema do **sistema operacional**, então
+quem usa Windows no modo escuro via o centro preto e o app perdia a identidade.
+Agora a variante `dark:` depende da classe `.dark` (que não aplicamos), fixando o
+padrão pedido: **sidebar escura + conteúdo claro, sempre**. Não foi preciso remover
+as centenas de `dark:` das telas — elas ficaram inertes.
+O teste mede a **luminância real** com `colorScheme: dark` forçado (usa canvas 1x1
+porque o Tailwind v4 devolve cor em `lab()`/`oklch()`, que um parser de `rgb()` não lê).
+
+### 2. Onboarding e menu coerentes com o papel (UXS-015)
+A recepção via o passo "Configure os horários de funcionamento" e o botão
+"Fazer agora" caía em **"Sem acesso a esta página"**. Cada passo agora declara o
+recurso RBAC que exige e a lista é filtrada pelo papel: **dono 6, recepção 4,
+barbeiro 0**. O mesmo bug existia no texto "tudo pronto", que linkava o Painel do
+dono — o destino agora muda conforme o papel.
+O e2e passou a varrer **todos** os links do bloco e **todos** os itens de menu da
+recepção exigindo 200 sem bloqueio. Foi justamente a varredura estreita (só os
+botões "Fazer agora") que deixou o bug do texto passar na primeira rodada.
+
+### 3. Trocador de usuário na sidebar (UXS-016)
+Rodapé da sidebar ganhou "Trocar de usuário (teste)": lista os perfis com **nome e
+e-mail**, troca a sessão sem passar pelo login e o shell reage ao novo papel.
+
+### Modo teste ligado em PRODUÇÃO (temporário)
+`NEXT_PUBLIC_DEMO_LOGINS=1` foi setada no Coolify a pedido do Inael. Com ela:
+- 3 **botões** de perfil na tela de login (clicou, preencheu e-mail e senha)
+- trocador de usuário no rodapé da sidebar
+
+**Como remover na entrega:** apagar a env `NEXT_PUBLIC_DEMO_LOGINS` no Coolify e
+redeployar — o login volta a ser só e-mail/senha e o trocador some. Fazer isso
+**junto com a troca das senhas demo** pelas reais do Rodrigo. A URL é pública, então
+enquanto estiver ligado qualquer um que acessar vê as credenciais de teste.
+
+Estado: **44 features / 296 ACs / 296 PASS** · unit 115 · integration 109 · e2e 80.
+
 ## 2026-08-27 (tarde) — SEC-03/04/05: as 3 pendências de segurança fechadas
 
 O Inael mandou "implementar todas as specs". **Não havia spec de produto pendente**
