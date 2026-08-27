@@ -14,8 +14,8 @@ O **dono** (RBAC `tv`) gerencia as TVs numa tela protegida: cria telas (com velo
 | TVUI-006 | barbeiro NÃO acessa o admin de TV (RBAC `tv` = dono) | e2e | e2e/tv-admin.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (CRUD telas/itens) → TVUI-001..003 → integration (Postgres) → lib/db/tv.integration.test.ts → PENDING
-REQUIREMENT (tela protegida + RBAC) → TVUI-004..006 → e2e (browser + login) → e2e/tv-admin.spec.ts → PENDING
+REQUIREMENT (CRUD telas/itens) → TVUI-001..003 → integration (Postgres) → lib/db/tv.integration.test.ts → PASS
+REQUIREMENT (tela protegida + RBAC) → TVUI-004..006 → e2e (browser + login) → e2e/tv-admin.spec.ts → PASS
 
 ## Segurança
 - As server actions revalidam `auth()` + `podeAcessar(papel, "tv")` no servidor (só dono). `/admin/*` protegido pelo `proxy.ts`.

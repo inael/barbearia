@@ -33,9 +33,9 @@ Esta spec cobre as **fundações** (hash, RBAC, usuários). A ligação com Auth
 2. `p !== q ⇒ verificarSenha(q, hashSenha(p)) === false`.
 
 ## Test Coverage Matrix
-REQUIREMENT (senha segura) → AUTH-001..005 → unit/property → lib/auth/password.test.ts → PENDING
-REQUIREMENT (RBAC por papel) → AUTH-006..009 → unit → lib/auth/rbac.test.ts → PENDING
-REQUIREMENT (usuários no banco) → AUTH-010..015 → integration → lib/db/usuarios.integration.test.ts → PENDING
+REQUIREMENT (senha segura) → AUTH-001..005 → unit/property → lib/auth/password.test.ts → PASS
+REQUIREMENT (RBAC por papel) → AUTH-006..009 → unit → lib/auth/rbac.test.ts → PASS
+REQUIREMENT (usuários no banco) → AUTH-010..015 → integration → lib/db/usuarios.integration.test.ts → PASS
 
 ## Gaps
 - ✅ **Wiring completo:** Auth.js (NextAuth v5) Credentials → `autenticar`; sessão JWT com `papel`/`profissionalId`; `/login` + logout; `proxy.ts` (ex-middleware, convenção Next 16) protegendo `/conta`; RBAC na UI. E2E autenticado verde (AUTH-016..019).

@@ -21,8 +21,8 @@ Fonte: `docs/produto/REQUISITOS-NOVOS-2026-08-18.md` (R1). Hoje `servicos.duraca
 2. Para `p > 0`, `duracaoEfetiva(p, o) > 0` (nunca zera a duração).
 
 ## Test Coverage Matrix
-REQUIREMENT (resolve puro) → AGD-001..004 → unit/property → lib/agenda.test.ts → PENDING
-REQUIREMENT (persistência + constraints) → AGD-005..009 → integration (Postgres) → lib/db/agenda.integration.test.ts → PENDING
+REQUIREMENT (resolve puro) → AGD-001..004 → unit/property → lib/agenda.test.ts → PASS
+REQUIREMENT (persistência + constraints) → AGD-005..009 → integration (Postgres) → lib/db/agenda.integration.test.ts → PASS
 
 ## Gaps / BLOQUEADO
 - **UI de edição da minutagem + RBAC (barbeiro edita a PRÓPRIA)** depende de **auth Logto** (saber quem é o barbeiro logado). BLOCKED até registrar o app no console Logto. O motor + dados (esta spec) não dependem de auth e ficam prontos.

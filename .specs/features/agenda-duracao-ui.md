@@ -15,8 +15,8 @@ O barbeiro (ou dono) edita, numa tela protegida, quanto tempo ELE leva em cada s
 | AGDUI-007 | dono também acessa (tem `agenda_propria`) | e2e | e2e/agenda-ui.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (persistência do override) → AGDUI-001..004 → integration (Postgres) → lib/db/agenda.integration.test.ts → PENDING
-REQUIREMENT (tela protegida + edição real) → AGDUI-005..007 → e2e (browser + login) → e2e/agenda-ui.spec.ts → PENDING
+REQUIREMENT (persistência do override) → AGDUI-001..004 → integration (Postgres) → lib/db/agenda.integration.test.ts → PASS
+REQUIREMENT (tela protegida + edição real) → AGDUI-005..007 → e2e (browser + login) → e2e/agenda-ui.spec.ts → PASS
 
 ## Segurança
 - As server actions (`salvar`/`usarPadrao`) **revalidam a autorização no servidor** (`auth()` + `podeAcessar(papel, "agenda_propria")` + `profissionalId` da sessão) — não confiam no cliente. O barbeiro só edita o PRÓPRIO `profissionalId`.

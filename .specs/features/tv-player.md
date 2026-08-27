@@ -10,7 +10,7 @@ A tela (TV) abre uma página **pública** (`/tv/[id]`) que exibe a playlist **pr
 | TVPLR-002 | o player cicla pro próximo item na velocidade da tela | e2e | e2e/tv-player.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (player exibe + cicla) → TVPLR-001,002 → e2e (browser) → e2e/tv-player.spec.ts → PENDING
+REQUIREMENT (player exibe + cicla) → TVPLR-001,002 → e2e (browser) → e2e/tv-player.spec.ts → PASS
 > A lógica de qual item mostrar em cada instante (`itemAtualIndex`) já é coberta por TV-001..003 (unit/property). Aqui o e2e prova a página exibindo e avançando.
 
 ## Gaps

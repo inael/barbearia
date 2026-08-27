@@ -38,10 +38,11 @@ Regras de comissão da Faith Barbearia. Fonte de verdade: `docs/produto/CONSTITU
 
 ## Test Coverage Matrix
 REQUIREMENT (comissão) → COM-001..011 → unit → lib/comissao.test.ts → PASS → 26 testes verdes
-REQUIREMENT (robustez) → COM-012..014 → property → lib/comissao.property.test.ts → PENDING → a criar
-REQUIREMENT (força da suíte) → COM-015 → mutation → stryker → PENDING → a criar
+REQUIREMENT (robustez) → COM-012..014 → property → lib/comissao.property.test.ts → PASS → property verde (seed fixa)
+REQUIREMENT (força da suíte) → COM-015 → mutation → stryker → PASS → mutation ~98% em lib/comissao.ts
 
 ## Gaps
-- Property tests dos invariantes 1–6 (COM-012..014).
-- Mutation direcionada a `lib/comissao.ts` para provar que os limiares/percentuais estão realmente cobertos (COM-015).
-- Cobertura de branch: caso `comissaoHidratacaoRecepcionista(q)` exatamente em q=10 e q=11 (borda do salto de tarifa) deve ter caso explícito.
+- Nenhum aberto. Os itens antes listados aqui foram fechados: property tests dos
+  invariantes 1–6 (COM-012..014, `lib/comissao.property.test.ts`), mutation
+  direcionada a `lib/comissao.ts` (COM-015, ~98%) e os casos de borda de
+  `comissaoHidratacaoRecepcionista` em q=10 e q=11 (`lib/comissao.test.ts`).

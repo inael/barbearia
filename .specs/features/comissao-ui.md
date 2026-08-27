@@ -17,8 +17,8 @@ Fonte de verdade: `app/comissao/page.tsx`.
 | CUI-006 | Consistência UI↔motor: para uma entrada fixada, os valores exibidos == `lib/comissao`+`lib/pote` computados diretamente | e2e | e2e/comissao.spec.ts | PASS | e2e verde (UI==motor, browser real) |
 
 ## Test Coverage Matrix
-REQUIREMENT (simulador calcula certo) → CUI-002..006 → e2e (Playwright, browser real) → e2e/comissao.spec.ts → PENDING
-REQUIREMENT (rota disponível) → CUI-001 → e2e → e2e/comissao.spec.ts → PENDING
+REQUIREMENT (simulador calcula certo) → CUI-002..006 → e2e (Playwright, browser real) → e2e/comissao.spec.ts → PASS
+REQUIREMENT (rota disponível) → CUI-001 → e2e → e2e/comissao.spec.ts → PASS
 
 ## Gaps
 - Suíte E2E do simulador — não existe.

@@ -12,8 +12,8 @@ Cross-cutting: as telas (painel `/`, simulador `/comissao`) precisam funcionar n
 | UXB-004 | `/comissao` sem violação axe de impacto `serious`/`critical` | e2e | e2e/ux-base.spec.ts | PASS | e2e verde |
 
 ## Test Coverage Matrix
-REQUIREMENT (mobile 375px) → UXB-001,002 → e2e (viewport) → e2e/ux-base.spec.ts → PENDING
-REQUIREMENT (acessibilidade) → UXB-003,004 → e2e (axe-core) → e2e/ux-base.spec.ts → PENDING
+REQUIREMENT (mobile 375px) → UXB-001,002 → e2e (viewport) → e2e/ux-base.spec.ts → PASS
+REQUIREMENT (acessibilidade) → UXB-003,004 → e2e (axe-core) → e2e/ux-base.spec.ts → PASS
 
 ## Gaps
 - Suíte e2e responsivo + axe. Ao criar telas novas (Agenda, TV), repetir UXB-00x pra elas.

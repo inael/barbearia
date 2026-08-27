@@ -25,8 +25,8 @@ Fonte de verdade: `docs/produto/CONSTITUTION.md`, `RESPOSTAS.md` (Q6) e `lib/rod
 
 ## Test Coverage Matrix
 REQUIREMENT (rodízio) → ROD-001..005 → unit → lib/rodizio.test.ts → PASS → 26 verdes
-REQUIREMENT (invariantes) → ROD-006,007 → property → lib/rodizio.property.test.ts → PENDING
-REQUIREMENT (força da suíte) → ROD-008 → mutation → stryker → PENDING
+REQUIREMENT (invariantes) → ROD-006,007 → property → lib/rodizio.property.test.ts → PASS
+REQUIREMENT (força da suíte) → ROD-008 → mutation → stryker → PASS
 
 ## Gaps
 - Property tests dos invariantes 1–3 (ROD-006, ROD-007).

@@ -16,8 +16,8 @@ Fonte de verdade: `app/page.tsx`, `app/layout.tsx`.
 | PNL-006 | Nav contém links "Painel" e "Comissao" | e2e | e2e/painel.spec.ts | PASS | e2e verde (browser real + DB semeado) |
 
 ## Test Coverage Matrix
-REQUIREMENT (painel renderiza catálogo real) → PNL-001..005 → e2e (Playwright) → e2e/painel.spec.ts → PENDING
-REQUIREMENT (navegação) → PNL-006 → e2e → e2e/painel.spec.ts → PENDING
+REQUIREMENT (painel renderiza catálogo real) → PNL-001..005 → e2e (Playwright) → e2e/painel.spec.ts → PASS
+REQUIREMENT (navegação) → PNL-006 → e2e → e2e/painel.spec.ts → PASS
 
 ## Gaps
 - **IMPORTANTE (auditoria 2026-08-22):** esta rota `/` é só o **catálogo read-only**. NÃO é o painel do dono (RF22) — esse é uma feature separada, ver `painel-dono.md` (DASH). Não confundir "PNL PASS" com "painel do dono pronto".

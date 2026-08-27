@@ -29,9 +29,9 @@ Fonte de verdade: `docs/produto/CONSTITUTION.md` e `lib/pote.ts`.
 
 ## Test Coverage Matrix
 REQUIREMENT (pote) → POTE-001..006 → unit → lib/pote.test.ts → PASS → 26 verdes
-REQUIREMENT (invariantes) → POTE-007,008 → property → lib/pote.property.test.ts → PENDING
-REQUIREMENT (consistência de dados) → POTE-010 → integration → catalogo.integration.test.ts → PENDING
-REQUIREMENT (força da suíte) → POTE-009 → mutation → stryker → PENDING
+REQUIREMENT (invariantes) → POTE-007,008 → property → lib/pote.property.test.ts → PASS
+REQUIREMENT (consistência de dados) → POTE-010 → integration → catalogo.integration.test.ts → PASS
+REQUIREMENT (força da suíte) → POTE-009 → mutation → stryker → PASS
 
 ## Gaps
 - Property tests dos invariantes 1–4 (POTE-007, POTE-008).

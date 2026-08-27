@@ -3,17 +3,11 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { perfisDemo } from "@/lib/demo-logins";
 
 // Atalho de teste (UXS-012): só existe quando NEXT_PUBLIC_DEMO_LOGINS=1 (dev).
-// Em produção a env não é setada e o bloco sai do bundle.
-const DEMO_LOGINS =
-  process.env.NEXT_PUBLIC_DEMO_LOGINS === "1"
-    ? [
-        { rotulo: "Dono (Rodrigo)", email: "dono@faith.com", senha: "dono123" },
-        { rotulo: "Recepção", email: "recepcao@faith.com", senha: "recep123" },
-        { rotulo: "Barbeiro (Pedro)", email: "barbeiro@faith.com", senha: "barb123" },
-      ]
-    : [];
+// Em produção a env não é setada, a lista sai vazia e o bloco não é renderizado.
+const DEMO_LOGINS = perfisDemo(process.env.NEXT_PUBLIC_DEMO_LOGINS);
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");

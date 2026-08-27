@@ -1,5 +1,32 @@
 # SESSION_HANDOFF
 
+## 2026-08-27 — Fechando 2 lacunas de rastreabilidade (pergunta do Inael)
+
+O Inael perguntou se o seletor de login tinha ficado como pedido e se sobrou spec
+pendente. A checagem achou **duas inconsistências reais** (nenhuma quebrava o app,
+mas ambas enfraqueciam a evidência):
+
+1. **O seletor de perfil não tinha teste.** O AC UXS-012 afirmava "login com seletor
+   de perfil APENAS em dev", mas o e2e só cobria o redirect e o `/tv` público — a
+   metade do enunciado sobre o seletor não era verificada por ninguém. Corrigido:
+   a lista saiu de dentro do componente para `lib/demo-logins.ts` (testável), e
+   viraram ACs próprios: **UXS-013** (unit: com a env traz os 3 papéis; sem a env a
+   lista é vazia — inclusive `"0"`, `""` e `"true"` não ligam) e **UXS-014** (e2e no
+   browser: ligado, escolher "Recepção" preenche e-mail/senha e loga; desligado, não
+   renderiza nem deixa `dono123`/`recep123`/`barb123` no HTML).
+2. **35 linhas de "Test Coverage Matrix" desatualizadas** em 18 specs antigas diziam
+   `PENDING` embora os ACs estivessem `PASS` (o `tlc-validate` valida a tabela de ACs,
+   não a matriz — por isso passou batido). Todas corrigidas, mais o bloco "Gaps" de
+   `comissao.md` que ainda listava como "a criar" os property tests e a mutação que
+   já existem há tempos.
+
+**Descoberta útil:** `next build` lê `.env.local`, então quem buildar numa máquina com
+`NEXT_PUBLIC_DEMO_LOGINS=1` leva o seletor pro bundle. Em produção (Coolify usa as envs
+do painel e não tem `.env.local`) ele não existe — reconfirmado no HTML servido. O
+teste UXS-014 cobre os dois cenários, então não há como regredir em silêncio.
+
+Estado: **44 features · 293 ACs · 293 PASS** · unit 115 · integration 109 · e2e 77.
+
 ## 2026-08-26 (noite) — DEPLOY EM PRODUÇÃO (CRT + UXS + OPR no ar)
 
 Autorizado pelo Inael. **http://179.198.113.115.sslip.io** agora roda o commit

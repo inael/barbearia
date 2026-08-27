@@ -26,7 +26,9 @@ agrupado em entrada → resultado com aviso de que nada é salvo. O player da TV
 | UXS-009 | Catálogo `/` explica o que é e tem busca que filtra os serviços | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 | UXS-010 | TV: cada tela tem botão "Abrir player" + os dois caminhos claros (upload de foto/vídeo OU colar link) | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 | UXS-011 | Simulador de comissão agrupado (1 entrada → 2 resultado) com aviso explícito de que é simulação | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
-| UXS-012 | App inteiro exige login (deslogado → /login; sem menu de visitante); públicos só /tv (Smart TV), /health e webhooks; login com seletor de perfil de teste APENAS em dev (NEXT_PUBLIC_DEMO_LOGINS) | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
+| UXS-012 | App inteiro exige login (deslogado → /login; sem menu de visitante); públicos só /tv (Smart TV), /health e webhooks | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
+| UXS-013 | Atalho "Entrar como" no login: com NEXT_PUBLIC_DEMO_LOGINS=1 traz os 3 papéis com as credenciais; sem a env a lista é vazia (o seletor some) | unit | lib/demo-logins.test.ts | PASS | verde (gate) |
+| UXS-014 | Atalho no browser: ligado, escolher o perfil preenche e-mail/senha e loga (nav mostra o papel); desligado, não renderiza nem vaza as senhas demo no HTML e o login normal segue funcionando | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (navegação por papel pura) → UXS-001 → unit → lib/nav.test.ts → PASS
@@ -40,10 +42,16 @@ REQUIREMENT (planos pré-configurados) → UXS-008 → integration → lib/db/on
 REQUIREMENT (catálogo com busca) → UXS-009 → e2e → e2e/ux-shell.spec.ts → PASS
 REQUIREMENT (TV clara) → UXS-010 → e2e → e2e/ux-shell.spec.ts → PASS
 REQUIREMENT (simulador honesto) → UXS-011 → e2e → e2e/ux-shell.spec.ts → PASS
-REQUIREMENT (tudo atrás de login + atalho de teste dev) → UXS-012 → e2e → e2e/ux-shell.spec.ts → PASS
+REQUIREMENT (tudo atrás de login) → UXS-012 → e2e → e2e/ux-shell.spec.ts → PASS
+REQUIREMENT (atalho de perfil só em dev) → UXS-013 → unit → lib/demo-logins.test.ts → PASS
+REQUIREMENT (atalho não vaza em produção) → UXS-014 → e2e → e2e/ux-shell.spec.ts → PASS
 
 ## Gaps
 - Onboarding não é dispensável manualmente (some sozinho quando completo) — se o
   Rodrigo quiser fechar o card, vira preferência local.
 - Grupos colapsáveis não persistem o estado entre visitas (estado local do client).
 - SHELL-002/005 e PNL-001/006 atualizados junto (labels novos: Catálogo, Painel do dono).
+- **Atenção (UXS-013/014):** `next build` lê `.env.local`, então quem buildar numa
+  máquina com `NEXT_PUBLIC_DEMO_LOGINS=1` leva o seletor pro bundle. Em produção
+  (Coolify, envs do painel, sem `.env.local`) ele não existe — verificado no HTML
+  servido por `179.198.113.115.sslip.io` em 2026-08-26. Não setar essa env lá.

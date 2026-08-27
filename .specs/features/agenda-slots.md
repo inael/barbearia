@@ -19,8 +19,8 @@ A agenda precisa gerar os **horários de início disponíveis** para um serviço
 2. Nenhum slot se sobrepõe a um intervalo ocupado (`t < o.fim && o.inicio < t+duração` é falso).
 
 ## Test Coverage Matrix
-REQUIREMENT (geração pura) → SLT-001..005 → unit/property → lib/agenda.test.ts → PENDING
-REQUIREMENT (composição R1+R2 no banco) → SLT-006,007 → integration → lib/db/agenda.integration.test.ts → PENDING
+REQUIREMENT (geração pura) → SLT-001..005 → unit/property → lib/agenda.test.ts → PASS
+REQUIREMENT (composição R1+R2 no banco) → SLT-006,007 → integration → lib/db/agenda.integration.test.ts → PASS
 
 ## Gaps / BLOQUEADO
 - **UI da grade de agenda** (mostrar slots, agendar) depende de **auth Logto** + do modelo de **agendamentos** (tabela de appointments, feature futura). BLOCKED.

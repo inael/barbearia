@@ -11,7 +11,7 @@ O usuário (dono/recepção/barbeiro) precisa de um caminho rápido pra pedir aj
 | SUP-003 | O link tem `aria-label` descritivo (acessível) | e2e | e2e/suporte.spec.ts | PASS | e2e verde |
 
 ## Test Coverage Matrix
-REQUIREMENT (canal de suporte) → SUP-001..003 → e2e (browser real) → e2e/suporte.spec.ts → PENDING
+REQUIREMENT (canal de suporte) → SUP-001..003 → e2e (browser real) → e2e/suporte.spec.ts → PASS
 
 ## Gaps
 - Suíte e2e do suporte. Futuro (se escopo crescer): registro de chamado com histórico/status (hoje é só WhatsApp).

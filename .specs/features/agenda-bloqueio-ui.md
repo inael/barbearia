@@ -14,8 +14,8 @@ O barbeiro (ou dono) cria e remove os **próprios** bloqueios de agenda (ausênc
 | BLQUI-006 | barbeiro cria um bloqueio (aparece na lista) e remove (some) | e2e | e2e/agenda-bloqueios.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (persistência + segurança) → BLQUI-001..004 → integration (Postgres) → lib/db/agenda.integration.test.ts → PENDING
-REQUIREMENT (tela protegida + criar/remover) → BLQUI-005,006 → e2e (browser + login) → e2e/agenda-bloqueios.spec.ts → PENDING
+REQUIREMENT (persistência + segurança) → BLQUI-001..004 → integration (Postgres) → lib/db/agenda.integration.test.ts → PASS
+REQUIREMENT (tela protegida + criar/remover) → BLQUI-005,006 → e2e (browser + login) → e2e/agenda-bloqueios.spec.ts → PASS
 
 ## Segurança
 - `removerBloqueio(db, id, profissionalId)` filtra por `profissionalId` no `WHERE` → um barbeiro não apaga bloqueio de outro (BLQUI-003). As server actions revalidam `auth()` + RBAC + usam o `profissionalId` da sessão.

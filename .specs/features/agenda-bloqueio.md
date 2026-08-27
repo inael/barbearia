@@ -18,8 +18,8 @@ Fonte: `docs/produto/REQUISITOS-NOVOS-2026-08-18.md` (R2). O barbeiro pode **blo
 3. `estaBloqueado` usa intervalo semi-aberto `[inicio, fim)`.
 
 ## Test Coverage Matrix
-REQUIREMENT (regra de bloqueio) → BLQ-001..003 → unit/property → lib/agenda.test.ts → PENDING
-REQUIREMENT (persistência + consulta) → BLQ-004,005 → integration (Postgres) → lib/db/agenda.integration.test.ts → PENDING
+REQUIREMENT (regra de bloqueio) → BLQ-001..003 → unit/property → lib/agenda.test.ts → PASS
+REQUIREMENT (persistência + consulta) → BLQ-004,005 → integration (Postgres) → lib/db/agenda.integration.test.ts → PASS
 
 ## Gaps / BLOQUEADO
 - **UI (barbeiro cria/remove o próprio bloqueio) + RBAC** dependem de **auth Logto** → BLOCKED.

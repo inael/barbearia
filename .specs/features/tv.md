@@ -18,8 +18,8 @@ Fonte: `docs/produto/REQUISITOS-NOVOS-2026-08-18.md` (R3). As TVs **não espelha
 2. Ciclo: `itemAtualIndex(qtd, vel, t) === itemAtualIndex(qtd, vel, t + vel*qtd)`.
 
 ## Test Coverage Matrix
-REQUIREMENT (player por tela) → TV-001..003 → unit/property → lib/tv.test.ts → PENDING
-REQUIREMENT (multi-tela independente) → TV-004..006 → integration (Postgres) → lib/db/tv.integration.test.ts → PENDING
+REQUIREMENT (player por tela) → TV-001..003 → unit/property → lib/tv.test.ts → PASS
+REQUIREMENT (multi-tela independente) → TV-004..006 → integration (Postgres) → lib/db/tv.integration.test.ts → PASS
 
 ## Gaps / BLOQUEADO
 - **UI do player** (tela em tela cheia consumindo a playlist no navegador) + **admin** das telas/playlists dependem de **auth Logto** (admin) e do reuso do player do midia-play. BLOCKED.

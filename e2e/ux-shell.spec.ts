@@ -31,6 +31,38 @@ test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
     await expect(page).toHaveURL(/\/tv$/);
   });
 
+  test("UXS-014 atalho de perfil: quando ligado, loga em 2 cliques; quando desligado, não vaza credencial", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+
+    // O bloco só é renderizado quando o BUILD teve NEXT_PUBLIC_DEMO_LOGINS=1.
+    // O build lê .env.local, então em dev ele aparece; em produção (envs do Coolify,
+    // sem .env.local) ele some. As duas pontas são asseguradas aqui.
+    const ligado = (await page.getByTestId("login-demo").count()) > 0;
+
+    if (ligado) {
+      // escolher o perfil preenche e-mail e senha e o login funciona direto
+      await page.getByTestId("login-demo").selectOption("1"); // índice 1 = Recepção
+      await expect(page.getByLabel("E-mail")).toHaveValue("recepcao@faith.com");
+      await expect(page.getByLabel("Senha")).toHaveValue("recep123");
+      await page.getByRole("button", { name: "Entrar" }).click();
+      await expect(page).toHaveURL(/\/conta/);
+      await expect(page.getByTestId("nav-usuario")).toContainText("Recepção");
+    } else {
+      // desligado (produção): nada de seletor nem de senha demo no HTML servido
+      await expect(page.getByText("Entrar como (atalho de teste)")).toHaveCount(0);
+      const html = await page.content();
+      for (const segredo of ["dono123", "recep123", "barb123"]) {
+        expect(html, `credencial ${segredo} não pode aparecer no login`).not.toContain(segredo);
+      }
+      // e o login normal continua funcionando
+      await page.getByLabel("E-mail").fill("recepcao@faith.com");
+      await page.getByLabel("Senha").fill("recep123");
+      await page.getByRole("button", { name: "Entrar" }).click();
+      await expect(page).toHaveURL(/\/conta/);
+    }
+  });
+
   test("UXS-004 onboarding na /conta com progresso real + telas com 'Como funciona?'", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     // /conta: card Primeiros passos com progresso X de 6

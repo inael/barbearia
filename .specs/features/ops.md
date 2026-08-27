@@ -11,7 +11,7 @@ Pra saber se o produto está no ar (monitoramento em status.toolpad.cloud), a ap
 | OPS-003 | `/health` não depende do banco (responde mesmo sem query ao Postgres) | unit | app/health/route.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (liveness p/ uptime) → OPS-001..003 → e2e → e2e/ops.spec.ts → PENDING
+REQUIREMENT (liveness p/ uptime) → OPS-001..003 → e2e → e2e/ops.spec.ts → PASS
 
 ## Gaps
 - Go-live (HUMANO): cadastrar a URL `/health` no painel status.toolpad.cloud quando deployar.

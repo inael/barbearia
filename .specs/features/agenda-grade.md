@@ -10,7 +10,7 @@ O barbeiro (ou dono) escolhe um serviço e um dia numa tela protegida e vê os *
 | GRD-002 | barbeiro escolhe serviço + dia e vê os horários livres (ex.: 09:00) | e2e | e2e/agenda-grade.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (grade protegida + slots reais) → GRD-001,002 → e2e (browser + login) → e2e/agenda-grade.spec.ts → PENDING
+REQUIREMENT (grade protegida + slots reais) → GRD-001,002 → e2e (browser + login) → e2e/agenda-grade.spec.ts → PASS
 > A geração dos slots (`gerarSlots`/`slotsDoBarbeiro`) já é coberta por SLT-001..007 (unit/property/integration). Aqui o e2e prova a tela consumindo o motor com o barbeiro logado.
 
 ## Gaps

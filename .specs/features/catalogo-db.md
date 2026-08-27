@@ -18,9 +18,9 @@ Fonte de verdade: `lib/db/schema.ts`, `lib/db/seed.ts`, `docs/produto/RESPOSTAS.
 | CAT-007 | Todo serviço com `entra_pote=true` tem `pontos_pote>0` e `slug` ∈ PONTOS_SERVICO com valor igual | integration | lib/db/catalogo.integration.test.ts | PASS | integration verde (6/6, Postgres real) |
 
 ## Test Coverage Matrix
-REQUIREMENT (schema/constraints) → CAT-001..003,006 → integration (Testcontainers Postgres) → catalogo.integration.test.ts → PENDING
-REQUIREMENT (seed determinístico) → CAT-004,005 → integration → catalogo.integration.test.ts → PENDING
-REQUIREMENT (consistência pote) → CAT-007 → integration → catalogo.integration.test.ts → PENDING
+REQUIREMENT (schema/constraints) → CAT-001..003,006 → integration (Testcontainers Postgres) → catalogo.integration.test.ts → PASS
+REQUIREMENT (seed determinístico) → CAT-004,005 → integration → catalogo.integration.test.ts → PASS
+REQUIREMENT (consistência pote) → CAT-007 → integration → catalogo.integration.test.ts → PASS
 
 ## Gaps
 - Suíte de integração inteira (Testcontainers Postgres + drizzle push/migrate + seed) — não existe ainda.
