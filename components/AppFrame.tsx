@@ -7,11 +7,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { GrupoNav } from "@/lib/nav";
+import { perfisDemo } from "@/lib/demo-logins";
+import TrocarUsuario from "./TrocarUsuario";
 
 interface Usuario {
   nome: string;
   papelLabel: string;
+  email?: string | null;
 }
+
+// Trocador de usuário do rodapé: só no modo demo (some ao desligar a env).
+const PERFIS_DEMO = perfisDemo(process.env.NEXT_PUBLIC_DEMO_LOGINS);
 
 const SUPORTE_URL =
   "https://wa.me/556191196730?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20o%20sistema%20da%20Faith%20Barbearia";
@@ -146,19 +152,22 @@ export default function AppFrame({
             Ajuda no WhatsApp
           </a>
           {usuario ? (
-            <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-xs text-neutral-400" data-testid="nav-usuario">
-                {usuario.nome} · {usuario.papelLabel}
-              </span>
-              <form action={sairAction}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-neutral-700 px-3 py-1.5 text-xs font-medium text-neutral-200 hover:bg-white/10"
-                >
-                  Sair
-                </button>
-              </form>
-            </div>
+            <>
+              <TrocarUsuario perfis={PERFIS_DEMO} emailAtual={usuario.email ?? null} />
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-xs text-neutral-400" data-testid="nav-usuario">
+                  {usuario.nome} · {usuario.papelLabel}
+                </span>
+                <form action={sairAction}>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-neutral-700 px-3 py-1.5 text-xs font-medium text-neutral-200 hover:bg-white/10"
+                  >
+                    Sair
+                  </button>
+                </form>
+              </div>
+            </>
           ) : (
             <Link
               href="/login"

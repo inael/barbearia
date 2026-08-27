@@ -23,7 +23,8 @@ export default async function ContaPage() {
   const papel = session?.user?.papel;
   const permitidos = papel ? RECURSOS.filter((r) => podeAcessar(papel, r)) : [];
   const mostraOnboarding = Boolean(papel && podeAcessar(papel, "cadastro"));
-  const passos = mostraOnboarding ? await primeirosPassos(getDb()) : [];
+  // filtrado pelo papel: recepção não vê passos de tela dono-only (horários, equipe)
+  const passos = mostraOnboarding ? await primeirosPassos(getDb(), papel) : [];
   const pendentes = passos.filter((p) => !p.feito);
 
   return (
@@ -55,8 +56,14 @@ export default async function ContaPage() {
             </div>
             {pendentes.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-700 dark:text-neutral-300">
-                Tudo pronto! A barbearia está configurada e vendendo. Acompanhe o dia no{" "}
-                <Link href="/painel" className="font-semibold text-emerald-800 underline dark:text-emerald-400">Painel do dono</Link>.
+                Tudo pronto! A barbearia está configurada e vendendo. Acompanhe o dia{" "}
+                {/* o destino muda com o papel: o painel é dono-only */}
+                {papel && podeAcessar(papel, "config") ? (
+                  <>no <Link href="/painel" className="font-semibold text-emerald-800 underline dark:text-emerald-400">Painel do dono</Link>.</>
+                ) : (
+                  <>na <Link href="/agenda" className="font-semibold text-emerald-800 underline dark:text-emerald-400">Agenda</Link> e no{" "}
+                  <Link href="/caixa" className="font-semibold text-emerald-800 underline dark:text-emerald-400">Caixa</Link>.</>
+                )}
               </p>
             ) : (
               <ol className="mt-3 flex flex-col gap-2">

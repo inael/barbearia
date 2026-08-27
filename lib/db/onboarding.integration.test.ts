@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { seedCatalog, seedPlanos, PLANOS } from "./seed";
 import { primeirosPassos } from "../onboarding";
+import { podeAcessar } from "../auth/rbac";
 import { listarPlanos } from "../assinaturas";
 import { criarCliente } from "../clientes";
 import { criarComanda, adicionarServico, fecharComanda } from "../caixa";
@@ -54,6 +55,29 @@ describe("UXS — onboarding e planos pré-configurados (integration)", () => {
     const depois = await primeirosPassos(db);
     expect(depois.find((p) => p.chave === "clientes")!.feito).toBe(true);
     expect(depois.find((p) => p.chave === "venda")!.feito).toBe(true);
+  });
+
+  it("UXS-015 onboarding é filtrado pelo papel: recepção não vê passo de tela dono-only", async () => {
+    const dono = await primeirosPassos(db, "dono");
+    const recepcao = await primeirosPassos(db, "recepcionista");
+    const barbeiro = await primeirosPassos(db, "barbeiro");
+
+    // o dono vê tudo, inclusive equipe e horários (telas de config)
+    expect(dono.map((p) => p.chave)).toEqual(["servicos", "profissionais", "horarios", "clientes", "agendamento", "venda"]);
+
+    // a recepção NÃO vê os passos que levariam a "Sem acesso a esta página"
+    expect(recepcao.map((p) => p.chave)).toEqual(["servicos", "clientes", "agendamento", "venda"]);
+    for (const proibido of ["profissionais", "horarios"]) {
+      expect(recepcao.some((p) => p.chave === proibido)).toBe(false);
+    }
+
+    // barbeiro não faz cadastro/caixa: nenhum passo sobra pra ele
+    expect(barbeiro).toEqual([]);
+
+    // INVARIANTE: todo passo exibido leva a uma tela que o papel pode abrir
+    for (const [papel, passos] of [["dono", dono], ["recepcionista", recepcao]] as const) {
+      for (const p of passos) expect(podeAcessar(papel, p.recurso), `${papel} não pode ${p.chave}`).toBe(true);
+    }
   });
 
   it("UXS-008 planos Flex/Premium do Rodrigo vêm pré-configurados no seed, sem duplicar", async () => {

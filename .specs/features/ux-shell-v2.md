@@ -29,6 +29,9 @@ agrupado em entrada → resultado com aviso de que nada é salvo. O player da TV
 | UXS-012 | App inteiro exige login (deslogado → /login; sem menu de visitante); públicos só /tv (Smart TV), /health e webhooks | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 | UXS-013 | Atalho "Entrar como" no login: com NEXT_PUBLIC_DEMO_LOGINS=1 traz os 3 papéis com as credenciais; sem a env a lista é vazia (o seletor some) | unit | lib/demo-logins.test.ts | PASS | verde (gate) |
 | UXS-014 | Atalho no browser: ligado, escolher o perfil preenche e-mail/senha e loga (nav mostra o papel); desligado, não renderiza nem vaza as senhas demo no HTML e o login normal segue funcionando | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
+| UXS-015 | Onboarding filtrado por papel: dono vê os 6 passos, recepção só os 4 que ela acessa (sem equipe/horários), barbeiro nenhum; e NENHUM link do bloco (inclusive os do texto "tudo pronto") ou item de menu leva a "Sem acesso" | integration + e2e | lib/db/onboarding.integration.test.ts, e2e/ux-shell.spec.ts | PASS | verde (gate) |
+| UXS-016 | Trocador de usuário no rodapé da sidebar (modo demo): lista os perfis com e-mail, troca a sessão e o shell reage ao novo papel (menu do dono aparece) | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
+| UXS-017 | Identidade visual fixa: sidebar escura + conteúdo claro mesmo com o SO em tema escuro (variante `dark:` presa à classe `.dark`, que não é aplicada) | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (navegação por papel pura) → UXS-001 → unit → lib/nav.test.ts → PASS
@@ -45,6 +48,9 @@ REQUIREMENT (simulador honesto) → UXS-011 → e2e → e2e/ux-shell.spec.ts →
 REQUIREMENT (tudo atrás de login) → UXS-012 → e2e → e2e/ux-shell.spec.ts → PASS
 REQUIREMENT (atalho de perfil só em dev) → UXS-013 → unit → lib/demo-logins.test.ts → PASS
 REQUIREMENT (atalho não vaza em produção) → UXS-014 → e2e → e2e/ux-shell.spec.ts → PASS
+REQUIREMENT (onboarding e menu coerentes com o papel) → UXS-015 → integration + e2e → lib/db/onboarding.integration.test.ts, e2e/ux-shell.spec.ts → PASS
+REQUIREMENT (troca rápida de usuário no teste) → UXS-016 → e2e → e2e/ux-shell.spec.ts → PASS
+REQUIREMENT (sidebar escura + centro claro sempre) → UXS-017 → e2e → e2e/ux-shell.spec.ts → PASS
 
 ## Gaps
 - Onboarding não é dispensável manualmente (some sozinho quando completo) — se o

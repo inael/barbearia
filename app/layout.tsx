@@ -27,7 +27,9 @@ const papelLabel: Record<Papel, string> = { dono: "Dono", recepcionista: "Recep√
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
   const papel = (session?.user?.papel as Papel | undefined) ?? null;
-  const usuario = papel ? { nome: session?.user?.name ?? "", papelLabel: papelLabel[papel] ?? papel } : null;
+  const usuario = papel
+    ? { nome: session?.user?.name ?? "", papelLabel: papelLabel[papel] ?? papel, email: session?.user?.email ?? null }
+    : null;
 
   return (
     <html

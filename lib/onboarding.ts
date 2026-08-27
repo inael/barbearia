@@ -4,6 +4,7 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { eq, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
+import { podeAcessar, type Papel, type Recurso } from "./auth/rbac";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -13,6 +14,8 @@ export interface PassoOnboarding {
   descricao: string;
   href: string;
   feito: boolean;
+  /** Permissão exigida pela tela do passo — quem não tem, não vê o passo. */
+  recurso: Recurso;
 }
 
 async function conta(db: DB, tabela: { id: unknown }): Promise<number> {
@@ -21,8 +24,18 @@ async function conta(db: DB, tabela: { id: unknown }): Promise<number> {
   return Number((row as { n: number })?.n ?? 0);
 }
 
-/** Passos do onboarding com o estado real do banco. */
-export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
+/**
+ * Passos do onboarding com o estado real do banco, **filtrados pelo papel**:
+ * cada passo leva a uma tela protegida, então quem não tem a permissão não vê
+ * o passo (senão o botão "Fazer agora" cairia num "Sem acesso a esta página").
+ * `papel` null = sem filtro (uso interno/teste).
+ */
+export async function primeirosPassos(db: DB, papel?: Papel | null): Promise<PassoOnboarding[]> {
+  const todos = await todosOsPassos(db);
+  return papel ? todos.filter((p) => podeAcessar(papel, p.recurso)) : todos;
+}
+
+async function todosOsPassos(db: DB): Promise<PassoOnboarding[]> {
   const [servicos, profissionais, horarios, clientes, agendamentos] = await Promise.all([
     conta(db, schema.servicos),
     conta(db, schema.profissionais),
@@ -42,6 +55,7 @@ export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
       descricao: "Preços e durações que aparecem no catálogo, na agenda e no caixa.",
       href: "/cadastros/servicos",
       feito: servicos > 0,
+      recurso: "cadastro",
     },
     {
       chave: "profissionais",
@@ -49,6 +63,7 @@ export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
       descricao: "Barbeiros e recepção — cada um com a sua comissão e agenda.",
       href: "/cadastros/profissionais",
       feito: profissionais > 0,
+      recurso: "config", // tela dono-only
     },
     {
       chave: "horarios",
@@ -56,6 +71,7 @@ export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
       descricao: "Dias e horários em que a agenda aceita marcação (e feriados).",
       href: "/cadastros/horarios",
       feito: horarios > 0,
+      recurso: "config", // tela dono-only
     },
     {
       chave: "clientes",
@@ -63,6 +79,7 @@ export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
       descricao: "Só nome e telefone — o CPF fica pra hora da nota.",
       href: "/cadastros/clientes",
       feito: clientes > 0,
+      recurso: "cadastro",
     },
     {
       chave: "agendamento",
@@ -70,6 +87,7 @@ export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
       descricao: "Escolha o cliente, o serviço e o horário livre na agenda.",
       href: "/agenda",
       feito: agendamentos > 0,
+      recurso: "agenda",
     },
     {
       chave: "venda",
@@ -77,6 +95,7 @@ export async function primeirosPassos(db: DB): Promise<PassoOnboarding[]> {
       descricao: "Abra a comanda, lance os itens e feche — é isso que alimenta comissão e painel.",
       href: "/caixa",
       feito: Number(vendas?.n ?? 0) > 0,
+      recurso: "caixa",
     },
   ];
 }

@@ -69,6 +69,90 @@ test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
     }
   });
 
+  test("UXS-015 recepção: nenhum passo do onboarding nem item de menu leva a 'Sem acesso'", async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
+
+    // 1) o onboarding dela não mostra passos de tela dono-only
+    const onboarding = page.getByTestId("onboarding");
+    await expect(onboarding).toBeVisible();
+    await expect(onboarding.getByText("Configure os horários de funcionamento")).toHaveCount(0);
+    await expect(onboarding.getByText("Cadastre a equipe")).toHaveCount(0);
+
+    // 2) QUALQUER link do bloco de onboarding (inclusive os do texto "tudo pronto")
+    //    abre uma tela que ela realmente acessa
+    const destinos = await onboarding.locator("a").evaluateAll((as) =>
+      as.map((a) => (a as HTMLAnchorElement).getAttribute("href")).filter((h): h is string => !!h && h.startsWith("/")),
+    );
+    expect(destinos.length, "o onboarding deveria ter ao menos um link").toBeGreaterThan(0);
+    for (const destino of [...new Set(destinos)]) {
+      const resp = await page.goto(destino);
+      expect(resp?.status(), `${destino} deveria abrir`).toBe(200);
+      await expect(page.getByText("Sem acesso a esta página."), `onboarding aponta ${destino} mas a recepção não acessa`).toHaveCount(0);
+      await page.goto("/conta");
+    }
+
+    // 3) TODO item do menu dela também abre sem bloqueio
+    await page.goto("/conta");
+    const hrefs = await page.locator("nav a").evaluateAll((as) =>
+      as.map((a) => (a as HTMLAnchorElement).getAttribute("href")).filter((h): h is string => !!h && h.startsWith("/")),
+    );
+    for (const href of [...new Set(hrefs)]) {
+      const resp = await page.goto(href);
+      expect(resp?.status(), `${href} deveria abrir`).toBe(200);
+      await expect(page.getByText("Sem acesso a esta página."), `menu mostra ${href} mas a recepção não acessa`).toHaveCount(0);
+    }
+  });
+
+  test("UXS-016 trocador de usuário no rodapé da sidebar troca de perfil e o shell reage", async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
+    const trocador = page.getByTestId("trocar-usuario");
+    if ((await trocador.count()) === 0) return; // modo demo desligado (produção)
+
+    await expect(page.getByTestId("nav-usuario")).toContainText("Recepção");
+    // a recepção NÃO enxerga o Painel do dono
+    await expect(page.locator("nav").getByRole("link", { name: "Painel do dono" })).toHaveCount(0);
+
+    await trocador.getByRole("button", { name: /Trocar de usuário/ }).click();
+    // a lista mostra o e-mail de cada perfil
+    await expect(trocador.getByText("dono@faith.com")).toBeVisible();
+    await expect(trocador.getByText("barbeiro@faith.com")).toBeVisible();
+
+    await trocador.locator('[data-trocar="dono@faith.com"]').click();
+    await expect(page.getByTestId("nav-usuario")).toContainText("Dono");
+    // agora o menu do dono aparece — o shell reagiu à troca
+    await expect(page.locator("nav").getByRole("link", { name: "Painel do dono" })).toBeVisible();
+  });
+
+  test("UXS-017 identidade visual: sidebar escura + centro claro mesmo com o SO no tema escuro", async ({ browser }) => {
+    // simula Windows/macOS no modo escuro — antes disso o centro ficava preto
+    const ctx = await browser.newContext({ colorScheme: "dark" });
+    const page = await ctx.newPage();
+    await page.goto("/login");
+    await page.getByLabel("E-mail").fill("dono@faith.com");
+    await page.getByLabel("Senha").fill("dono123");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/conta/);
+
+    // O Tailwind v4 devolve cor em lab()/oklch(), então normalizo pintando num
+    // canvas 1x1 e lendo o pixel — funciona pra qualquer formato de cor.
+    const luminancia = (el: Element) => {
+      const cor = getComputedStyle(el).backgroundColor;
+      const c = document.createElement("canvas");
+      c.width = c.height = 1;
+      const ctx2 = c.getContext("2d")!;
+      ctx2.fillStyle = cor;
+      ctx2.fillRect(0, 0, 1, 1);
+      const [r, g, b] = ctx2.getImageData(0, 0, 1, 1).data;
+      return { cor, lum: 0.2126 * r + 0.7152 * g + 0.0722 * b }; // 0 preto … 255 branco
+    };
+    const conteudo = await page.locator("main").first().evaluate(luminancia);
+    const sidebar = await page.locator("nav").first().evaluate(luminancia);
+
+    expect(conteudo.lum, `conteúdo deveria ser claro, veio ${conteudo.cor}`).toBeGreaterThan(200);
+    expect(sidebar.lum, `sidebar deveria ser escura, veio ${sidebar.cor}`).toBeLessThan(60);
+    await ctx.close();
+  });
+
   test("UXS-004 onboarding na /conta com progresso real + telas com 'Como funciona?'", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     // /conta: card Primeiros passos com progresso X de 6
