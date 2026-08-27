@@ -1,43 +1,33 @@
-# ACTIVE_PLAN — Reforma UX "cara de sistema" (2026-08-26)
+# ACTIVE_PLAN — Go-live da Faith Barbearia (2026-08-26)
 
-> Plano anterior (CRT cortesia + serviço do barbeiro) CONCLUÍDO em 2026-08-25
-> (commit `2fb582e`, 270/270 ACs). Este plano executa o feedback de UX do Inael:
-> `docs/produto/FEEDBACK-UX-2026-08-26.md` (12 pontos). Goal LoopX `barbearia-goal`.
+> Planos anteriores CONCLUÍDOS: CRT (cortesia/vale, 25/08), UXS (shell SaaS + onboarding,
+> 26/08) e OPR (auditoria dos áudios do Rodrigo + gaps, 26/08). Estado atual:
+> **44 features · 291 ACs · 291 PASS**, `EXIT_SIGNAL: true (código)` em `.specs/STATE.md`.
 
-## Objetivo
-Tirar a cara de protótipo: shell SaaS com sidebar escura (grupos+submenus) e conteúdo
-claro, onboarding autoexplicativo no login, texto "o que é / como funciona" em toda
-tela, filtros e fixes pontuais (estoque, metas, planos, TV, catálogo, comissão).
+## Onde estamos
+O sistema está **completo em código** e validado por uma simulação de 1 mês de operação
+(`docs/context/SIMULACAO-2026-08-26.md`: 236 comandas, R$ 21.461,90, conferência cruzada
+painel == caixa). A auditoria integral dos pedidos do Rodrigo
+(`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`) não deixou gap de código.
 
-## Ondas
-**Onda 1 (shell + explicação):**
-- `components/Sidebar.tsx` (client, usePathname/estado mobile) + `AppShell` no layout;
-  navbar horizontal morre. Grupos por papel: Visão geral / Operação / Cadastros /
-  Gestão / TV + Conta. Labels renomeados: `/`="Catálogo", `/painel`="Painel do dono".
-- `components/PageHeader.tsx`: título + descrição + `<details>` "Como funciona?" —
-  aplicado em caixa, painel, pote, TV, estoque, metas, vales, assinaturas, agenda,
-  cadastros, catálogo, comissão.
-- `lib/onboarding.ts` + card "Primeiros passos" na `/conta` (progresso real por
-  contagem no banco + CTA por passo; some quando completo).
-- Catálogo `/`: busca de serviços (GET form) + texto do que é a página.
-- Comissão: reagrupar (entradas → resultado), rotular como simulador (nada salva).
-- Painel do dono: filtro de período (7d/30d/90d/12m) via searchParams.
-- Estoque: unidade vira select pré-configurado.
-- TV: formulário claro (upload de imagem/vídeo OU colar link YouTube/URL) + bloco
-  explicando o link do player na Smart TV.
-- Agenda/telas vazias: empty states com CTA (ex.: cadastrar cliente).
+## O que falta — NÃO é código
+1. **Deploy da versão atual** (3 commits acima do que está na VPS): `drizzle-kit push`
+   no banco de produção (colunas novas têm DEFAULT, migração segura) + redeploy Coolify.
+   Lembrar de NÃO setar `NEXT_PUBLIC_DEMO_LOGINS` em produção (o seletor de perfil some).
+2. **Trocar as senhas demo** (dono/recepção/barbeiro) pelas reais do Rodrigo.
+3. **SimplesZap**: conectar a instância (QR no número da barbearia) → `SIMPLESZAP_INSTANCE`.
+4. **Asaas produção** (link de cartão recorrente) + webhook registrado.
+5. **NFS-e** do MEI do Rodrigo (CNPJ + município + credencial).
+6. **Scheduler/cron** dos lembretes.
+7. **Storage** da mídia da TV (bucket do cliente).
+8. **SEC-04**: fechar Postgres 5432 público + SSH root na VPS.
+9. **status.toolpad.cloud**: cadastrar a URL (regra IT Booster) + domínio próprio.
+10. **Treinar o Rodrigo** (o onboarding na /conta já guia os primeiros passos).
 
-**Onda 2 (regras):**
-- Metas por quantidade de atendimentos (schema `metas.tipoAlvo`+`alvoQuantidade`,
-  `atendimentosDoPeriodo`).
-- Planos Flex/Premium pré-configurados no seed (RF25/RF28).
+## Perguntas abertas com o Rodrigo (não bloqueiam)
+- CRT (P1–P3): cortesia usa a faixa do barbeiro? vale = preço − comissão natural?
+  cortesia fora do faturamento? (rascunho de mensagem pronto, aguarda aprovação do Inael)
+- OPR: meta da recepção em "quantidade" mede hidratações — confirmar a régua.
 
-## Riscos
-- e2e de shell/painel referenciam labels antigos ("Painel", nav horizontal) →
-  atualizar shell.spec/painel.spec junto (spec SHELL continua válida: navegação por
-  papel).
-- Sidebar client component: manter UM `<nav>` (testes usam locator("nav")).
-- Axe (ux-base) roda em `/` e `/comissao`: sidebar escura precisa contraste ≥4.5:1.
-
-## Validação
-`npm run tlc` OK · quality:quick → integration → e2e · commit por onda, autor inael.
+## Próximo passo
+Autorização do Inael para o deploy. Depois: smoke real com credenciais e treinamento.

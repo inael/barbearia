@@ -29,6 +29,15 @@ const D = {
 };
 
 test.describe("CUI — Simulador de Comissao & Pote", () => {
+  // UXS-012: o app inteiro exige login.
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel("E-mail").fill("barbeiro@faith.com");
+    await page.getByLabel("Senha").fill("barb123");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/conta/);
+  });
+
   test("CUI-001 rota responde e mostra o titulo", { tag: "@critical" }, async ({ page }) => {
     const resp = await page.goto("/comissao");
     expect(resp?.status()).toBe(200);

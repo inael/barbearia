@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
-import { definirMeta, definirMetaQuantidade, relatorioProfissional, semanaAtual, type RelatorioProfissional } from "@/lib/metas";
+import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao } from "@/lib/metas";
 import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +60,33 @@ function LinhaRelatorio({ nome, rel }: { nome: string; rel: RelatorioProfissiona
   );
 }
 
+function LinhaRecepcao({ nome, rec }: { nome: string; rec: RelatorioRecepcao }) {
+  return (
+    <div data-prof-meta={nome} className="flex flex-wrap items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <span className="w-24 font-medium">{nome}</span>
+      <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">recepção</span>
+      <span className="text-neutral-600">Produtos: <strong>{brl(rec.produtosCentavos)}</strong></span>
+      <span className="text-neutral-600">Hidratações: <strong>{rec.qtdHidratacoes}</strong></span>
+      <span className="text-neutral-600">Divididos da casa: {brl(rec.divididosCasaCentavos)}</span>
+      <span className="text-neutral-600">Comissão: {rec.comissaoTotalReais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+      <span className="text-neutral-600">Vales: {brl(rec.valesCentavos)}</span>
+      <span className="text-neutral-600">
+        Meta:{" "}
+        {rec.tipoAlvo === "quantidade"
+          ? `${rec.alvoQuantidade} hidratações`
+          : rec.alvoCentavos != null
+            ? brl(rec.alvoCentavos)
+            : "—"}
+      </span>
+      {rec.batido == null ? null : rec.batido ? (
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">meta batida</span>
+      ) : (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">não batida</span>
+      )}
+    </div>
+  );
+}
+
 export default async function MetasPage() {
   const session = await auth();
   const papel = session?.user?.papel;
@@ -83,7 +110,13 @@ export default async function MetasPage() {
   const alvos = editar
     ? profissionais
     : profissionais.filter((p) => p.id === pid);
-  const relatorios = await Promise.all(alvos.map(async (p) => ({ nome: p.nome, rel: await relatorioProfissional(db, p.id, inicio, fim) })));
+  const relatorios = await Promise.all(
+    alvos.map(async (p) =>
+      p.papel === "recepcionista"
+        ? { nome: p.nome, rec: await relatorioRecepcao(db, p.id, inicio, fim), rel: null }
+        : { nome: p.nome, rec: null, rel: await relatorioProfissional(db, p.id, inicio, fim) },
+    ),
+  );
 
   return (
     <main className={wrap}>
@@ -126,9 +159,9 @@ export default async function MetasPage() {
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">{editar ? "Equipe" : "Meu desempenho"} (semana)</h2>
           <div className="flex flex-col gap-2">
-            {relatorios.length === 0 ? <p className="text-sm text-neutral-600">Sem dados.</p> : relatorios.map((r) => (
-              <LinhaRelatorio key={r.nome} nome={r.nome} rel={r.rel} />
-            ))}
+            {relatorios.length === 0 ? <p className="text-sm text-neutral-600">Sem dados.</p> : relatorios.map((r) =>
+              r.rec ? <LinhaRecepcao key={r.nome} nome={r.nome} rec={r.rec} /> : <LinhaRelatorio key={r.nome} nome={r.nome} rel={r.rel!} />,
+            )}
           </div>
         </section>
       </div>

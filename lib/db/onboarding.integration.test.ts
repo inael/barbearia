@@ -63,7 +63,7 @@ describe("UXS — onboarding e planos pré-configurados (integration)", () => {
     expect(flexCompleto?.precoCentavos).toBe(22000);
     expect(flexCompleto?.descontoServicoPct).toBe(10);
     expect(flexCompleto?.descontoProdutoPct).toBe(5);
-    expect(flexCompleto?.dias).toBe("ter-qui");
+    expect(flexCompleto?.dias).toBe("2,3,4"); // ter,qua,qui — formato do beneficioValido
     const premiumCompleto = planos.find((p) => p.nome === "Premium — Corte/barba/pezinho/sobrancelha");
     expect(premiumCompleto?.precoCentavos).toBe(25000);
     expect(premiumCompleto?.descontoServicoPct).toBe(20);

@@ -59,7 +59,7 @@ test.describe("CX — caixa (e2e)", () => {
 
     // painel do dono mostra o custo de cortesias (valor concedido no período)
     await page.locator("nav").getByRole("button", { name: "Sair" }).click();
-    await expect(page.locator("nav").getByRole("link", { name: "Entrar" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible(); // sessão encerrada
     await login(page, "dono@faith.com", "dono123");
     await page.goto("/painel");
     await expect(page.getByTestId("custo-cortesias")).toContainText("60,00");

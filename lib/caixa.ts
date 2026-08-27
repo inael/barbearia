@@ -10,12 +10,28 @@ import {
   isServicoDividido,
   valeServicoBarbeiroCentavos,
   fracaoComissaoItem,
+  comissaoHidratacaoRecepcionista,
   type FaixaServico,
   type FaixaProduto,
 } from "./comissao";
 import { registrarValeServicoBarbeiro } from "./vales";
+import { planoAtivoDoCliente, beneficioValido, descontoAssinante } from "./assinaturas";
 
 type DB = PostgresJsDatabase<typeof schema>;
+
+/** DSC/RF28: % de desconto do assinante ATIVO da comanda para o dia (0 se não há). */
+async function descontoDaComanda(db: DB, comandaId: number, tipo: "servico" | "produto", quando: Date): Promise<number> {
+  const [c] = await db.select({ clienteId: schema.comandas.clienteId }).from(schema.comandas).where(eq(schema.comandas.id, comandaId));
+  if (!c?.clienteId) return 0;
+  const plano = await planoAtivoDoCliente(db, c.clienteId);
+  if (!plano || !beneficioValido(plano, quando)) return 0;
+  return descontoAssinante(plano, tipo);
+}
+
+/** Preço com o desconto do assinante aplicado (centavos, arredondado). */
+export function aplicarDesconto(precoCentavos: number, pct: number): number {
+  return Math.round((precoCentavos * (100 - pct)) / 100);
+}
 
 /** Lançamento de um item (CRT): normal cobra do cliente; cortesia e serviço-do-barbeiro não. */
 export type Lancamento = "normal" | "cortesia" | "servico_barbeiro";
@@ -43,40 +59,44 @@ export async function criarComanda(db: DB, clienteId: number | null): Promise<nu
   return row.id;
 }
 
-/** Lança um serviço na comanda (preço/nome/slug vêm do catálogo, não do cliente). */
-export async function adicionarServico(db: DB, comandaId: number, servicoId: number, profissionalId: number, lancamento: string = "normal"): Promise<number> {
+/** Lança um serviço na comanda (preço/nome/slug vêm do catálogo, não do cliente).
+ * Assinante ativo com benefício no dia paga com o desconto do plano (DSC/RF28). */
+export async function adicionarServico(db: DB, comandaId: number, servicoId: number, profissionalId: number, lancamento: string = "normal", quando: Date = new Date()): Promise<number> {
   const lanc = exigirLancamento(lancamento, LANCAMENTOS);
   await exigirAberta(db, comandaId);
   const [s] = await db.select().from(schema.servicos).where(eq(schema.servicos.id, servicoId));
   if (!s) throw new Error("serviço inexistente");
+  const pct = lanc === "normal" ? await descontoDaComanda(db, comandaId, "servico", quando) : 0;
   const [row] = await db
     .insert(schema.comandaItens)
-    .values({ comandaId, tipo: "servico", refId: s.id, slug: s.slug, profissionalId, descricao: s.nome, valorCentavos: s.precoCentavos, lancamento: lanc })
+    .values({ comandaId, tipo: "servico", refId: s.id, slug: s.slug, profissionalId, descricao: s.nome, valorCentavos: aplicarDesconto(s.precoCentavos, pct), lancamento: lanc, descontoPct: pct })
     .returning({ id: schema.comandaItens.id });
   return row.id;
 }
 
-export async function adicionarCombo(db: DB, comandaId: number, comboId: number, profissionalId: number, lancamento: string = "normal"): Promise<number> {
+export async function adicionarCombo(db: DB, comandaId: number, comboId: number, profissionalId: number, lancamento: string = "normal", quando: Date = new Date()): Promise<number> {
   const lanc = exigirLancamento(lancamento, LANCAMENTOS);
   await exigirAberta(db, comandaId);
   const [c] = await db.select().from(schema.combos).where(eq(schema.combos.id, comboId));
   if (!c) throw new Error("combo inexistente");
+  const pct = lanc === "normal" ? await descontoDaComanda(db, comandaId, "servico", quando) : 0;
   const [row] = await db
     .insert(schema.comandaItens)
-    .values({ comandaId, tipo: "combo", refId: c.id, slug: c.slug, profissionalId, descricao: c.nome, valorCentavos: c.precoCentavos, lancamento: lanc })
+    .values({ comandaId, tipo: "combo", refId: c.id, slug: c.slug, profissionalId, descricao: c.nome, valorCentavos: aplicarDesconto(c.precoCentavos, pct), lancamento: lanc, descontoPct: pct })
     .returning({ id: schema.comandaItens.id });
   return row.id;
 }
 
 /** Produto: cortesia é permitida; retirada pelo próprio barbeiro usa o fluxo VAL (30% off), não o caixa. */
-export async function adicionarProduto(db: DB, comandaId: number, produtoId: number, profissionalId: number, lancamento: string = "normal"): Promise<number> {
+export async function adicionarProduto(db: DB, comandaId: number, produtoId: number, profissionalId: number, lancamento: string = "normal", quando: Date = new Date()): Promise<number> {
   const lanc = exigirLancamento(lancamento, ["normal", "cortesia"]);
   await exigirAberta(db, comandaId);
   const [p] = await db.select().from(schema.produtos).where(eq(schema.produtos.id, produtoId));
   if (!p) throw new Error("produto inexistente");
+  const pct = lanc === "normal" ? await descontoDaComanda(db, comandaId, "produto", quando) : 0;
   const [row] = await db
     .insert(schema.comandaItens)
-    .values({ comandaId, tipo: "produto", refId: p.id, slug: p.slug, profissionalId, descricao: p.nome, valorCentavos: p.precoCentavos, lancamento: lanc })
+    .values({ comandaId, tipo: "produto", refId: p.id, slug: p.slug, profissionalId, descricao: p.nome, valorCentavos: aplicarDesconto(p.precoCentavos, pct), lancamento: lanc, descontoPct: pct })
     .returning({ id: schema.comandaItens.id });
   return row.id;
 }
@@ -96,6 +116,7 @@ export interface ItemView {
   profissionalNome: string;
   valorCentavos: number;
   lancamento: string;
+  descontoPct: number;
 }
 
 export async function listarItens(db: DB, comandaId: number): Promise<ItemView[]> {
@@ -108,6 +129,7 @@ export async function listarItens(db: DB, comandaId: number): Promise<ItemView[]
       profissionalNome: schema.profissionais.nome,
       valorCentavos: schema.comandaItens.valorCentavos,
       lancamento: schema.comandaItens.lancamento,
+      descontoPct: schema.comandaItens.descontoPct,
     })
     .from(schema.comandaItens)
     .innerJoin(schema.profissionais, eq(schema.profissionais.id, schema.comandaItens.profissionalId))
@@ -279,6 +301,69 @@ export async function comissaoDoPeriodo(
     cortesias: cortAvulsos + cortCombos + cortDivididos + cortProdutos,
     comissaoCortesias: Math.round((comissaoCortesias + Number.EPSILON) * 100) / 100,
     faixaServico,
+    faixaProduto,
+    comissaoTotal: Math.round((comissaoTotal + Number.EPSILON) * 100) / 100,
+  };
+}
+
+export interface ComissaoRecepcaoPeriodo {
+  /** Produtos vendidos POR ELA no período (reais). */
+  produtos: number;
+  /** Nº de hidratações de cabelo feitas por ela. */
+  qtdHidratacoes: number;
+  /** Valor cheio dos serviços divididos DA CASA (reais) — ela leva 20%. */
+  divididosCasa: number;
+  faixaProduto: FaixaProduto;
+  comissaoTotal: number;
+}
+
+/**
+ * REC (RF18/RF19): comissão REAL da recepcionista a partir das vendas fechadas:
+ * produtos vendidos por ela (faixa 5%/10%), R$5 por hidratação de cabelo feita por
+ * ela (R$10/cada acima de 10 no período) e 20% de TODOS os serviços divididos da
+ * casa (Limpeza Detox / Acidificação, qualquer barbeiro). Cortesias contam pelo
+ * valor cheio (CRT); consumo próprio (servico_barbeiro) fica fora.
+ */
+export async function comissaoRecepcaoDoPeriodo(
+  db: DB,
+  profissionalId: number,
+  de: Date,
+  ate: Date,
+  opts?: { produtosMesAnterior?: number },
+): Promise<ComissaoRecepcaoPeriodo> {
+  const rows = await db
+    .select({
+      tipo: schema.comandaItens.tipo,
+      slug: schema.comandaItens.slug,
+      valor: schema.comandaItens.valorCentavos,
+      lancamento: schema.comandaItens.lancamento,
+      profissionalId: schema.comandaItens.profissionalId,
+    })
+    .from(schema.comandaItens)
+    .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
+    .where(and(eq(schema.comandas.status, "fechada"), gte(schema.comandas.fechadaEm, de), lt(schema.comandas.fechadaEm, ate)));
+
+  let produtos = 0;
+  let qtdHidratacoes = 0;
+  let divididosCasa = 0;
+  for (const r of rows) {
+    if (r.lancamento === "servico_barbeiro") continue;
+    const reais = r.valor / 100;
+    if (r.tipo === "servico" && r.slug && isServicoDividido(r.slug)) divididosCasa += reais;
+    if (r.profissionalId !== profissionalId) continue;
+    if (r.tipo === "produto") produtos += reais;
+    if (r.tipo === "servico" && r.slug === "hidratacao_cabelo") qtdHidratacoes += 1;
+  }
+
+  const faixaProduto = faixaComissaoProduto(opts?.produtosMesAnterior ?? 0);
+  const comissaoTotal =
+    comissaoProduto(produtos, faixaProduto) +
+    comissaoHidratacaoRecepcionista(qtdHidratacoes) +
+    comissaoDividida(divididosCasa).recepcionista;
+  return {
+    produtos,
+    qtdHidratacoes,
+    divididosCasa,
     faixaProduto,
     comissaoTotal: Math.round((comissaoTotal + Number.EPSILON) * 100) / 100,
   };

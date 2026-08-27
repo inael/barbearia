@@ -77,6 +77,17 @@ export async function reconhecerAssinante(db: DB, telefone: string): Promise<Ass
   return { clienteId: cli.id, clienteNome: cli.nome, plano, status: ass.status };
 }
 
+/** Plano da assinatura ATIVA do cliente (DSC/RF28) — null se não é assinante ativo. */
+export async function planoAtivoDoCliente(db: DB, clienteId: number): Promise<schema.Plano | null> {
+  const [ass] = await db
+    .select()
+    .from(schema.assinaturas)
+    .where(and(eq(schema.assinaturas.clienteId, clienteId), eq(schema.assinaturas.status, "ativa")));
+  if (!ass) return null;
+  const [plano] = await db.select().from(schema.planos).where(eq(schema.planos.id, ass.planoId));
+  return plano ?? null;
+}
+
 /** True se o cliente tem alguma assinatura em atraso (bloqueia novo agendamento). */
 export async function assinaturaEmAtraso(db: DB, clienteId: number): Promise<boolean> {
   const rows = await db

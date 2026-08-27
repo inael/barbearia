@@ -1,6 +1,15 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("SUP — Suporte via WhatsApp", () => {
+  // UXS-012: o app inteiro exige login (o botão Ajuda vive na sidebar do shell).
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel("E-mail").fill("recepcao@faith.com");
+    await page.getByLabel("Senha").fill("recep123");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/conta/);
+  });
+
   for (const path of ["/", "/comissao"]) {
     test(`SUP-001/002/003 botao Ajuda em ${path}`, { tag: "@critical" }, async ({ page }) => {
       await page.goto(path);

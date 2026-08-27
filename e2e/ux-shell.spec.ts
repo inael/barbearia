@@ -11,12 +11,24 @@ async function login(page: Page, email: string, senha: string) {
 test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
   test("UXS-002 no mobile a sidebar vira drawer: abre pelo botão Menu e navega", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 720 });
+    await login(page, "recepcao@faith.com", "recep123");
     await page.goto("/");
     // sidebar fora da tela; o botão abre o drawer
     await page.getByRole("button", { name: "Abrir menu" }).click();
     await expect(page.locator("nav").getByRole("link", { name: "Comissão", exact: true })).toBeVisible();
     await page.locator("nav").getByRole("link", { name: "Comissão", exact: true }).click();
     await expect(page).toHaveURL(/\/comissao/);
+  });
+
+  test("UXS-012 sem login TUDO redireciona pro /login; player da TV continua público", async ({ page }) => {
+    for (const rota of ["/", "/painel", "/caixa", "/comissao", "/estoque"]) {
+      await page.goto(rota);
+      await expect(page, `rota ${rota} deveria exigir login`).toHaveURL(/\/login/);
+    }
+    // a TV abre sem sessão (Smart TV não loga)
+    const resp = await page.goto("/tv");
+    expect(resp?.status()).toBe(200);
+    await expect(page).toHaveURL(/\/tv$/);
   });
 
   test("UXS-004 onboarding na /conta com progresso real + telas com 'Como funciona?'", async ({ page }) => {
@@ -56,6 +68,7 @@ test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
   });
 
   test("UXS-009 catálogo explica o que é e a busca filtra os serviços", async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
     await page.goto("/");
     await expect(page.getByText("vitrine da Faith Barbearia", { exact: false })).toBeVisible();
     await page.getByLabel("Buscar serviço").fill("selagem");
@@ -77,6 +90,7 @@ test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
   });
 
   test("UXS-011 simulador de comissão avisa que nada é salvo e agrupa entrada → resultado", async ({ page }) => {
+    await login(page, "barbeiro@faith.com", "barb123");
     await page.goto("/comissao");
     await expect(page.getByText("Isto é uma simulação", { exact: false })).toBeVisible();
     await expect(page.getByRole("heading", { name: "1 · O que você informa" })).toBeVisible();

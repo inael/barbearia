@@ -119,6 +119,8 @@ export const comandaItens = pgTable("comanda_itens", {
   descricao: text("descricao").notNull(),
   valorCentavos: integer("valor_centavos").notNull(),
   lancamento: text("lancamento").notNull().default("normal"),
+  /** DSC/RF28: % de desconto de assinante aplicado no valor (0 = sem desconto). */
+  descontoPct: integer("desconto_pct").notNull().default(0),
 });
 
 /** Planos de assinatura (Flex/Premium): desconto e dias contratados. */

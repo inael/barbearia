@@ -12,10 +12,9 @@ async function login(page: Page, email: string, senha: string) {
 const nav = (page: Page) => page.locator("nav");
 
 test.describe("SHELL — navegação por papel + login/logout", () => {
-  test("SHELL-001 deslogado mostra Entrar; logado mostra usuário + Sair; logout volta a Entrar", { tag: "@critical" }, async ({ page }) => {
+  test("SHELL-001 deslogado é levado pro /login (UXS-012); logado mostra usuário + Sair; logout volta pro login", { tag: "@critical" }, async ({ page }) => {
     await page.goto("/");
-    await expect(nav(page).getByRole("link", { name: "Entrar" })).toBeVisible();
-    await expect(nav(page).getByRole("button", { name: "Sair" })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/login/); // app inteiro exige sessão
 
     await login(page, "dono@faith.com", "dono123");
     await page.goto("/");
@@ -23,7 +22,8 @@ test.describe("SHELL — navegação por papel + login/logout", () => {
     await expect(nav(page).getByRole("button", { name: "Sair" })).toBeVisible();
 
     await nav(page).getByRole("button", { name: "Sair" }).click();
-    await expect(nav(page).getByRole("link", { name: "Entrar" })).toBeVisible();
+    // o server action encerra a sessão e a tela de login toma o lugar (a URL pode ficar em "/")
+    await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
   });
 
   test("SHELL-002 dono vê Painel do dono/Catálogo/Comissão/Minha agenda/Cadastros/TVs/Conta e navega", { tag: "@critical" }, async ({ page }) => {

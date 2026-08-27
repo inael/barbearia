@@ -1,5 +1,45 @@
 # SESSION_HANDOFF
 
+## 2026-08-26 (noite) — OPR: auditoria integral dos pedidos do Rodrigo + simulação de 1 mês
+
+Pedido do Inael: reler TUDO que o Rodrigo mandou, conferir se está implementado, e
+simular um mês de operação real. Goal LoopX `barbearia-goal`.
+
+### Auditoria (docs/context/AUDITORIA-REQUISITOS-2026-08-26.md)
+Lidos na íntegra os 14 áudios (`TRANSCRICOES.md`), as 21 respostas (`RESPOSTAS.md`),
+`REQUISITOS.md` (RF1–RF31), `BRIEFING.md` e os requisitos novos de 22/08. Matriz
+requisito-a-requisito contra as 44 specs e o código. **4 gaps encontrados e fechados**
+(feature OPR, 9 ACs):
+1. **REC** (RF18/19) — comissão da recepcionista era só simulador; agora é calculada
+   dos dados reais (`comissaoRecepcaoDoPeriodo`): produtos dela (5/10%), R$5 por
+   hidratação (R$10 acima de 10) e 20% dos divididos da casa. Linha própria em Metas.
+2. **RODF** (RF7) — o rodízio existia como motor mas a UI obrigava escolher barbeiro.
+   Agora tem "Sem preferência (rodízio)" (`criarAgendamentoSemPreferencia`): não repete
+   o último, equilibra a contagem, pula ocupado/bloqueado, nunca escala a recepção.
+3. **DSC** (RF28) — desconto de assinante existia como função pura e não era aplicado.
+   Agora o caixa aplica no lançamento (Flex 10/5 só ter-qui, Premium 20/10 sempre),
+   grava `comanda_itens.desconto_pct`, mostra badge e comissiona o valor cobrado.
+4. **GRD2** (RF5/áudios 01/03) — agenda ganhou a **grade do dia estilo Trinks**
+   (`montarGradeDia`): colunas por barbeiro, linhas de 30min, seletor de data.
+
+Também nesta sessão (decisão do Inael): **UXS-012 — o app inteiro exige login**
+(deslogado só existe /login, player da TV e /health; webhooks seguem com token
+próprio) + **seletor de perfil no login** para testes, ativo só em dev via
+`NEXT_PUBLIC_DEMO_LOGINS=1`.
+
+### Simulação de 1 mês (docs/context/SIMULACAO-2026-08-26.md)
+`npx tsx tools/simulacao-mes.ts` (determinístico, semente fixa, só banco de DEV):
+3 barbeiros + recepção, 24 clientes, 5 assinantes (1 em atraso), 28 dias →
+**236 comandas, R$ 21.461,90**, 4 cortesias, 2 consumos de barbeiro, 12 notas,
+30 hidratações, vales, estoque com contagem e pedido. Conferência automática:
+painel == caixa == soma esperada, e soma por profissional == total. ✔
+
+### Estado
+**44 features · 291 ACs · 291 PASS** (tlc OK) · unit 113 · integration 109 · e2e 76 ·
+coverage 100% · axe sem violação. `.specs/STATE.md` com **EXIT_SIGNAL: true (código)**.
+Falta só EXECUÇÃO: QR SimplesZap, Hub de IA, Asaas prod, NFS-e do MEI, scheduler dos
+lembretes, storage da TV e o **deploy** (3 commits novos ainda não subiram pra VPS).
+
 ## 2026-08-26 — UXS: reforma "cara de sistema" (feedback do Inael)
 
 Punch list de 12 pontos em `docs/produto/FEEDBACK-UX-2026-08-26.md`. Spec

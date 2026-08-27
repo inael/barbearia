@@ -1,6 +1,19 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function login(page: Page, email: string, senha: string) {
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Senha").fill(senha);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page).toHaveURL(/\/conta/);
+}
 
 test.describe("PNL — Painel do catalogo", () => {
+  // UXS-012: o app inteiro exige login; o catálogo é visto por quem opera o sistema.
+  test.beforeEach(async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
+  });
+
   test("PNL-001 / responde 200 e mostra o catálogo", { tag: "@critical" }, async ({ page }) => {
     const resp = await page.goto("/");
     expect(resp?.status()).toBe(200);

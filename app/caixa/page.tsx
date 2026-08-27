@@ -196,6 +196,9 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                   {i.lancamento === "servico_barbeiro" ? (
                     <span data-testid="badge-barbeiro" className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">do barbeiro</span>
                   ) : null}
+                  {i.descontoPct > 0 ? (
+                    <span data-testid="badge-assinante" className="rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">-{i.descontoPct}% assinante</span>
+                  ) : null}
                   <span className="text-neutral-500">({i.profissionalNome})</span>
                   <span className="ml-auto">
                     {i.lancamento === "normal" ? brl(i.valorCentavos) : <><s className="text-neutral-400">{brl(i.valorCentavos)}</s> {brl(0)}</>}

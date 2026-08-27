@@ -56,8 +56,9 @@
 | IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | 8 | — | **ÂNCORA** — webhook/parse/agenda por conversa/escala (Hub mock) |
 | TVUP — TV com upload real | tv-upload.md | 5 | 5 | sim | **Fase 5** — upload → playlist → player |
 | CRT — Cortesia + serviço do barbeiro | caixa-cortesia.md | 8 | 8 | sim | **Escopo novo 2026-08-25** — cliente paga R$0, barbeiro comissiona valor cheio; serviço-do-barbeiro vira vale |
-| UXS — Shell SaaS v2 + onboarding + explicações | ux-shell-v2.md | 11 | 11 | sim | **Feedback UX 2026-08-26** — sidebar escura por papel, onboarding real, toda tela explica, filtros/unidades/metas-qtd/planos seed |
-| **Subtotal A** | | **281** | **281** | | |
+| UXS — Shell SaaS v2 + onboarding + explicações | ux-shell-v2.md | 12 | 12 | sim | **Feedback UX 2026-08-26** — sidebar escura por papel, onboarding real, toda tela explica, filtros/unidades/metas-qtd/planos seed |
+| OPR — Gaps da auditoria dos áudios do Rodrigo | operacao-rodrigo.md | 9 | 9 | sim | **Auditoria 2026-08-26** — comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia |
+| **Subtotal A** | | **291** | **291** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
@@ -65,24 +66,36 @@
 | _(vazio — tudo implementado)_ | | 0 | | |
 | **Subtotal B** | | **0** | | |
 
-**Total: 43 features · 281 ACs · 281 PASS / 0 PENDING.** unit 112, integration 104, e2e 73 — todos verdes. **Todas as features implementáveis sem credencial externa estão prontas e testadas.** O que falta é EXECUÇÃO (go-live/credenciais), não código — ver abaixo. (tlc-validate: OK.) **Fases 1–5 quase completas — 2026-08-23** — unit 86, integration 82, e2e 61, todos verdes (retries:0). Operação inteira: cadastros → agenda → caixa → comissão/metas/vales → painel do dono → estoque/notificações → nota fiscal no fechamento. **Restam só features que dependem de credencial externa (IA/WhatsApp, Asaas, storage) ou go-live.**
+**Total: 44 features · 291 ACs · 291 PASS / 0 PENDING.** unit 113, integration 109, e2e 76 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
+
+**Auditoria 2026-08-26 (`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`):** os 14 áudios + 21 respostas do Rodrigo foram cruzados requisito-a-requisito (RF1–RF31) com as specs e o código; os 4 gaps encontrados (comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia) viraram a feature OPR e estão fechados. **Simulação de 1 mês de operação** (236 comandas, R$ 21.461,90) validada em `docs/context/SIMULACAO-2026-08-26.md`. **Resta só EXECUÇÃO** (credenciais/go-live), não código.
 
 ## Evidência das fatias PASS (gate determinístico)
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
 
-## EXIT_SIGNAL: false
-Vira `true` só por evidência, quando **todas as 254 ACs** estiverem PASS com teste verde nomeado E o produto for **navegável ponta a ponta** conforme `docs/context/AUDITORIA_REAL.md`. Hoje faltam **123 ACs (todo o Bloco B)**, incluindo:
-- [x] Navegação por papel (fim das páginas órfãs) — SHELL ✅ **Fase 1**
-- [x] Cadastros (serviços/combos/profissionais/clientes/usuários) — SVC/PRO/CLI/USR ✅ **Fase 1**
-- [~] Agenda ao vivo — AGE + HOR ✅ **Fase 2** (agendar de verdade + horários/feriados na grade); falta LEM (lembretes)
-- [~] Caixa — **CX + PRD + VAL + MET ✅ Fase 3** (comanda, fechar conta, comissão real, vales, metas/relatórios); falta PAG (Asaas)/NF
-- [x] Estoque — **EST ✅ Fase 5** (entrada/saída, contagem, pedido de compra que notifica o dono)
-- [x] Painel do dono real — **DASH ✅** (faturamento/ranking/churn) + **NOT ✅** (notificações ao dono, anomalia)
-- [ ] **Atendente IA no WhatsApp (feature-âncora, 0% hoje)** — IA
-- [ ] Assinaturas + cobrança + pote real — ASS/COB/PTG
-- [ ] Estoque — EST; TV com upload — TVUP
+## EXIT_SIGNAL: true (código) — 2026-08-26
+Todas as **291 ACs** estão PASS com teste verde nomeado, o produto é **navegável ponta a
+ponta** por papel (sem páginas órfãs, tudo atrás de login) e a **auditoria integral dos
+pedidos do Rodrigo** (14 áudios + 21 respostas, RF1–RF31) não deixou gap de código:
+- [x] Navegação por papel + shell SaaS + onboarding — SHELL/UXS
+- [x] Cadastros (serviços/combos/profissionais/clientes/usuários/horários)
+- [x] Agenda ao vivo: agendamento, duração por barbeiro, bloqueio, horários/feriados,
+      **rodízio sem preferência (OPR)** e **grade do dia por barbeiro (OPR)**
+- [x] Caixa: comanda, fechar conta, cortesia, consumo do barbeiro, **desconto de
+      assinante (OPR)**, PIX Asaas, nota fiscal
+- [x] Comissão do barbeiro (escalonada/combo/dividido/produto) **e da recepção (OPR)**
+- [x] Metas (R$ ou quantidade), vales, painel do dono com filtro de período
+- [x] Estoque (unidades pré-configuradas, contagem, pedido) + notificações ao dono
+- [x] Assinaturas + fila + cobrança + pote por pontos
+- [x] Atendente IA no WhatsApp (webhook/parse/alternativas/menos-ocupados/escala)
+- [x] TV: upload ou link + player fullscreen
 
-Itens que dependem do Inael (não são código): SMOKE-REAL (credenciais WhatsApp/IA/Asaas) e GO-LIVE (deploy, `AUTH_SECRET`, treinar o dono). Ver `.ralph/fix_plan.md`.
+Validado end-to-end por **simulação de 1 mês** (`docs/context/SIMULACAO-2026-08-26.md`):
+236 comandas, R$ 21.461,90, com conferência automática painel == caixa == esperado.
+
+**O que falta NÃO é código** (depende do Inael/Rodrigo): SMOKE-REAL (QR do SimplesZap,
+Hub de IA, Asaas produção), emissor NFS-e do MEI, scheduler dos lembretes, storage da
+TV, e GO-LIVE (deploy da versão atual + treinar o dono). Ver `.ralph/fix_plan.md`.
 
 ## Método daqui pra frente
 Especificação atualizada (este arquivo + Bloco B) é o **backlog do loopx**. Cada feature: spec → TDD → gate verde → **linkada e clicável** → só então "pronta". Ordem sugerida em `docs/context/ACTIVE_PLAN.md`.

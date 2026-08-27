@@ -26,6 +26,7 @@ agrupado em entrada → resultado com aviso de que nada é salvo. O player da TV
 | UXS-009 | Catálogo `/` explica o que é e tem busca que filtra os serviços | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 | UXS-010 | TV: cada tela tem botão "Abrir player" + os dois caminhos claros (upload de foto/vídeo OU colar link) | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 | UXS-011 | Simulador de comissão agrupado (1 entrada → 2 resultado) com aviso explícito de que é simulação | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
+| UXS-012 | App inteiro exige login (deslogado → /login; sem menu de visitante); públicos só /tv (Smart TV), /health e webhooks; login com seletor de perfil de teste APENAS em dev (NEXT_PUBLIC_DEMO_LOGINS) | e2e | e2e/ux-shell.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (navegação por papel pura) → UXS-001 → unit → lib/nav.test.ts → PASS
@@ -39,6 +40,7 @@ REQUIREMENT (planos pré-configurados) → UXS-008 → integration → lib/db/on
 REQUIREMENT (catálogo com busca) → UXS-009 → e2e → e2e/ux-shell.spec.ts → PASS
 REQUIREMENT (TV clara) → UXS-010 → e2e → e2e/ux-shell.spec.ts → PASS
 REQUIREMENT (simulador honesto) → UXS-011 → e2e → e2e/ux-shell.spec.ts → PASS
+REQUIREMENT (tudo atrás de login + atalho de teste dev) → UXS-012 → e2e → e2e/ux-shell.spec.ts → PASS
 
 ## Gaps
 - Onboarding não é dispensável manualmente (some sozinho quando completo) — se o

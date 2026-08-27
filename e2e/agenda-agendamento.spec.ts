@@ -48,4 +48,31 @@ test.describe("AGE — agenda ao vivo (e2e)", () => {
     await expect(linha).toBeVisible();
     await expect(linha).toContainText("com Pedro");
   });
+
+  test("OPR-005/009 sem preferência agenda via rodízio e a grade do dia mostra as colunas por barbeiro", async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
+    await page.goto("/agenda");
+
+    // grade do dia (GRD2): seção visível, fechada OU com coluna por barbeiro
+    await expect(page.getByTestId("grade-dia")).toBeVisible();
+
+    // agenda SEM preferência (RF7): o rodízio escala alguém e o agendamento aparece
+    // (evita domingo: a grade pode estar fechada nesse dia)
+    const base = new Date();
+    base.setDate(base.getDate() + 6);
+    const adiante = base.getDay() === 0 ? 7 : 6;
+    await page.getByTestId("age-cliente").selectOption({ index: 0 });
+    await page.getByTestId("age-servico").selectOption({ label: "Barba" });
+    await page.getByTestId("age-profissional").selectOption({ label: "Sem preferência (rodízio)" });
+    await page.getByTestId("age-inicio").fill(futuroLocal(adiante, 11));
+    await page.getByRole("button", { name: "Agendar" }).click();
+    await expect(page.getByText("Agendamento criado.")).toBeVisible();
+    const linha = page.locator("[data-agendamento]").filter({ hasText: "Barba" }).first();
+    await expect(linha).toContainText(/com (Rodrigo|Pedro|Joao)/);
+
+    // a grade do dia agendado mostra o serviço no slot do barbeiro escalado
+    const dia = futuroLocal(adiante, 11).slice(0, 10);
+    await page.goto(`/agenda?dia=${dia}`);
+    await expect(page.getByTestId("grade-dia").getByText("Barba", { exact: false }).first()).toBeVisible();
+  });
 });

@@ -1,7 +1,7 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { and, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
-import { comissaoDoPeriodo } from "./caixa";
+import { comissaoDoPeriodo, comissaoRecepcaoDoPeriodo } from "./caixa";
 import { totalValesPorTipo } from "./vales";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -85,6 +85,47 @@ export interface RelatorioProfissional {
   tipoAlvo: "valor" | "quantidade" | null;
   alvoQuantidade: number | null;
   batido: boolean | null;
+}
+
+export interface RelatorioRecepcao {
+  produtosCentavos: number;
+  qtdHidratacoes: number;
+  divididosCasaCentavos: number;
+  comissaoTotalReais: number;
+  valesCentavos: number;
+  alvoCentavos: number | null;
+  tipoAlvo: "valor" | "quantidade" | null;
+  alvoQuantidade: number | null;
+  batido: boolean | null;
+}
+
+/** REC (RF18): relatório da RECEPCIONISTA — a régua dela é outra (produtos +
+ * hidratações + 20% dos divididos da casa). Meta em R$ compara com produtos
+ * vendidos por ela; meta em quantidade compara com o nº de hidratações. */
+export async function relatorioRecepcao(db: DB, profissionalId: number, de: Date, ate: Date): Promise<RelatorioRecepcao> {
+  const [c, vales, meta] = await Promise.all([
+    comissaoRecepcaoDoPeriodo(db, profissionalId, de, ate),
+    totalValesPorTipo(db, profissionalId, de, ate),
+    metaDoPeriodo(db, profissionalId, de),
+  ]);
+  const produtosCentavos = Math.round(c.produtos * 100);
+  const tipoAlvo = meta ? ((meta.tipoAlvo === "quantidade" ? "quantidade" : "valor") as "valor" | "quantidade") : null;
+  const batido = !meta
+    ? null
+    : tipoAlvo === "quantidade"
+      ? metaBatida(c.qtdHidratacoes, meta.alvoQuantidade ?? 0)
+      : metaBatida(produtosCentavos, meta.alvoCentavos);
+  return {
+    produtosCentavos,
+    qtdHidratacoes: c.qtdHidratacoes,
+    divididosCasaCentavos: Math.round(c.divididosCasa * 100),
+    comissaoTotalReais: c.comissaoTotal,
+    valesCentavos: vales.produto_cliente + vales.retirado_barbeiro + vales.servico_barbeiro,
+    alvoCentavos: meta && tipoAlvo === "valor" ? meta.alvoCentavos : null,
+    tipoAlvo,
+    alvoQuantidade: meta?.alvoQuantidade ?? null,
+    batido,
+  };
 }
 
 /** Relatório do profissional no período: faturamento, comissão, vales, atendimentos e meta (batido/não). */

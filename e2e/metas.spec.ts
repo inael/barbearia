@@ -28,4 +28,14 @@ test.describe("MET — metas + relatórios (e2e)", () => {
     await expect(page.locator('[data-prof-meta="Pedro"]')).toBeVisible();
     await expect(page.getByTestId("met-alvo")).toHaveCount(0);
   });
+
+  test("OPR-003 recepcionista tem linha própria: produtos, hidratações e divididos da casa (régua de recepção)", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+    const linha = page.locator('[data-prof-meta="Recepcao"]');
+    await expect(linha).toBeVisible();
+    await expect(linha).toContainText("recepção");
+    await expect(linha).toContainText("Hidratações");
+    await expect(linha).toContainText("Divididos da casa");
+  });
 });

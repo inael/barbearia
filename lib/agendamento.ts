@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, asc, eq, gte, lt, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { resolverDuracao } from "./agenda";
 import { escolherBarbeiroRodizio } from "./rodizio";
@@ -77,6 +77,52 @@ export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<num
     .values({ clienteId: d.clienteId, servicoId: d.servicoId, profissionalId: d.profissionalId, inicio: d.inicio, fim, status: "agendado" })
     .returning({ id: schema.agendamentos.id });
   return row.id;
+}
+
+/**
+ * RODF (RF7): cliente SEM preferência de barbeiro — o rodízio escolhe quem atende:
+ * não repete quem atendeu por último e prioriza quem atendeu menos no período; se o
+ * escolhido não tiver o horário (conflito/bloqueio), tenta o próximo do rodízio.
+ * Retorna o agendamento criado e quem foi escalado.
+ */
+export async function criarAgendamentoSemPreferencia(
+  db: DB,
+  d: { clienteId: number; servicoId: number; inicio: Date },
+): Promise<{ id: number; profissionalId: number }> {
+  if (Number.isNaN(d.inicio.getTime())) throw new Error("data invalida");
+  const barbeiros = await db
+    .select({ id: schema.profissionais.id })
+    .from(schema.profissionais)
+    .where(inArray(schema.profissionais.papel, ["barbeiro", "dono"]));
+  if (barbeiros.length === 0) throw new Error("nenhum barbeiro cadastrado");
+
+  // contagem dos últimos 30 dias (equilíbrio) + quem atendeu por último (não repetir)
+  const ha30 = new Date(d.inicio.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const recentes = await db
+    .select({ profissionalId: schema.agendamentos.profissionalId, inicio: schema.agendamentos.inicio })
+    .from(schema.agendamentos)
+    .where(and(ne(schema.agendamentos.status, "cancelado"), gte(schema.agendamentos.inicio, ha30)))
+    .orderBy(desc(schema.agendamentos.inicio));
+  const contagem: Record<number, number> = {};
+  for (const r of recentes) contagem[r.profissionalId] = (contagem[r.profissionalId] ?? 0) + 1;
+  const ultimoAtendeu = recentes[0]?.profissionalId ?? null;
+
+  let candidatos = barbeiros.map((b) => b.id);
+  let ultimoErro: Error | null = null;
+  while (candidatos.length > 0) {
+    const escolhido = proximoBarbeiroSemPreferencia(candidatos, ultimoAtendeu, contagem);
+    if (escolhido == null) break;
+    try {
+      const id = await criarAgendamento(db, { ...d, profissionalId: escolhido });
+      return { id, profissionalId: escolhido };
+    } catch (e) {
+      ultimoErro = e instanceof Error ? e : new Error("erro ao agendar");
+      // assinatura em atraso não depende do barbeiro: nenhum candidato resolveria
+      if (/assinatura/.test(ultimoErro.message)) throw ultimoErro;
+      candidatos = candidatos.filter((c) => c !== escolhido);
+    }
+  }
+  throw new Error(ultimoErro && !/bloqueado|ocupado/.test(ultimoErro.message) ? ultimoErro.message : "nenhum barbeiro disponível nesse horário");
 }
 
 /** Cancela um agendamento (libera o horário de volta). */

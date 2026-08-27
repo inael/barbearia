@@ -13,9 +13,11 @@ export interface GrupoNav {
   itens: ItemNav[];
 }
 
-/** Grupos de menu visíveis para o papel (null = visitante deslogado). */
+/** Grupos de menu visíveis para o papel. Visitante (null) não vê menu nenhum:
+ * o app inteiro exige login (UXS-012) — deslogado só existe /login e o player da TV. */
 export function gruposParaPapel(papel: Papel | null): GrupoNav[] {
-  const pode = (r: Parameters<typeof podeAcessar>[1]) => (papel ? podeAcessar(papel, r) : false);
+  if (!papel) return [];
+  const pode = (r: Parameters<typeof podeAcessar>[1]) => podeAcessar(papel, r);
 
   const visaoGeral: ItemNav[] = [];
   if (pode("config")) visaoGeral.push({ href: "/painel", label: "Painel do dono" });

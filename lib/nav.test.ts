@@ -27,7 +27,7 @@ describe("UXS — grupos de navegação por papel (sidebar)", () => {
     }
   });
 
-  it("UXS-001 barbeiro vê só o próprio mundo; visitante vê só Catálogo/Comissão; grupos vazios somem", () => {
+  it("UXS-001 barbeiro vê só o próprio mundo; visitante não vê menu (app exige login); grupos vazios somem", () => {
     const barbeiro = labels("barbeiro");
     for (const esperado of ["Catálogo", "Comissão", "Minha agenda", "Vales", "Metas", "Pote", "Conta"]) {
       expect(barbeiro).toContain(esperado);
@@ -36,9 +36,9 @@ describe("UXS — grupos de navegação por papel (sidebar)", () => {
       expect(barbeiro).not.toContain(proibido);
     }
 
-    expect(labels(null)).toEqual(["Catálogo", "Comissão"]);
+    // UXS-012: deslogado não existe dentro do app — nenhum grupo de menu
+    expect(gruposParaPapel(null)).toEqual([]);
     // nenhum grupo renderiza vazio
-    for (const g of gruposParaPapel(null)) expect(g.itens.length).toBeGreaterThan(0);
     for (const g of gruposParaPapel("barbeiro")) expect(g.itens.length).toBeGreaterThan(0);
   });
 });

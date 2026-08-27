@@ -73,8 +73,10 @@ export default function AppFrame({
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
 
-  // Player da TV roda sem shell (tela cheia no navegador da Smart TV).
-  if (/^\/tv\/.+/.test(pathname)) return <>{children}</>;
+  // Sem shell: deslogado (o app inteiro exige sessão — UXS-012 — então sem sessão
+  // só existem login/TV/health), player/lista da TV (tela cheia na Smart TV) e a
+  // própria tela de login.
+  if (!usuario || /^\/tv(\/|$)/.test(pathname) || pathname === "/login") return <>{children}</>;
 
   const ativo = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);

@@ -4,6 +4,15 @@ import AxeBuilder from "@axe-core/playwright";
 const PAGES = ["/", "/comissao"];
 
 test.describe("UXB — responsivo + acessibilidade", () => {
+  // UXS-012: o app inteiro exige login.
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel("E-mail").fill("dono@faith.com");
+    await page.getByLabel("Senha").fill("dono123");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/conta/);
+  });
+
   for (const path of PAGES) {
     test(`UXB responsivo 375px sem scroll horizontal em ${path}`, { tag: "@critical" }, async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 800 });

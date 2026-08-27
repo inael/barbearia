@@ -44,12 +44,12 @@ export const PROFISSIONAIS = [
 // Planos que o Rodrigo definiu (docs/produto/RESPOSTAS.md, perguntas 10 e 28):
 // Flex vale ter-qui com 10%/5% de desconto extra; Premium vale todos os dias com 20%/10%.
 export const PLANOS = [
-  { nome: "Flex — Corte/barba/pezinho/sobrancelha", tipo: "flex", precoCentavos: 22000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "ter-qui" },
-  { nome: "Flex — Corte/sobrancelha", tipo: "flex", precoCentavos: 12000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "ter-qui" },
-  { nome: "Flex — Barba/pezinho", tipo: "flex", precoCentavos: 14000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "ter-qui" },
-  { nome: "Premium — Corte/barba/pezinho/sobrancelha", tipo: "premium", precoCentavos: 25000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "todos" },
-  { nome: "Premium — Corte/sobrancelha", tipo: "premium", precoCentavos: 15000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "todos" },
-  { nome: "Premium — Barba/pezinho", tipo: "premium", precoCentavos: 17000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "todos" },
+  { nome: "Flex — Corte/barba/pezinho/sobrancelha", tipo: "flex", precoCentavos: 22000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "2,3,4" },
+  { nome: "Flex — Corte/sobrancelha", tipo: "flex", precoCentavos: 12000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "2,3,4" },
+  { nome: "Flex — Barba/pezinho", tipo: "flex", precoCentavos: 14000, descontoServicoPct: 10, descontoProdutoPct: 5, dias: "2,3,4" },
+  { nome: "Premium — Corte/barba/pezinho/sobrancelha", tipo: "premium", precoCentavos: 25000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "" },
+  { nome: "Premium — Corte/sobrancelha", tipo: "premium", precoCentavos: 15000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "" },
+  { nome: "Premium — Barba/pezinho", tipo: "premium", precoCentavos: 17000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "" },
 ];
 
 /** Semeia os planos do Rodrigo só quando a tabela está VAZIA (assinaturas referenciam
