@@ -31,7 +31,7 @@ test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
     await expect(page).toHaveURL(/\/tv$/);
   });
 
-  test("UXS-014 atalho de perfil: quando ligado, loga em 2 cliques; quando desligado, não vaza credencial", async ({ page }) => {
+  test("UXS-014 atalho de perfil (botões): ligado, clicar preenche e loga; desligado, não vaza credencial", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
 
@@ -41,13 +41,19 @@ test.describe("UXS — shell SaaS + telas autoexplicativas (e2e)", () => {
     const ligado = (await page.getByTestId("login-demo").count()) > 0;
 
     if (ligado) {
-      // escolher o perfil preenche e-mail e senha e o login funciona direto
-      await page.getByTestId("login-demo").selectOption("1"); // índice 1 = Recepção
+      // os 3 papéis aparecem como BOTÕES; clicar preenche e-mail e senha
+      const atalhos = page.getByTestId("login-demo");
+      await expect(atalhos.getByRole("button")).toHaveCount(3);
+      await atalhos.locator('[data-demo="recepcao@faith.com"]').click();
       await expect(page.getByLabel("E-mail")).toHaveValue("recepcao@faith.com");
       await expect(page.getByLabel("Senha")).toHaveValue("recep123");
+      // trocar de perfil substitui as credenciais (não acumula)
+      await atalhos.locator('[data-demo="dono@faith.com"]').click();
+      await expect(page.getByLabel("E-mail")).toHaveValue("dono@faith.com");
+      await expect(page.getByLabel("Senha")).toHaveValue("dono123");
       await page.getByRole("button", { name: "Entrar" }).click();
       await expect(page).toHaveURL(/\/conta/);
-      await expect(page.getByTestId("nav-usuario")).toContainText("Recepção");
+      await expect(page.getByTestId("nav-usuario")).toContainText("Dono");
     } else {
       // desligado (produção): nada de seletor nem de senha demo no HTML servido
       await expect(page.getByText("Entrar como (atalho de teste)")).toHaveCount(0);
