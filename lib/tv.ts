@@ -114,3 +114,16 @@ export async function itemAtualDaTela(
   const idx = itemAtualIndex(itens.length, tela.vel, segundosDecorridos);
   return idx == null ? null : itens[idx].url;
 }
+
+/** CRUD-008: renomeia a tela / muda a velocidade da playlist. */
+export async function editarTela(db: PostgresJsDatabase<typeof schema>, id: number, nome: string, velocidadeSegundos: number): Promise<void> {
+  if (!nome || !nome.trim()) throw new Error("nome obrigatório");
+  if (!Number.isInteger(velocidadeSegundos) || velocidadeSegundos <= 0) throw new Error("velocidade inválida");
+  await db.update(schema.telas).set({ nome: nome.trim(), velocidadeSegundos }).where(eq(schema.telas.id, id));
+}
+
+/** CRUD-008: exclui a tela e a playlist dela (a mídia em si fica no storage). */
+export async function removerTela(db: PostgresJsDatabase<typeof schema>, id: number): Promise<void> {
+  await db.delete(schema.itensPlaylist).where(eq(schema.itensPlaylist.telaId, id));
+  await db.delete(schema.telas).where(eq(schema.telas.id, id));
+}

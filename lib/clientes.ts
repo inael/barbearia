@@ -73,3 +73,18 @@ export async function editarCliente(db: DB, id: number, d: { nome: string; telef
 export async function listarClientes(db: DB): Promise<schema.Cliente[]> {
   return db.select().from(schema.clientes).orderBy(asc(schema.clientes.nome));
 }
+
+/**
+ * Exclui um cliente. CRUD-002: se ele já tem agendamento, comanda ou assinatura,
+ * o histórico não pode ser apagado — a função recusa e explica. Nesse caso a tela
+ * oferece desativar (o cliente some das listas mas o passado fica intacto).
+ */
+export async function removerCliente(db: DB, id: number): Promise<void> {
+  const [ag] = await db.select({ id: schema.agendamentos.id }).from(schema.agendamentos).where(eq(schema.agendamentos.clienteId, id)).limit(1);
+  if (ag) throw new Error("cliente tem agendamento: desative em vez de excluir");
+  const [cm] = await db.select({ id: schema.comandas.id }).from(schema.comandas).where(eq(schema.comandas.clienteId, id)).limit(1);
+  if (cm) throw new Error("cliente tem venda no caixa: desative em vez de excluir");
+  const [as] = await db.select({ id: schema.assinaturas.id }).from(schema.assinaturas).where(eq(schema.assinaturas.clienteId, id)).limit(1);
+  if (as) throw new Error("cliente tem assinatura: desative em vez de excluir");
+  await db.delete(schema.clientes).where(eq(schema.clientes.id, id));
+}

@@ -98,3 +98,27 @@ export async function resetarSenha(db: DB, id: number, novaSenha: string): Promi
   if (!novaSenha || novaSenha.length < 4) throw new Error("senha muito curta");
   await db.update(schema.usuarios).set({ senhaHash: hashSenha(novaSenha) }).where(eq(schema.usuarios.id, id));
 }
+
+/** CRUD-003: edita nome e e-mail do usuário (senha e papel têm ações próprias). */
+export async function editarUsuario(db: DB, id: number, nome: string, email: string): Promise<void> {
+  const n = nome?.trim();
+  const e = email?.trim().toLowerCase();
+  if (!n) throw new Error("nome obrigatório");
+  if (!e || !e.includes("@")) throw new Error("e-mail inválido");
+  const [dup] = await db.select({ id: schema.usuarios.id }).from(schema.usuarios).where(eq(schema.usuarios.email, e)).limit(1);
+  if (dup && dup.id !== id) throw new Error("já existe usuário com esse e-mail");
+  await db.update(schema.usuarios).set({ nome: n, email: e }).where(eq(schema.usuarios.id, id));
+}
+
+/** CRUD-003: exclui um login. Recusa apagar o ÚLTIMO dono ativo (senão ninguém
+ * mais administra o sistema) — nesse caso o certo é desativar. */
+export async function removerUsuario(db: DB, id: number): Promise<void> {
+  const [alvo] = await db.select().from(schema.usuarios).where(eq(schema.usuarios.id, id));
+  if (!alvo) return;
+  if (alvo.papel === "dono") {
+    const donos = await db.select({ id: schema.usuarios.id }).from(schema.usuarios).where(eq(schema.usuarios.papel, "dono"));
+    const outros = donos.filter((d) => d.id !== id);
+    if (outros.length === 0) throw new Error("não dá pra excluir o único dono: crie outro dono antes");
+  }
+  await db.delete(schema.usuarios).where(eq(schema.usuarios.id, id));
+}

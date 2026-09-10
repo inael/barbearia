@@ -96,3 +96,37 @@ export async function assinaturaEmAtraso(db: DB, clienteId: number): Promise<boo
     .where(eq(schema.assinaturas.clienteId, clienteId));
   return rows.some((r) => r.status === "atraso");
 }
+
+/** CRUD-005: edita um plano (preço/descontos/dias). Vale para as próximas cobranças. */
+export async function editarPlano(db: DB, id: number, d: DadosPlano): Promise<void> {
+  if (!d.nome?.trim()) throw new Error("nome obrigatório");
+  if (d.tipo !== "flex" && d.tipo !== "premium") throw new Error("tipo inválido");
+  await db.update(schema.planos).set({ ...d, nome: d.nome.trim() }).where(eq(schema.planos.id, id));
+}
+
+/** CRUD-005: liga/desliga um plano. Plano inativo some da lista de contratação, mas
+ * quem já assina continua — por isso NÃO se apaga um plano que tem assinante. */
+export async function definirPlanoAtivo(db: DB, id: number, ativo: boolean): Promise<void> {
+  await db.update(schema.planos).set({ ativo }).where(eq(schema.planos.id, id));
+}
+
+/** CRUD-005: exclui um plano. Recusa se alguém já assina (histórico de cobrança). */
+export async function removerPlano(db: DB, id: number): Promise<void> {
+  const [ass] = await db.select({ id: schema.assinaturas.id }).from(schema.assinaturas).where(eq(schema.assinaturas.planoId, id)).limit(1);
+  if (ass) throw new Error("plano tem assinante: desative em vez de excluir");
+  await db.delete(schema.planos).where(eq(schema.planos.id, id));
+}
+
+/** CRUD-006: troca o plano de uma assinatura (upgrade/downgrade). */
+export async function trocarPlanoAssinatura(db: DB, assinaturaId: number, planoId: number): Promise<void> {
+  const [plano] = await db.select({ id: schema.planos.id }).from(schema.planos).where(eq(schema.planos.id, planoId));
+  if (!plano) throw new Error("plano inexistente");
+  await db.update(schema.assinaturas).set({ planoId }).where(eq(schema.assinaturas.id, assinaturaId));
+}
+
+/** CRUD-006: exclui uma assinatura (contratação errada). Cancelar preserva o
+ * histórico e é o caminho normal na tela; excluir some de vez. A fila de espera é
+ * por cliente+plano, então não referencia a assinatura e nada mais precisa sair. */
+export async function removerAssinatura(db: DB, id: number): Promise<void> {
+  await db.delete(schema.assinaturas).where(eq(schema.assinaturas.id, id));
+}

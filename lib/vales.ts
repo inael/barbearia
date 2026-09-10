@@ -109,3 +109,23 @@ export async function listarVales(db: DB, profissionalId?: number): Promise<Vale
   const rows = profissionalId != null ? await base.where(eq(schema.vales.profissionalId, profissionalId)) : await base;
   return rows;
 }
+
+/** CRUD-007: corrige um vale lançado errado (recalcula o desconto pelo preço novo).
+ * O tipo `servico_barbeiro` é gerado pelo caixa e não se edita por aqui. */
+export async function editarVale(db: DB, id: number, d: { tipo: TipoVale; descricao: string; precoCentavos: number }): Promise<void> {
+  const [atual] = await db.select().from(schema.vales).where(eq(schema.vales.id, id));
+  if (!atual) throw new Error("vale inexistente");
+  if (atual.tipo === "servico_barbeiro") throw new Error("vale gerado pelo caixa: corrija a comanda, não o vale");
+  if (!(TIPOS_VALE as string[]).includes(d.tipo)) throw new Error("tipo de vale inválido");
+  if (!d.descricao || !d.descricao.trim()) throw new Error("descrição obrigatória");
+  if (!Number.isInteger(d.precoCentavos) || d.precoCentavos <= 0) throw new Error("preço inválido");
+  await db
+    .update(schema.vales)
+    .set({ tipo: d.tipo, descricao: d.descricao.trim(), precoCentavos: d.precoCentavos, valorCentavos: valorComDesconto(d.precoCentavos) })
+    .where(eq(schema.vales.id, id));
+}
+
+/** CRUD-007: exclui um vale lançado por engano. */
+export async function removerVale(db: DB, id: number): Promise<void> {
+  await db.delete(schema.vales).where(eq(schema.vales.id, id));
+}

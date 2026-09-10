@@ -6,7 +6,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { GrupoNav } from "@/lib/nav";
+import type { GrupoNav, ItemNav, IconeNav } from "@/lib/nav";
+import {
+  LayoutDashboard, BookOpen, Calculator, CalendarDays, CalendarClock, ShoppingCart,
+  Receipt, FolderCog, Scissors, Package, Users, UserCog, IdCard, Clock, Target,
+  Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser, type LucideIcon,
+} from "lucide-react";
+
+// Icones da biblioteca lucide-react (nunca emoji — pedido do Inael 2026-09-10).
+const ICONES: Record<IconeNav, LucideIcon> = {
+  LayoutDashboard, BookOpen, Calculator, CalendarDays, CalendarClock, ShoppingCart,
+  Receipt, FolderCog, Scissors, Package, Users, UserCog, IdCard, Clock, Target,
+  Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser,
+};
 import { perfisDemo } from "@/lib/demo-logins";
 import TrocarUsuario from "./TrocarUsuario";
 
@@ -61,6 +73,76 @@ function Grupo({
         </svg>
       </button>
       {aberto ? <div className="mt-0.5 flex flex-col gap-0.5">{children}</div> : null}
+    </div>
+  );
+}
+
+/**
+ * Item do menu: pai com icone e, quando tem submenus, os filhos INDENTADOS sob
+ * ele com uma guia vertical (padrao da referencia enviada pelo Inael). O bloco de
+ * filhos fica aberto quando o pai ou algum filho esta na rota atual.
+ */
+function ItemComFilhos({
+  item,
+  ativo,
+  itemCls,
+}: {
+  item: ItemNav;
+  ativo: (href: string) => boolean;
+  itemCls: (href: string) => string;
+}) {
+  const Icone = ICONES[item.icone];
+  const filhos = item.filhos ?? [];
+  const algumFilhoAtivo = filhos.some((f) => ativo(f.href));
+  const [aberto, setAberto] = useState(ativo(item.href) || algumFilhoAtivo);
+
+  return (
+    <div data-nav-item={item.href}>
+      <div className="flex items-center gap-1">
+        <Link href={item.href} className={`${itemCls(item.href)} min-w-0 flex-1 gap-2.5`}>
+          <Icone aria-hidden size={18} strokeWidth={1.75} className="shrink-0" />
+          <span className="truncate">{item.label}</span>
+        </Link>
+        {filhos.length > 0 ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAberto((v) => !v);
+            }}
+            aria-expanded={aberto}
+            aria-label={`${aberto ? "Recolher" : "Expandir"} submenu de ${item.label}`}
+            className="rounded-md p-1.5 text-neutral-500 hover:bg-white/10 hover:text-neutral-200"
+          >
+            <svg aria-hidden viewBox="0 0 16 16" className={`h-3 w-3 transition-transform ${aberto ? "rotate-0" : "-rotate-90"}`} fill="currentColor">
+              <path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" />
+            </svg>
+          </button>
+        ) : null}
+      </div>
+
+      {filhos.length > 0 && aberto ? (
+        // indentacao + guia vertical ligando os submenus ao pai
+        <div data-submenu={item.href} className="ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-neutral-700 pl-3">
+          {filhos.map((f) => {
+            const IconeFilho = ICONES[f.icone];
+            return (
+              <Link
+                key={f.href}
+                href={f.href}
+                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors ${
+                  ativo(f.href)
+                    ? "bg-emerald-700 font-semibold text-white"
+                    : "text-neutral-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <IconeFilho aria-hidden size={15} strokeWidth={1.75} className="shrink-0" />
+                <span className="truncate">{f.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -133,9 +215,7 @@ export default function AppFrame({
           {grupos.map((g, i) => (
             <Grupo key={g.titulo ?? `g${i}`} titulo={g.titulo}>
               {g.itens.map((item) => (
-                <Link key={item.href} href={item.href} className={itemCls(item.href)}>
-                  {item.label}
-                </Link>
+                <ItemComFilhos key={item.href} item={item} ativo={ativo} itemCls={itemCls} />
               ))}
             </Grupo>
           ))}

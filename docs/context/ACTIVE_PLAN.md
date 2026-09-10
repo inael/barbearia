@@ -1,33 +1,53 @@
-# ACTIVE_PLAN — Go-live da Faith Barbearia (2026-08-26)
+# ACTIVE_PLAN — Menu hierárquico com ícones + CRUD completo (2026-09-10)
 
-> Planos anteriores CONCLUÍDOS: CRT (cortesia/vale, 25/08), UXS (shell SaaS + onboarding,
-> 26/08) e OPR (auditoria dos áudios do Rodrigo + gaps, 26/08). Estado atual:
-> **44 features · 291 ACs · 291 PASS**, `EXIT_SIGNAL: true (código)` em `.specs/STATE.md`.
+> Planos anteriores concluídos: CRT (cortesia/vale), UXS (shell SaaS + onboarding),
+> OPR (auditoria dos áudios), SEC-03/04/05 (segurança). App no ar em
+> http://179.198.113.115.sslip.io. Estado: 44 features · 296 ACs · 296 PASS.
 
-## Onde estamos
-O sistema está **completo em código** e validado por uma simulação de 1 mês de operação
-(`docs/context/SIMULACAO-2026-08-26.md`: 236 comandas, R$ 21.461,90, conferência cruzada
-painel == caixa). A auditoria integral dos pedidos do Rodrigo
-(`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`) não deixou gap de código.
+## Pedido do Inael (2026-09-10)
+1. **Menu/submenu confusos**: hoje pai e filho estão no MESMO nível visual — não dá
+   pra saber o que é menu e o que é submenu. Adotar o padrão da referência enviada:
+   item pai com **ícone**, filhos **indentados** e ligados por uma **linha vertical**.
+2. **Ícones de biblioteca** (`lucide-react` — confirmado por ele). **Proibido emoji.**
+3. **CRUD completo**: toda entidade precisa de cadastro, edição e exclusão para a
+   aplicação funcionar de verdade.
 
-## O que falta — NÃO é código
-1. **Deploy da versão atual** (3 commits acima do que está na VPS): `drizzle-kit push`
-   no banco de produção (colunas novas têm DEFAULT, migração segura) + redeploy Coolify.
-   Lembrar de NÃO setar `NEXT_PUBLIC_DEMO_LOGINS` em produção (o seletor de perfil some).
-2. **Trocar as senhas demo** (dono/recepção/barbeiro) pelas reais do Rodrigo.
-3. **SimplesZap**: conectar a instância (QR no número da barbearia) → `SIMPLESZAP_INSTANCE`.
-4. **Asaas produção** (link de cartão recorrente) + webhook registrado.
-5. **NFS-e** do MEI do Rodrigo (CNPJ + município + credencial).
-6. **Scheduler/cron** dos lembretes.
-7. **Storage** da mídia da TV (bucket do cliente).
-8. **SEC-04**: fechar Postgres 5432 público + SSH root na VPS.
-9. **status.toolpad.cloud**: cadastrar a URL (regra IT Booster) + domínio próprio.
-10. **Treinar o Rodrigo** (o onboarding na /conta já guia os primeiros passos).
+## Onda A — Navegação (visual)
+- `lucide-react` como dependência; cada item de menu recebe um ícone do pacote.
+- `lib/nav.ts`: estrutura vira hierárquica (`ItemNav` ganha `filhos?: ItemNav[]`).
+  Pais: Cadastros (serviços/produtos/clientes/profissionais/usuários/horários),
+  Agenda (minha agenda), Assinaturas (pote).
+- `components/AppFrame.tsx`: renderiza pai com ícone + bloco de filhos indentado com
+  guia vertical (borda à esquerda), item ativo destacado; pai fica aberto quando um
+  filho está ativo. Sem emoji em lugar nenhum.
 
-## Perguntas abertas com o Rodrigo (não bloqueiam)
-- CRT (P1–P3): cortesia usa a faixa do barbeiro? vale = preço − comissão natural?
-  cortesia fora do faturamento? (rascunho de mensagem pronto, aguarda aprovação do Inael)
-- OPR: meta da recepção em "quantidade" mede hidratações — confirmar a régua.
+## Onda B — CRUD que falta (auditado hoje, entidade por entidade)
+| Entidade | Hoje | Falta |
+|---|---|---|
+| Combos | criar, excluir | **editar** |
+| Clientes | criar, editar | **excluir/desativar** |
+| Usuários | criar, ativar, papel, senha | **editar nome/e-mail**, **excluir** |
+| Estoque (produto) | cadastrar, movimentar | **editar**, **excluir** |
+| Planos | criar | **editar**, **desativar** |
+| Assinatura do cliente | criar, mudar status | **trocar de plano** |
+| Vales | lançar | **editar**, **excluir** (lançamento errado) |
+| TV (tela) | criar, item add/remove | **editar nome/velocidade**, **excluir tela** |
+| Agendamento | criar, cancelar | **remarcar** (horário/profissional) |
 
-## Próximo passo
-Autorização do Inael para o deploy. Depois: smoke real com credenciais e treinamento.
+Regras: exclusão bloqueada quando há vínculo (ex.: profissional com venda) — nesses
+casos **desativar**, nunca apagar histórico. Toda ação destrutiva pede confirmação.
+
+## Arquivos afetados
+`lib/nav.ts`, `components/AppFrame.tsx`, `package.json`; motores em `lib/{catalogo,
+clientes,usuarios,estoque,assinaturas,vales,tv,agendamento}.ts`; telas em
+`app/cadastros/*`, `app/estoque`, `app/assinaturas`, `app/vales`, `app/admin/tv`,
+`app/agenda`; specs `.specs/features/{ux-shell-v2,crud-completo}.md`.
+
+## Riscos
+- e2e do menu dependem dos labels/estrutura atuais → atualizar junto.
+- Exclusão com chave estrangeira: cobrir com teste de integração (deve recusar e
+  orientar a desativar).
+- Escopo grande: entregar em ondas commitáveis, gate verde em cada uma.
+
+## Validação
+`npm run tlc`, `quality:quick`, integration, e2e; deploy Coolify + smoke em produção.

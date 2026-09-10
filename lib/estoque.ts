@@ -74,3 +74,23 @@ export async function registrarPedidoCompra(db: DB, produtoEstoqueId: number, qu
 export async function listarProdutosEstoque(db: DB): Promise<schema.ProdutoEstoque[]> {
   return db.select().from(schema.produtosEstoque).where(eq(schema.produtosEstoque.ativo, true)).orderBy(asc(schema.produtosEstoque.nome));
 }
+
+/** CRUD-004: corrige nome/unidade de um produto de estoque (saldo muda por movimento). */
+export async function editarProdutoEstoque(db: DB, id: number, nome: string, unidade: string): Promise<void> {
+  if (!nome || !nome.trim()) throw new Error("nome obrigatório");
+  if (!unidadeValida(unidade?.trim() || "")) throw new Error("unidade inválida");
+  await db.update(schema.produtosEstoque).set({ nome: nome.trim(), unidade: unidade.trim() }).where(eq(schema.produtosEstoque.id, id));
+}
+
+/** CRUD-004: exclui um produto de estoque e o histórico dele (movimentos, contagens
+ * e pedidos são só do item, não afetam o caixa). Recusa se ainda houver saldo — o
+ * certo é dar baixa antes, senão o inventário fecha errado. */
+export async function removerProdutoEstoque(db: DB, id: number): Promise<void> {
+  const [p] = await db.select().from(schema.produtosEstoque).where(eq(schema.produtosEstoque.id, id));
+  if (!p) return;
+  if (p.saldo > 0) throw new Error(`ainda há ${p.saldo} ${p.unidade} em estoque: dê baixa antes de excluir`);
+  await db.delete(schema.movimentosEstoque).where(eq(schema.movimentosEstoque.produtoEstoqueId, id));
+  await db.delete(schema.contagensEstoque).where(eq(schema.contagensEstoque.produtoEstoqueId, id));
+  await db.delete(schema.pedidosCompra).where(eq(schema.pedidosCompra.produtoEstoqueId, id));
+  await db.delete(schema.produtosEstoque).where(eq(schema.produtosEstoque.id, id));
+}
