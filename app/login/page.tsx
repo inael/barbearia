@@ -60,8 +60,8 @@ export default function LoginPage() {
               ref={logoRef}
               src="/logo-faith.png"
               alt="Faith Barbearia"
-              width={168}
-              height={168}
+              width={228}
+              height={311}
               onError={() => setSemLogo(true)}
               className="h-auto w-40 select-none"
             />
