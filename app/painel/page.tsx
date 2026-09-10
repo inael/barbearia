@@ -11,6 +11,7 @@ import {
 } from "@/lib/dashboard";
 import { cortesiasDoPeriodo } from "@/lib/caixa";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -27,7 +28,7 @@ const PERIODOS = [
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 const card = "rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900";
 
-export default async function PainelDonoPage({ searchParams }: { searchParams: Promise<{ p?: string }> }) {
+export default async function PainelDonoPage({ searchParams }: { searchParams: Promise<{ p?: string; ok?: string; erro?: string }> }) {
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -76,6 +77,8 @@ export default async function PainelDonoPage({ searchParams }: { searchParams: P
             </>
           }
         />
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <div role="group" aria-label="Período" className="flex flex-wrap gap-2" data-testid="filtro-periodo">
           {PERIODOS.map((per) => (

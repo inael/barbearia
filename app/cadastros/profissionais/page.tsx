@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar, PAPEIS, type Papel } from "@/lib/auth/rbac";
+import Aviso from "@/components/Aviso";
 import {
   criarProfissional,
   editarProfissional,
@@ -29,6 +31,7 @@ async function novo(formData: FormData) {
     telefone: String(formData.get("telefone") || ""),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Profissional cadastrado.")}`);
 }
 
 async function salvar(formData: FormData) {
@@ -40,6 +43,7 @@ async function salvar(formData: FormData) {
     telefone: String(formData.get("telefone") || ""),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Profissional atualizado.")}`);
 }
 
 async function remover(formData: FormData) {
@@ -47,6 +51,7 @@ async function remover(formData: FormData) {
   if (!(await autorizado())) return;
   await inativarProfissional(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Profissional removido.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -56,7 +61,8 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroProfissionaisPage() {
+export default async function CadastroProfissionaisPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -77,6 +83,8 @@ export default async function CadastroProfissionaisPage() {
       <div className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Equipe / profissionais</h1>
         <p className="mt-1 text-sm text-neutral-600">Cadastre barbeiros, recepção e o dono. Só o dono gerencia a equipe.</p>
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Novo profissional</h2>

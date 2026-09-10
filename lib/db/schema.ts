@@ -358,3 +358,18 @@ export type Comanda = typeof comandas.$inferSelect;
 export type ComandaItem = typeof comandaItens.$inferSelect;
 export type HorarioFuncionamento = typeof horariosFuncionamento.$inferSelect;
 export type Feriado = typeof feriados.$inferSelect;
+
+/** Mural de recados: o dono publica um aviso e TODA a equipe vê no topo do sistema
+ * (ex.: "salário sai dia 5", "festa sexta", "meta nova do mês"). */
+export const recados = pgTable("recados", {
+  id: serial("id").primaryKey(),
+  mensagem: text("mensagem").notNull(),
+  /** info | alerta | comemoracao — muda só a cor/ícone da faixa. */
+  tipo: text("tipo").notNull().default("info"),
+  ativo: boolean("ativo").notNull().default(true),
+  /** null = sem data de validade; senão some sozinho depois dessa data. */
+  expiraEm: timestamp("expira_em", { withTimezone: true }),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Recado = typeof recados.$inferSelect;

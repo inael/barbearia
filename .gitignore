@@ -27,3 +27,7 @@ e2e/.runtime.json
 .loopx/
 .codex/goals/
 .local/
+
+# scripts temporarios de diagnostico (NUNCA versionar: costumam levar credencial)
+*.tmp.mjs
+chk.tmp.*

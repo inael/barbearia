@@ -1,10 +1,12 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
 import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao } from "@/lib/metas";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/metas";
@@ -28,6 +30,7 @@ async function salvarMeta(formData: FormData) {
     await definirMeta(getDb(), pid, inicio, fim, reaisParaCentavos(String(formData.get("alvo") || "0")));
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Meta salva.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -87,7 +90,8 @@ function LinhaRecepcao({ nome, rec }: { nome: string; rec: RelatorioRecepcao }) 
   );
 }
 
-export default async function MetasPage() {
+export default async function MetasPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
   const pid = session?.user?.profissionalId ?? null;
@@ -132,6 +136,8 @@ export default async function MetasPage() {
             </>
           }
         />
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         {editar ? (
           <section className="mt-6">

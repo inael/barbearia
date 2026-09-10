@@ -9,6 +9,7 @@ import { listarClientes } from "@/lib/clientes";
 import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, type TipoPlano , editarPlano, definirPlanoAtivo, removerPlano, trocarPlanoAssinatura } from "@/lib/assinaturas";
 import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/cobranca";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/assinaturas";
@@ -32,6 +33,7 @@ async function novoPlano(formData: FormData) {
     dias: String(formData.get("dias") || ""),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Plano criado.")}`);
 }
 
 async function salvarPlano(formData: FormData) {
@@ -50,6 +52,7 @@ async function salvarPlano(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Plano atualizado.")}`);
 }
 
 async function desativarPlano(formData: FormData) {
@@ -57,6 +60,7 @@ async function desativarPlano(formData: FormData) {
   if (!(await podeGerenciar())) return;
   await definirPlanoAtivo(getDb(), Number(formData.get("id")), false);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Plano desativado.")}`);
 }
 
 async function excluirPlano(formData: FormData) {
@@ -75,6 +79,7 @@ async function trocarPlano(formData: FormData) {
   if (!(await podeGerenciar())) return;
   await trocarPlanoAssinatura(getDb(), Number(formData.get("id")), Number(formData.get("planoId")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Plano da assinatura trocado.")}`);
 }
 
 async function novaAssinatura(formData: FormData) {
@@ -82,6 +87,7 @@ async function novaAssinatura(formData: FormData) {
   if (!(await podeGerenciar())) return;
   await criarAssinatura(getDb(), Number(formData.get("clienteId")), Number(formData.get("planoId")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Assinatura criada.")}`);
 }
 
 async function mudarStatus(formData: FormData) {
@@ -89,6 +95,7 @@ async function mudarStatus(formData: FormData) {
   if (!(await podeGerenciar())) return;
   await definirStatusAssinatura(getDb(), Number(formData.get("id")), String(formData.get("status")) as "ativa" | "atraso" | "cancelada");
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Situação da assinatura alterada.")}`);
 }
 
 async function podeOperar() {
@@ -101,18 +108,21 @@ async function pedir(formData: FormData) {
   if (!(await podeOperar())) return;
   await pedirAssinatura(getDb(), Number(formData.get("clienteId")), Number(formData.get("planoId")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Pedido enviado para a fila de espera.")}`);
 }
 async function aprovar(formData: FormData) {
   "use server";
   if (!(await podeGerenciar())) return;
   await aprovarFila(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Assinatura aprovada.")}`);
 }
 async function rejeitar(formData: FormData) {
   "use server";
   if (!(await podeGerenciar())) return;
   await rejeitarFila(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Pedido rejeitado.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -120,7 +130,7 @@ const input = "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neut
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
 const btnGhost = "rounded-lg border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function AssinaturasPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function AssinaturasPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
   const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
@@ -161,6 +171,8 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
           }
         />
 
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
+
         {gerenciar ? (
           <section className="mt-6">
             <h2 className="mb-3 text-lg font-semibold">Novo plano</h2>
@@ -176,11 +188,6 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
           </section>
         ) : null}
 
-        {sp?.erro ? (
-          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
-            {sp.erro}
-          </p>
-        ) : null}
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Planos ({planos.length})</h2>

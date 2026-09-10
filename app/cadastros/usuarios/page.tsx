@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { podeAcessar, PAPEIS, type Papel } from "@/lib/auth/rbac";
 import { criarUsuario, listarUsuarios, definirAtivo, alterarPapel, resetarSenha , editarUsuario, removerUsuario } from "@/lib/auth/usuarios";
 import { listarProfissionais } from "@/lib/profissionais";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/cadastros/usuarios";
@@ -29,6 +30,7 @@ async function novo(formData: FormData) {
     profissionalId: Number.isInteger(profissionalId) && profissionalId > 0 ? profissionalId : null,
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Login criado.")}`);
 }
 
 async function salvarDados(formData: FormData) {
@@ -40,6 +42,7 @@ async function salvarDados(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Usuário atualizado.")}`);
 }
 
 async function excluirUsuario(formData: FormData) {
@@ -51,6 +54,7 @@ async function excluirUsuario(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao excluir")}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Usuário excluído.")}`);
 }
 
 async function toggleAtivo(formData: FormData) {
@@ -58,6 +62,7 @@ async function toggleAtivo(formData: FormData) {
   if (!(await autorizado())) return;
   await definirAtivo(getDb(), Number(formData.get("id")), formData.get("ativo") === "1");
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Situação do usuário alterada.")}`);
 }
 
 async function mudarPapel(formData: FormData) {
@@ -65,6 +70,7 @@ async function mudarPapel(formData: FormData) {
   if (!(await autorizado())) return;
   await alterarPapel(getDb(), Number(formData.get("id")), String(formData.get("papel") || "barbeiro") as Papel);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Papel alterado.")}`);
 }
 
 async function trocarSenha(formData: FormData) {
@@ -72,6 +78,7 @@ async function trocarSenha(formData: FormData) {
   if (!(await autorizado())) return;
   await resetarSenha(getDb(), Number(formData.get("id")), String(formData.get("senha") || ""));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Senha redefinida.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -81,7 +88,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroUsuariosPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function CadastroUsuariosPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
   const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
@@ -105,11 +112,8 @@ export default async function CadastroUsuariosPage({ searchParams }: { searchPar
         <h1 className="text-2xl font-bold tracking-tight">Usuários / logins</h1>
         <p className="mt-1 text-sm text-neutral-600">Só o dono cria e gerencia os acessos ao sistema.</p>
 
-        {sp?.erro ? (
-          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
-            {sp.erro}
-          </p>
-        ) : null}
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
+
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Novo usuário</h2>

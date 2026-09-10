@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
+import Aviso from "@/components/Aviso";
 import {
   definirHorario,
   listarHorarios,
@@ -42,6 +44,7 @@ async function salvarDia(formData: FormData) {
     /* janela inválida: ignora o salvamento */
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Horário salvo.")}`);
 }
 
 async function novoFeriado(formData: FormData) {
@@ -49,6 +52,7 @@ async function novoFeriado(formData: FormData) {
   if (!(await autorizado())) return;
   await adicionarFeriado(getDb(), String(formData.get("data") || ""), String(formData.get("descricao") || ""));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Feriado adicionado.")}`);
 }
 
 async function excluirFeriado(formData: FormData) {
@@ -56,6 +60,7 @@ async function excluirFeriado(formData: FormData) {
   if (!(await autorizado())) return;
   await removerFeriado(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Feriado removido.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -64,7 +69,8 @@ const input =
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function HorariosPage() {
+export default async function HorariosPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -87,6 +93,8 @@ export default async function HorariosPage() {
       <div className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Horário de funcionamento</h1>
         <p className="mt-1 text-sm text-neutral-600">Define os horários que a grade oferece. Sem configuração, o padrão é 09h–19h.</p>
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <section className="mt-6 flex flex-col gap-2">
           {DIAS.map((nome, dow) => {

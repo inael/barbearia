@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarBloqueios, criarBloqueio, removerBloqueio } from "@/lib/agenda";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/minha-agenda/bloqueios";
@@ -35,9 +37,11 @@ async function remover(formData: FormData) {
   if (!Number.isInteger(id)) return;
   await removerBloqueio(getDb(), id, pid); // só remove o próprio (segurança na função)
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Removido.")}`);
 }
 
-export default async function BloqueiosPage() {
+export default async function BloqueiosPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
   const pid = session?.user?.profissionalId;
@@ -73,6 +77,8 @@ export default async function BloqueiosPage() {
     <main className={wrap}>
       <div className="mx-auto max-w-2xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Meus bloqueios</h1>
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
         <p className="mt-1 text-sm text-neutral-600">Marque os períodos em que você vai ficar ausente.</p>
 
         <form action={bloquear} className="mt-6 flex flex-wrap items-end gap-3">

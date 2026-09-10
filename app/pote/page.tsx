@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { relatorioPote } from "@/lib/pote-gestao";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -10,7 +11,8 @@ const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 da
 const card = "rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900";
 const linha = "flex flex-wrap items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900";
 
-export default async function PotePage() {
+export default async function PotePage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
   const pid = session?.user?.profissionalId ?? null;
@@ -47,6 +49,8 @@ export default async function PotePage() {
             </>
           }
         />
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         {dono ? (
           <section className="mt-6 grid grid-cols-2 gap-4">

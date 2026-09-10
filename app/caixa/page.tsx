@@ -22,6 +22,7 @@ import {
 import { emitirNota } from "@/lib/nf";
 import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/caixa";
@@ -101,7 +102,7 @@ async function fechar(formData: FormData) {
   } catch {
     /* sem CPF / já emitida: segue sem NF */
   }
-  redirect(`${ROTA}?fechada=1${nf ? "&nf=1" : ""}`);
+  redirect(`${ROTA}?ok=${encodeURIComponent(nf ? "Conta fechada. Nota fiscal emitida." : "Conta fechada.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -111,7 +112,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CaixaPage({ searchParams }: { searchParams: Promise<{ comanda?: string; fechada?: string; erro?: string; nf?: string }> }) {
+export default async function CaixaPage({ searchParams }: { searchParams: Promise<{ comanda?: string; fechada?: string; ok?: string; erro?: string; nf?: string }> }) {
   const session = await auth();
   const papel = session?.user?.papel;
   const sp = await searchParams;
@@ -169,14 +170,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
           }
         />
 
-        {sp.fechada ? (
-          <p className="mt-4 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-            Conta fechada.{sp.nf ? " Nota fiscal emitida." : ""}
-          </p>
-        ) : null}
-        {sp.erro ? (
-          <p role="alert" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Não foi possível fechar: {sp.erro}.</p>
-        ) : null}
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         {comandaAberta ? (
           <section className="mt-6 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900" data-testid="comanda">

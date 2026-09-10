@@ -11,6 +11,7 @@ import { janelaDoDia, listarHorarios, listarFeriados, toISODate } from "@/lib/ho
 import { montarGradeDia } from "@/lib/agenda-grade-dia";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/agenda";
@@ -42,7 +43,7 @@ async function agendar(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao agendar")}`);
   }
   revalidatePath(ROTA);
-  redirect(`${ROTA}?ok=1`);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Agendamento criado.")}`);
 }
 
 async function cancelar(formData: FormData) {
@@ -50,6 +51,7 @@ async function cancelar(formData: FormData) {
   if (!(await autorizado())) return;
   await cancelarAgendamento(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Agendamento cancelado.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -59,7 +61,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 
 const fmt = (d: Date) => d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
-export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ erro?: string; ok?: string; dia?: string }> }) {
+export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string; dia?: string }> }) {
   const session = await auth();
   const papel = session?.user?.papel;
   const sp = await searchParams;
@@ -111,16 +113,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           }
         />
 
-        {sp?.erro ? (
-          <p role="alert" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
-            Não foi possível agendar: {sp.erro}.
-          </p>
-        ) : null}
-        {sp?.ok ? (
-          <p className="mt-4 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-            Agendamento criado.
-          </p>
-        ) : null}
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <section className="mt-6" data-testid="grade-dia">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

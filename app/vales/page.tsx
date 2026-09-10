@@ -6,6 +6,7 @@ import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
 import { registrarVale, listarVales, editarVale, removerVale, TIPOS_VALE, type TipoVale } from "@/lib/vales";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/vales";
@@ -36,6 +37,7 @@ async function salvarVale(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Vale atualizado.")}`);
 }
 
 async function excluirVale(formData: FormData) {
@@ -43,6 +45,7 @@ async function excluirVale(formData: FormData) {
   if (!(await podeLancarVale())) return;
   await removerVale(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Vale excluído.")}`);
 }
 async function novo(formData: FormData) {
   "use server";
@@ -54,6 +57,7 @@ async function novo(formData: FormData) {
     precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Vale lançado.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -61,7 +65,7 @@ const input =
   "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
 
-export default async function ValesPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function ValesPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
   const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
@@ -99,6 +103,8 @@ export default async function ValesPage({ searchParams }: { searchParams: Promis
           }
         />
 
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
+
         {podeLancar ? (
           <section className="mt-6">
             <h2 className="mb-3 text-lg font-semibold">Lançar vale</h2>
@@ -124,11 +130,6 @@ export default async function ValesPage({ searchParams }: { searchParams: Promis
           </section>
         ) : null}
 
-        {sp?.erro ? (
-          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
-            {sp.erro}
-          </p>
-        ) : null}
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Vales ({vales.length})</h2>

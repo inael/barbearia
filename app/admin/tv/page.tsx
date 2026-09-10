@@ -1,10 +1,13 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarTelas, criarTela, editarTela, removerTela, adicionarItem, removerItem, listarItens } from "@/lib/tv";
 import { uploadMidia, getStorageClient } from "@/lib/tv-upload";
 import PageHeader from "@/components/PageHeader";
+import { rotuloDaMidia } from "@/lib/midia";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/admin/tv";
@@ -23,6 +26,7 @@ async function novaTela(formData: FormData) {
   if (!nome || !Number.isInteger(vel) || vel <= 0) return;
   await criarTela(getDb(), nome, vel);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Tela criada.")}`);
 }
 
 async function salvarTela(formData: FormData) {
@@ -34,6 +38,7 @@ async function salvarTela(formData: FormData) {
   if (!Number.isInteger(id) || !nome || !Number.isInteger(vel) || vel <= 0) return;
   await editarTela(getDb(), id, nome, vel);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Tela atualizada.")}`);
 }
 
 async function excluirTela(formData: FormData) {
@@ -43,6 +48,7 @@ async function excluirTela(formData: FormData) {
   if (!Number.isInteger(id)) return;
   await removerTela(getDb(), id);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Tela excluída.")}`);
 }
 
 async function novoItem(formData: FormData) {
@@ -53,6 +59,7 @@ async function novoItem(formData: FormData) {
   if (!Number.isInteger(telaId) || !url) return;
   await adicionarItem(getDb(), telaId, url);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Mídia adicionada à playlist.")}`);
 }
 
 async function excluirItem(formData: FormData) {
@@ -62,6 +69,7 @@ async function excluirItem(formData: FormData) {
   if (!Number.isInteger(itemId)) return;
   await removerItem(getDb(), itemId);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Mídia removida da playlist.")}`);
 }
 
 async function enviarMidia(formData: FormData) {
@@ -73,13 +81,17 @@ async function enviarMidia(formData: FormData) {
   const bytes = new Uint8Array(await arquivo.arrayBuffer());
   try {
     await uploadMidia(getDb(), getStorageClient(), telaId, { nome: arquivo.name, tipo: arquivo.type, tamanho: arquivo.size, bytes });
-  } catch {
-    /* mídia inválida: ignora */
+  } catch (e) {
+    // antes o erro era engolido e o usuário achava que o botão não funcionava
+    const msg = e instanceof Error ? e.message : "não foi possível enviar a mídia";
+    redirect(`${ROTA}?erro=${encodeURIComponent(msg)}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Mídia enviada para a playlist.")}`);
 }
 
-export default async function AdminTvPage() {
+export default async function AdminTvPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
   const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -115,6 +127,8 @@ export default async function AdminTvPage() {
             </>
           }
         />
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <form action={novaTela} className="mt-2 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
@@ -168,8 +182,19 @@ export default async function AdminTvPage() {
                     <li className="text-sm text-neutral-600">Playlist vazia.</li>
                   ) : (
                     itensPorTela[i].map((it) => (
-                      <li key={it.id} data-url={it.url} className="flex items-center justify-between text-sm">
-                        <span>{it.ordem}. {it.url}</span>
+                      <li key={it.id} data-url={it.url} className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="min-w-0 flex-1 truncate">
+                          {it.ordem}. {rotuloDaMidia(it.url)}
+                        </span>
+                        <a
+                          href={it.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-abrir-midia={it.id}
+                          className="rounded border border-neutral-300 px-2 py-0.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+                        >
+                          Abrir mídia
+                        </a>
                         <form action={excluirItem}>
                           <input type="hidden" name="itemId" value={it.id} />
                           <button type="submit" className="text-xs text-red-700 underline hover:text-red-900 dark:text-red-400">remover</button>

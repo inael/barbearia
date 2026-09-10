@@ -59,7 +59,8 @@
 | UXS — Shell SaaS v2 + onboarding + explicações | ux-shell-v2.md | 17 | 17 | sim | **Feedback UX 2026-08-26** — sidebar escura por papel, onboarding real, toda tela explica, filtros/unidades/metas-qtd/planos seed |
 | OPR — Gaps da auditoria dos áudios do Rodrigo | operacao-rodrigo.md | 9 | 9 | sim | **Auditoria 2026-08-26** — comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia |
 | CRUD — Cadastro, edição e exclusão completos | crud-completo.md | 8 | 8 | sim | **2026-09-10** — editar/excluir em cliente, usuário, estoque, plano, assinatura, vale e TV; recusa apagar histórico e orienta desativar |
-| **Subtotal A** | | **304** | **304** | | |
+| FDB — Confirmação de ação + mural de recados + player da TV | feedback-e-recados.md | 7 | 7 | sim | **2026-09-10** — toda ação confirma na tela; recado do dono aparece pra equipe; YouTube toca no player (antes dava tela preta) |
+| **Subtotal A** | | **310** | **310** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
@@ -67,7 +68,7 @@
 | _(vazio — tudo implementado)_ | | 0 | | |
 | **Subtotal B** | | **0** | | |
 
-**Total: 45 features · 304 ACs · 304 PASS / 0 PENDING.** unit 115, integration 109, e2e 77 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
+**Total: 46 features · 310 ACs · 310 PASS / 0 PENDING.** unit 121, integration 111, e2e 90 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
 
 **Auditoria 2026-08-26 (`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`):** os 14 áudios + 21 respostas do Rodrigo foram cruzados requisito-a-requisito (RF1–RF31) com as specs e o código; os 4 gaps encontrados (comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia) viraram a feature OPR e estão fechados. **Simulação de 1 mês de operação** (236 comandas, R$ 21.461,90) validada em `docs/context/SIMULACAO-2026-08-26.md`. **Resta só EXECUÇÃO** (credenciais/go-live), não código.
 
@@ -75,7 +76,7 @@
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
 
 ## EXIT_SIGNAL: true (código) — 2026-08-26 (revisado 27/08)
-Todas as **304 ACs** estão PASS com teste verde nomeado, o produto é **navegável ponta a
+Todas as **310 ACs** estão PASS com teste verde nomeado, o produto é **navegável ponta a
 ponta** por papel (sem páginas órfãs, tudo atrás de login) e a **auditoria integral dos
 pedidos do Rodrigo** (14 áudios + 21 respostas, RF1–RF31) não deixou gap de código:
 - [x] Navegação por papel + shell SaaS + onboarding — SHELL/UXS

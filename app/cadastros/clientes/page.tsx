@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { criarCliente, editarCliente, completarCadastro, listarClientes, removerCliente } from "@/lib/clientes";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/cadastros/clientes";
@@ -23,6 +24,7 @@ async function novo(formData: FormData) {
     cpf: String(formData.get("cpf") || ""),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Cliente cadastrado.")}`);
 }
 
 async function excluir(formData: FormData) {
@@ -34,6 +36,7 @@ async function excluir(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao excluir")}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Excluído.")}`);
 }
 
 async function salvar(formData: FormData) {
@@ -44,6 +47,7 @@ async function salvar(formData: FormData) {
     telefone: String(formData.get("telefone") || ""),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Cliente atualizado.")}`);
 }
 
 async function definirCpf(formData: FormData) {
@@ -51,6 +55,7 @@ async function definirCpf(formData: FormData) {
   if (!(await autorizado())) return;
   await completarCadastro(getDb(), Number(formData.get("id")), String(formData.get("cpf") || ""));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("CPF salvo.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -60,7 +65,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroClientesPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function CadastroClientesPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
   const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
@@ -83,11 +88,8 @@ export default async function CadastroClientesPage({ searchParams }: { searchPar
         <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
         <p className="mt-1 text-sm text-neutral-600">Pré-cadastro é nome + telefone. CPF só quando o cliente pedir nota fiscal.</p>
 
-        {sp?.erro ? (
-          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
-            {sp.erro}
-          </p>
-        ) : null}
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
+
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Novo cliente</h2>

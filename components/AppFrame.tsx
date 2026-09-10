@@ -10,14 +10,14 @@ import type { GrupoNav, ItemNav, IconeNav } from "@/lib/nav";
 import {
   LayoutDashboard, BookOpen, Calculator, CalendarDays, CalendarClock, ShoppingCart,
   Receipt, FolderCog, Scissors, Package, Users, UserCog, IdCard, Clock, Target,
-  Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser, type LucideIcon,
+  Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser, Megaphone, type LucideIcon,
 } from "lucide-react";
 
 // Icones da biblioteca lucide-react (nunca emoji — pedido do Inael 2026-09-10).
 const ICONES: Record<IconeNav, LucideIcon> = {
   LayoutDashboard, BookOpen, Calculator, CalendarDays, CalendarClock, ShoppingCart,
   Receipt, FolderCog, Scissors, Package, Users, UserCog, IdCard, Clock, Target,
-  Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser,
+  Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser, Megaphone,
 };
 import { perfisDemo } from "@/lib/demo-logins";
 import TrocarUsuario from "./TrocarUsuario";

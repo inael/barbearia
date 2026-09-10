@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarDuracoesEfetivas, definirDuracao, removerDuracao } from "@/lib/agenda";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,7 @@ async function salvar(formData: FormData) {
   if (!Number.isInteger(servicoId) || !Number.isInteger(duracao) || duracao <= 0) return;
   await definirDuracao(getDb(), pid, servicoId, duracao);
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Salvo.")}`);
 }
 
 async function usarPadrao(formData: FormData) {
@@ -38,7 +41,8 @@ async function usarPadrao(formData: FormData) {
   revalidatePath(ROTA);
 }
 
-export default async function DuracoesPage() {
+export default async function DuracoesPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
   const pid = session?.user?.profissionalId;
@@ -72,6 +76,8 @@ export default async function DuracoesPage() {
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Minha minutagem</h1>
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
         <p className="mt-1 text-sm text-neutral-600">
           Ajuste quanto tempo <strong>você</strong> leva em cada serviço. Sem ajuste, vale o padrão.
         </p>

@@ -1,9 +1,11 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarNotificacoes, marcarLida, definirConfig, eventoAtivo } from "@/lib/notificacoes";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/notificacoes";
@@ -22,6 +24,7 @@ async function marcar(formData: FormData) {
   if (!(await autorizado())) return;
   await marcarLida(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Aviso marcado como lido.")}`);
 }
 
 async function toggle(formData: FormData) {
@@ -29,12 +32,14 @@ async function toggle(formData: FormData) {
   if (!(await autorizado())) return;
   await definirConfig(getDb(), String(formData.get("evento")), formData.get("ativo") === "1");
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Preferência de aviso alterada.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 const btnGhost = "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function NotificacoesPage() {
+export default async function NotificacoesPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -65,6 +70,8 @@ export default async function NotificacoesPage() {
             </>
           }
         />
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">O que me notifica</h2>

@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { cadastrarProdutoEstoque, registrarMovimento, registrarContagem, registrarPedidoCompra, listarProdutosEstoque, editarProdutoEstoque, removerProdutoEstoque, UNIDADES_ESTOQUE } from "@/lib/estoque";
 import PageHeader from "@/components/PageHeader";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/estoque";
@@ -19,6 +20,7 @@ async function cadastrar(formData: FormData) {
   if (!(await autorizado())) return;
   await cadastrarProdutoEstoque(getDb(), String(formData.get("nome") || ""), String(formData.get("unidade") || "un"), Number(formData.get("saldo")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Produto de estoque cadastrado.")}`);
 }
 async function salvarProduto(formData: FormData) {
   "use server";
@@ -29,6 +31,7 @@ async function salvarProduto(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
   }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Produto atualizado.")}`);
 }
 
 async function excluirProduto(formData: FormData) {
@@ -49,18 +52,21 @@ async function movimentar(formData: FormData) {
     await registrarMovimento(getDb(), Number(formData.get("id")), String(formData.get("tipo")) as "entrada" | "saida", Number(formData.get("quantidade")), "manual");
   } catch { /* saldo insuficiente: ignora */ }
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Movimento registrado.")}`);
 }
 async function contar(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
   await registrarContagem(getDb(), Number(formData.get("id")), String(formData.get("periodo")) as "manha" | "noite", Number(formData.get("contado")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Contagem registrada.")}`);
 }
 async function pedir(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
   await registrarPedidoCompra(getDb(), Number(formData.get("id")), Number(formData.get("quantidade")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Pedido de compra registrado (o dono foi avisado).")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -69,7 +75,7 @@ const input =
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
 const btnGhost = "rounded-lg border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function EstoquePage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+export default async function EstoquePage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
   const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
@@ -101,11 +107,8 @@ export default async function EstoquePage({ searchParams }: { searchParams: Prom
           }
         />
 
-        {sp?.erro ? (
-          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
-            {sp.erro}
-          </p>
-        ) : null}
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
+
 
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">Novo produto de estoque</h2>

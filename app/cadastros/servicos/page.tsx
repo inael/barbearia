@@ -1,7 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
+import Aviso from "@/components/Aviso";
 import {
   criarServico,
   editarServico,
@@ -37,6 +39,7 @@ async function novoServico(formData: FormData) {
     pontosPote: entraPote ? Number(formData.get("pontos")) : 0,
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Serviço cadastrado.")}`);
 }
 
 async function salvarServico(formData: FormData) {
@@ -52,6 +55,7 @@ async function salvarServico(formData: FormData) {
     pontosPote: entraPote ? Number(formData.get("pontos")) : 0,
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Serviço atualizado.")}`);
 }
 
 async function removerServico(formData: FormData) {
@@ -59,6 +63,7 @@ async function removerServico(formData: FormData) {
   if (!(await autorizado())) return;
   await inativarServico(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Serviço removido.")}`);
 }
 
 async function novoCombo(formData: FormData) {
@@ -71,6 +76,7 @@ async function novoCombo(formData: FormData) {
     inclui: String(formData.get("inclui") || ""),
   });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Combo cadastrado.")}`);
 }
 
 async function removerCombo(formData: FormData) {
@@ -78,6 +84,7 @@ async function removerCombo(formData: FormData) {
   if (!(await autorizado())) return;
   await inativarCombo(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Combo removido.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -87,7 +94,8 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroServicosPage() {
+export default async function CadastroServicosPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -109,6 +117,8 @@ export default async function CadastroServicosPage() {
       <div className="mx-auto max-w-4xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Cadastro de serviços e combos</h1>
         <p className="mt-1 text-sm text-neutral-600">Crie, edite e inative o que a barbearia oferece. Reflete no painel e na agenda.</p>
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         {/* Novo serviço */}
         <section className="mt-8">

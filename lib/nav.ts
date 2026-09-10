@@ -11,7 +11,7 @@ export type IconeNav =
   | "LayoutDashboard" | "BookOpen" | "Calculator" | "CalendarDays" | "CalendarClock"
   | "ShoppingCart" | "Receipt" | "FolderCog" | "Scissors" | "Package" | "Users"
   | "UserCog" | "IdCard" | "Clock" | "Target" | "Boxes" | "CreditCard" | "PiggyBank"
-  | "Bell" | "MonitorPlay" | "CircleUser";
+  | "Bell" | "MonitorPlay" | "CircleUser" | "Megaphone";
 
 export interface ItemNav {
   href: string;
@@ -78,7 +78,14 @@ export function gruposParaPapel(papel: Papel | null): GrupoNav[] {
   } else if (pode("comissao")) {
     gestao.push({ href: "/pote", label: "Pote", icone: "PiggyBank" });
   }
-  if (pode("config")) gestao.push({ href: "/notificacoes", label: "Avisos", icone: "Bell" });
+  if (pode("config")) {
+    gestao.push({
+      href: "/notificacoes",
+      label: "Avisos",
+      icone: "Bell",
+      filhos: [{ href: "/notificacoes/recados", label: "Recados da equipe", icone: "Megaphone" }],
+    });
+  }
 
   const tv: ItemNav[] = [];
   if (pode("tv")) tv.push({ href: "/admin/tv", label: "TVs", icone: "MonitorPlay" });

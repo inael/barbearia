@@ -1,8 +1,10 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { criarProduto, editarProduto, inativarProduto, listarProdutos } from "@/lib/produtos";
+import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/cadastros/produtos";
@@ -21,6 +23,7 @@ async function novo(formData: FormData) {
   if (!(await autorizado())) return;
   await criarProduto(getDb(), { nome: String(formData.get("nome") || ""), precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")) });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Produto cadastrado.")}`);
 }
 
 async function salvar(formData: FormData) {
@@ -28,6 +31,7 @@ async function salvar(formData: FormData) {
   if (!(await autorizado())) return;
   await editarProduto(getDb(), Number(formData.get("id")), { nome: String(formData.get("nome") || ""), precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")) });
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Produto atualizado.")}`);
 }
 
 async function remover(formData: FormData) {
@@ -35,6 +39,7 @@ async function remover(formData: FormData) {
   if (!(await autorizado())) return;
   await inativarProduto(getDb(), Number(formData.get("id")));
   revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Produto removido.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -44,7 +49,8 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroProdutosPage() {
+export default async function CadastroProdutosPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -65,6 +71,8 @@ export default async function CadastroProdutosPage() {
       <div className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Produtos</h1>
         <p className="mt-1 text-sm text-neutral-600">Itens vendidos no balcão (pomada, shampoo...). Ficam disponíveis no caixa.</p>
+
+        <Aviso ok={sp?.ok} erro={sp?.erro} />
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Novo produto</h2>
