@@ -61,6 +61,31 @@ curl -s -o /dev/null -w "%{http_code}" http://179.198.113.115.sslip.io/health   
 E no navegador, logado como dono: onboarding na `/conta`, e `/painel`, `/agenda`,
 `/caixa`, `/metas`, `/assinaturas`, `/estoque`, `/admin/tv`, `/pote` todos abrindo.
 
+## Domínio e HTTPS (2026-09-10)
+
+O sistema atende em **https://barbearia.itbooster.com.br**. O endereço antigo por IP
+(`http://179.198.113.115.sslip.io`) continua respondendo durante a transição.
+
+- **DNS**: registro A `barbearia` → `179.198.113.115`, criado pela API da Hostinger
+  (`HOSTINGER_API_TOKEN` no vault), que é quem hospeda a zona `itbooster.com.br`.
+  O domínio é da IT Booster mas aponta para a VPS do Rodrigo: **nenhum dado do
+  cliente passa pela infra da IT Booster**, só a resolução de nome.
+- **Certificado**: Let's Encrypt emitido pelo `coolify-proxy` (Traefik v3.6), resolver
+  `letsencrypt` por desafio HTTP. Renova sozinho. Exige a **porta 80 aberta**, então
+  não feche a 80 "porque agora tem HTTPS": sem ela a renovação falha.
+- **Labels do Traefik**: o Coolify regenerou sozinho ao salvar o domínio, incluindo o
+  roteador `https-0-*` com `tls.certresolver=letsencrypt` e o redirecionamento de
+  http para https. Não vale a pena escrever esses labels à mão aqui.
+  (O gotcha de labels que existe na VPS da IT Booster **não se aplica**: lá o Traefik
+  usa entrypoints `web`/`websecure`; aqui o Coolify é dono do proxy e usa `http`/`https`.)
+- **`AUTH_URL`** precisa acompanhar o domínio, senão o login redireciona para o lugar
+  errado. Está como `https://barbearia.itbooster.com.br`. Como `AUTH_TRUST_HOST=true`,
+  os dois endereços continuam funcionando.
+- URL registrada no painel https://status.toolpad.cloud (categoria "Clientes — Produção").
+
+Para trocar o domínio de novo: PATCH `domains` em `/api/v1/applications/<uuid>`, ajustar
+`AUTH_URL`, e **redeploy** (só reiniciar não reaplica os labels novos no container).
+
 ## Variáveis de ambiente — cuidados
 
 - As envs vivem no painel do Coolify (não há `.env.local` na VPS).

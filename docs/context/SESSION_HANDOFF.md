@@ -44,7 +44,9 @@ Ficou exposto por poucos minutos.
   de ambiente lida do vault.
 
 ### Estado da produção
-- http://179.198.113.115.sslip.io no commit `c2cea2f`. Tabela `recados` aplicada.
+- **https://barbearia.itbooster.com.br** (domínio próprio com certificado Let's
+  Encrypt, no ar desde 2026-09-10). O endereço antigo por IP segue respondendo.
+  Tabela `recados` aplicada. Logo do Rodrigo publicada em `public/logo-faith.png`.
 - **Correção de um diagnóstico meu que estava errado:** cheguei a registrar que o
   túnel SSH "não funciona". Funciona. São duas causas, e nenhuma é o túnel: a porta
   **5433 é do Docker Desktop** nesta máquina, e escrever **`localhost`** no lado
@@ -55,9 +57,10 @@ Ficou exposto por poucos minutos.
 
 ### Pendente antes de entregar ao Rodrigo
 1. **Remover `NEXT_PUBLIC_DEMO_LOGINS=1`** do Coolify e trocar as senhas de
-   demonstração. Hoje o seletor "Entrar como" expõe as três senhas na URL pública.
-2. Salvar a logo enviada pelo Inael como `public/logo-faith.png` (o login já aponta
-   para ela e cai num monograma enquanto o arquivo não existe).
+   demonstração. O seletor "Entrar como" expõe as três senhas numa URL pública.
+   **Decisão do Inael em 10/09: fica ligado por enquanto**, porque o Rodrigo vai
+   testar. Remover antes da entrega final.
+2. ~~Logo no login~~ **feito em 10/09** (`public/logo-faith.png`, 228x311).
 3. Três dúvidas para o Rodrigo sobre regras de cortesia/vale, redigidas e ainda não
    enviadas (precisam do aval do Inael antes de ir).
 4. Go-live: QR do SimplesZap, Asaas produção, emissor de NFS-e, agendador de
