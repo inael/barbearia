@@ -45,9 +45,12 @@ Ficou exposto por poucos minutos.
 
 ### Estado da produção
 - http://179.198.113.115.sslip.io no commit `c2cea2f`. Tabela `recados` aplicada.
-- O túnel SSH do runbook **travou de novo** (não foi só "Address already in use"):
-  o caminho que funciona hoje é `ssh + docker exec psql` no container
-  `tud3ivhyb95ubzdexu85delt`. Vale corrigir o runbook.
+- **Correção de um diagnóstico meu que estava errado:** cheguei a registrar que o
+  túnel SSH "não funciona". Funciona. São duas causas, e nenhuma é o túnel: a porta
+  **5433 é do Docker Desktop** nesta máquina, e escrever **`localhost`** no lado
+  remoto faz a conexão pendurar sem erro (a porta local até fica escutando). Com
+  `-L 127.0.0.1:5466:127.0.0.1:5432` o túnel sobe e a consulta responde. Runbook
+  corrigido. Para DDL simples, `ssh + docker exec psql` continua sendo o atalho.
 - 24 clientes cadastrados (20 de demonstração).
 
 ### Pendente antes de entregar ao Rodrigo

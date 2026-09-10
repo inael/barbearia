@@ -12,13 +12,26 @@ Credenciais no vault: `~/.claude/credentials/services.env` (prefixo `BARBEARIA_`
 A porta 5432 está bloqueada para fora (regra `DOCKER-USER`), então abra um túnel:
 
 ```bash
-# terminal 1 — túnel: porta local 5433 -> Postgres da VPS
-ssh -i ~/.ssh/faith_barbearia_vps -N -L 5433:localhost:5432 root@179.198.113.115
+# terminal 1 — túnel: porta local 5466 -> Postgres da VPS
+# Escreva 127.0.0.1 dos DOIS lados. Com "localhost" no lado remoto o túnel abre,
+# a porta local fica escutando e a conexão pendura sem erro nenhum. E não use a
+# 5433: nesta máquina ela é do Docker Desktop.
+ssh -i ~/.ssh/faith_barbearia_vps -N -L 127.0.0.1:5466:127.0.0.1:5432 \
+    root@179.198.113.115
 
 # terminal 2 — aplica o schema através do túnel
 cd <repo>
-DATABASE_URL="postgres://barbearia:<BARBEARIA_DB_PASSWORD>@localhost:5433/barbearia" \
+DATABASE_URL="postgres://barbearia:<BARBEARIA_DB_PASSWORD>@127.0.0.1:5466/barbearia" \
   npx drizzle-kit push --force
+```
+
+Alternativa sem túnel, boa para uma consulta rápida ou um DDL simples:
+
+```bash
+ssh -i ~/.ssh/faith_barbearia_vps root@179.198.113.115 \
+  "docker exec -i tud3ivhyb95ubzdexu85delt psql -U barbearia -d barbearia" <<'SQL'
+select count(*) from clientes;
+SQL
 ```
 
 Colunas novas devem ter `DEFAULT` (ou ser nullable) para o push rodar sem downtime
