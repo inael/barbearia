@@ -1,8 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar, PAPEIS, type Papel } from "@/lib/auth/rbac";
-import { criarUsuario, listarUsuarios, definirAtivo, alterarPapel, resetarSenha } from "@/lib/auth/usuarios";
+import { criarUsuario, listarUsuarios, definirAtivo, alterarPapel, resetarSenha , editarUsuario, removerUsuario } from "@/lib/auth/usuarios";
 import { listarProfissionais } from "@/lib/profissionais";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,28 @@ async function novo(formData: FormData) {
     papel: String(formData.get("papel") || "barbeiro") as Papel,
     profissionalId: Number.isInteger(profissionalId) && profissionalId > 0 ? profissionalId : null,
   });
+  revalidatePath(ROTA);
+}
+
+async function salvarDados(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  try {
+    await editarUsuario(getDb(), Number(formData.get("id")), String(formData.get("nome") || ""), String(formData.get("email") || ""));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
+  }
+  revalidatePath(ROTA);
+}
+
+async function excluirUsuario(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  try {
+    await removerUsuario(getDb(), Number(formData.get("id")));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao excluir")}`);
+  }
   revalidatePath(ROTA);
 }
 
@@ -58,7 +81,8 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroUsuariosPage() {
+export default async function CadastroUsuariosPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -80,6 +104,12 @@ export default async function CadastroUsuariosPage() {
       <div className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Usuários / logins</h1>
         <p className="mt-1 text-sm text-neutral-600">Só o dono cria e gerencia os acessos ao sistema.</p>
+
+        {sp?.erro ? (
+          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
+            {sp.erro}
+          </p>
+        ) : null}
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Novo usuário</h2>
@@ -122,6 +152,18 @@ export default async function CadastroUsuariosPage() {
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${u.ativo ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-neutral-200 text-neutral-600 dark:bg-neutral-800"}`}>
                   {u.ativo ? "ativo" : "inativo"}
                 </span>
+                <form action={salvarDados} className="flex items-end gap-1">
+                  <input type="hidden" name="id" value={u.id} />
+                  <input name="nome" defaultValue={u.nome} aria-label={`Nome de ${u.email}`} className={`${input} w-32`} />
+                  <input name="email" type="email" defaultValue={u.email} aria-label={`E-mail de ${u.email}`} className={`${input} w-44`} />
+                  <button type="submit" data-salvar-usuario={u.email} className={btnGhost}>Salvar</button>
+                </form>
+                <form action={excluirUsuario} className="flex items-end">
+                  <input type="hidden" name="id" value={u.id} />
+                  <button type="submit" data-excluir-usuario={u.email} className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50">
+                    Excluir
+                  </button>
+                </form>
                 <form action={mudarPapel} className="flex items-center gap-1">
                   <input type="hidden" name="id" value={u.id} />
                   <select name="papel" defaultValue={u.papel} aria-label={`Papel de ${u.email}`} className={input}>

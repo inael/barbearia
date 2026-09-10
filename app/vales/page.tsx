@@ -1,9 +1,10 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
-import { registrarVale, listarVales, TIPOS_VALE, type TipoVale } from "@/lib/vales";
+import { registrarVale, listarVales, editarVale, removerVale, TIPOS_VALE, type TipoVale } from "@/lib/vales";
 import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,27 @@ async function podeLancarVale() {
   return Boolean(papel && podeAcessar(papel, "caixa"));
 }
 
+async function salvarVale(formData: FormData) {
+  "use server";
+  if (!(await podeLancarVale())) return;
+  try {
+    await editarVale(getDb(), Number(formData.get("id")), {
+      tipo: String(formData.get("tipo")) as TipoVale,
+      descricao: String(formData.get("descricao") || ""),
+      precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+    });
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
+  }
+  revalidatePath(ROTA);
+}
+
+async function excluirVale(formData: FormData) {
+  "use server";
+  if (!(await podeLancarVale())) return;
+  await removerVale(getDb(), Number(formData.get("id")));
+  revalidatePath(ROTA);
+}
 async function novo(formData: FormData) {
   "use server";
   if (!(await podeLancarVale())) return;
@@ -39,7 +61,8 @@ const input =
   "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
 
-export default async function ValesPage() {
+export default async function ValesPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
   const pid = session?.user?.profissionalId ?? null;
@@ -101,6 +124,12 @@ export default async function ValesPage() {
           </section>
         ) : null}
 
+        {sp?.erro ? (
+          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
+            {sp.erro}
+          </p>
+        ) : null}
+
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Vales ({vales.length})</h2>
           <div className="flex flex-col gap-2">
@@ -110,6 +139,23 @@ export default async function ValesPage() {
                 <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">{tipoLabel[v.tipo] ?? v.tipo}</span>
                 <span className="text-neutral-500">{v.profissionalNome}</span>
                 <span className="ml-auto"><s className="text-neutral-400">{brl(v.precoCentavos)}</s> <strong>{brl(v.valorCentavos)}</strong></span>
+                {podeLancar && v.tipo !== "servico_barbeiro" ? (
+                  <>
+                    <form action={salvarVale} className="flex items-end gap-1">
+                      <input type="hidden" name="id" value={v.id} />
+                      <select name="tipo" defaultValue={v.tipo} aria-label={`Tipo do vale ${v.descricao}`} className={input}>
+                        {TIPOS_VALE.map((t) => <option key={t} value={t}>{tipoLabel[t]}</option>)}
+                      </select>
+                      <input name="descricao" defaultValue={v.descricao} aria-label={`Descrição do vale ${v.descricao}`} className={`${input} w-28`} />
+                      <input name="preco" defaultValue={(v.precoCentavos / 100).toFixed(2)} inputMode="decimal" aria-label={`Preço do vale ${v.descricao}`} className={`${input} w-20`} />
+                      <button type="submit" data-salvar-vale={v.descricao} className="rounded-lg border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-800 hover:bg-neutral-100">Salvar</button>
+                    </form>
+                    <form action={excluirVale} className="flex items-end">
+                      <input type="hidden" name="id" value={v.id} />
+                      <button type="submit" data-excluir-vale={v.descricao} className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50">Excluir</button>
+                    </form>
+                  </>
+                ) : null}
               </div>
             ))}
           </div>

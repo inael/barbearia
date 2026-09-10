@@ -29,9 +29,12 @@ test.describe("SHELL — navegação por papel + login/logout", () => {
   test("SHELL-002 dono vê Painel do dono/Catálogo/Comissão/Minha agenda/Cadastros/TVs/Conta e navega", { tag: "@critical" }, async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto("/");
-    for (const nome of ["Painel do dono", "Catálogo", "Comissão", "Minha agenda", "Cadastros", "TVs", "Conta"]) {
+    for (const nome of ["Painel do dono", "Catálogo", "Comissão", "Agenda", "Cadastros", "TVs", "Conta"]) {
       await expect(nav(page).getByRole("link", { name: nome, exact: true })).toBeVisible();
     }
+    // "Minha agenda" é SUBMENU de Agenda: aparece ao expandir o pai
+    await nav(page).getByRole("button", { name: /submenu de Agenda/ }).click();
+    await expect(nav(page).getByRole("link", { name: "Minha agenda", exact: true })).toBeVisible();
     await nav(page).getByRole("link", { name: "Cadastros", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Cadastros" })).toBeVisible();
     await nav(page).getByRole("link", { name: "TVs", exact: true }).click();

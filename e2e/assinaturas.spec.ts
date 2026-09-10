@@ -16,7 +16,7 @@ test.describe("ASS — assinaturas (e2e)", () => {
     await expect(page.getByRole("heading", { name: "Assinaturas", exact: true })).toBeVisible();
     await page.getByTestId("ass-nome").fill("Premium E2E");
     await page.getByTestId("ass-tipo").selectOption("premium");
-    await page.getByLabel("Preço").fill("200,00");
+    await page.getByLabel("Preço", { exact: true }).fill("200,00");
     await page.getByRole("button", { name: "Criar plano" }).click();
     await expect(page.locator('div[data-plano="Premium E2E"]')).toBeVisible();
 

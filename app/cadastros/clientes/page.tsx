@@ -1,8 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
-import { criarCliente, editarCliente, completarCadastro, listarClientes } from "@/lib/clientes";
+import { criarCliente, editarCliente, completarCadastro, listarClientes, removerCliente } from "@/lib/clientes";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/cadastros/clientes";
@@ -21,6 +22,17 @@ async function novo(formData: FormData) {
     telefone: String(formData.get("telefone") || ""),
     cpf: String(formData.get("cpf") || ""),
   });
+  revalidatePath(ROTA);
+}
+
+async function excluir(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  try {
+    await removerCliente(getDb(), Number(formData.get("id")));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao excluir")}`);
+  }
   revalidatePath(ROTA);
 }
 
@@ -48,7 +60,8 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroClientesPage() {
+export default async function CadastroClientesPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -69,6 +82,12 @@ export default async function CadastroClientesPage() {
       <div className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
         <p className="mt-1 text-sm text-neutral-600">Pré-cadastro é nome + telefone. CPF só quando o cliente pedir nota fiscal.</p>
+
+        {sp?.erro ? (
+          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
+            {sp.erro}
+          </p>
+        ) : null}
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Novo cliente</h2>
@@ -99,7 +118,17 @@ export default async function CadastroClientesPage() {
                   <label className="flex flex-col gap-1 text-xs">Telefone
                     <input name="telefone" defaultValue={c.telefone} aria-label={`Telefone de ${c.nome}`} className={input} />
                   </label>
-                  <button type="submit" className={btnGhost}>Salvar</button>
+                  <button type="submit" data-salvar-cliente={c.nome} className={btnGhost}>Salvar</button>
+                </form>
+                <form action={excluir} className="flex items-end">
+                  <input type="hidden" name="id" value={c.id} />
+                  <button
+                    type="submit"
+                    data-excluir-cliente={c.nome}
+                    className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+                  >
+                    Excluir
+                  </button>
                 </form>
                 <form action={definirCpf} className="flex items-end gap-2">
                   <input type="hidden" name="id" value={c.id} />

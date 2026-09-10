@@ -1,11 +1,12 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarClientes } from "@/lib/clientes";
-import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, type TipoPlano } from "@/lib/assinaturas";
+import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, type TipoPlano , editarPlano, definirPlanoAtivo, removerPlano, trocarPlanoAssinatura } from "@/lib/assinaturas";
 import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/cobranca";
 import PageHeader from "@/components/PageHeader";
 
@@ -30,6 +31,49 @@ async function novoPlano(formData: FormData) {
     descontoProdutoPct: Number(formData.get("descProduto")) || 0,
     dias: String(formData.get("dias") || ""),
   });
+  revalidatePath(ROTA);
+}
+
+async function salvarPlano(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  try {
+    await editarPlano(getDb(), Number(formData.get("id")), {
+      nome: String(formData.get("nome") || ""),
+      tipo: String(formData.get("tipo") || "flex") as TipoPlano,
+      precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+      descontoServicoPct: Number(formData.get("descServico")) || 0,
+      descontoProdutoPct: Number(formData.get("descProduto")) || 0,
+      dias: String(formData.get("dias") || ""),
+    });
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
+  }
+  revalidatePath(ROTA);
+}
+
+async function desativarPlano(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  await definirPlanoAtivo(getDb(), Number(formData.get("id")), false);
+  revalidatePath(ROTA);
+}
+
+async function excluirPlano(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  try {
+    await removerPlano(getDb(), Number(formData.get("id")));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao excluir")}`);
+  }
+  revalidatePath(ROTA);
+}
+
+async function trocarPlano(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  await trocarPlanoAssinatura(getDb(), Number(formData.get("id")), Number(formData.get("planoId")));
   revalidatePath(ROTA);
 }
 
@@ -76,7 +120,8 @@ const input = "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neut
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
 const btnGhost = "rounded-lg border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function AssinaturasPage() {
+export default async function AssinaturasPage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -94,7 +139,7 @@ export default async function AssinaturasPage() {
   const gerenciar = podeAcessar(papel, "config");
   const [planos, clientes] = await Promise.all([listarPlanos(db), listarClientes(db)]);
   const assinaturas = await db
-    .select({ id: schema.assinaturas.id, status: schema.assinaturas.status, clienteNome: schema.clientes.nome, planoNome: schema.planos.nome })
+    .select({ id: schema.assinaturas.id, status: schema.assinaturas.status, planoId: schema.assinaturas.planoId, clienteNome: schema.clientes.nome, planoNome: schema.planos.nome })
     .from(schema.assinaturas)
     .innerJoin(schema.clientes, eq(schema.clientes.id, schema.assinaturas.clienteId))
     .innerJoin(schema.planos, eq(schema.planos.id, schema.assinaturas.planoId));
@@ -131,6 +176,12 @@ export default async function AssinaturasPage() {
           </section>
         ) : null}
 
+        {sp?.erro ? (
+          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
+            {sp.erro}
+          </p>
+        ) : null}
+
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Planos ({planos.length})</h2>
           <div className="flex flex-col gap-2">
@@ -140,6 +191,31 @@ export default async function AssinaturasPage() {
                 <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">{p.tipo}</span>
                 <span className="text-neutral-500">{brl(p.precoCentavos)}/mês</span>
                 <span className="text-neutral-500">serv -{p.descontoServicoPct}% · prod -{p.descontoProdutoPct}%</span>
+                {gerenciar ? (
+                  <>
+                    <form action={salvarPlano} className="ml-auto flex flex-wrap items-end gap-1">
+                      <input type="hidden" name="id" value={p.id} />
+                      <input name="nome" defaultValue={p.nome} aria-label={`Nome do plano ${p.nome}`} className={`${input} w-40`} />
+                      <select name="tipo" defaultValue={p.tipo} aria-label={`Tipo do plano ${p.nome}`} className={input}>
+                        <option value="flex">flex</option>
+                        <option value="premium">premium</option>
+                      </select>
+                      <input name="preco" defaultValue={(p.precoCentavos / 100).toFixed(2)} inputMode="decimal" aria-label={`Preço do plano ${p.nome}`} className={`${input} w-20`} />
+                      <input name="descServico" type="number" min={0} max={100} defaultValue={p.descontoServicoPct} aria-label={`Desconto de serviço do plano ${p.nome}`} className={`${input} w-14`} />
+                      <input name="descProduto" type="number" min={0} max={100} defaultValue={p.descontoProdutoPct} aria-label={`Desconto de produto do plano ${p.nome}`} className={`${input} w-14`} />
+                      <input name="dias" defaultValue={p.dias} aria-label={`Dias do plano ${p.nome}`} className={`${input} w-20`} />
+                      <button type="submit" data-salvar-plano={p.nome} className={btnGhost}>Salvar</button>
+                    </form>
+                    <form action={desativarPlano}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <button type="submit" data-desativar-plano={p.nome} className={btnGhost}>Desativar</button>
+                    </form>
+                    <form action={excluirPlano}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <button type="submit" data-excluir-plano={p.nome} className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50">Excluir</button>
+                    </form>
+                  </>
+                ) : null}
               </div>
             ))}
             {planos.length === 0 ? <p className="text-sm text-neutral-600">Nenhum plano.</p> : null}
@@ -166,6 +242,15 @@ export default async function AssinaturasPage() {
                     <input type="hidden" name="id" value={a.id} />
                     <select name="status" defaultValue={a.status} aria-label={`Status de ${a.clienteNome}`} className={input}><option value="ativa">ativa</option><option value="atraso">atraso</option><option value="cancelada">cancelada</option></select>
                     <button type="submit" className={btnGhost}>Salvar</button>
+                  </form>
+                ) : null}
+                {gerenciar ? (
+                  <form action={trocarPlano} className="flex items-center gap-1">
+                    <input type="hidden" name="id" value={a.id} />
+                    <select name="planoId" defaultValue={a.planoId} aria-label={`Trocar plano de ${a.clienteNome}`} className={input}>
+                      {planos.map((pl) => <option key={pl.id} value={pl.id}>{pl.nome}</option>)}
+                    </select>
+                    <button type="submit" data-trocar-plano={a.clienteNome} className={btnGhost}>Trocar plano</button>
                   </form>
                 ) : null}
               </div>

@@ -1,8 +1,9 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
-import { cadastrarProdutoEstoque, registrarMovimento, registrarContagem, registrarPedidoCompra, listarProdutosEstoque, UNIDADES_ESTOQUE } from "@/lib/estoque";
+import { cadastrarProdutoEstoque, registrarMovimento, registrarContagem, registrarPedidoCompra, listarProdutosEstoque, editarProdutoEstoque, removerProdutoEstoque, UNIDADES_ESTOQUE } from "@/lib/estoque";
 import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,28 @@ async function cadastrar(formData: FormData) {
   await cadastrarProdutoEstoque(getDb(), String(formData.get("nome") || ""), String(formData.get("unidade") || "un"), Number(formData.get("saldo")));
   revalidatePath(ROTA);
 }
+async function salvarProduto(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  try {
+    await editarProdutoEstoque(getDb(), Number(formData.get("id")), String(formData.get("nome") || ""), String(formData.get("unidade") || ""));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
+  }
+  revalidatePath(ROTA);
+}
+
+async function excluirProduto(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  try {
+    await removerProdutoEstoque(getDb(), Number(formData.get("id")));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao excluir")}`);
+  }
+  revalidatePath(ROTA);
+}
+
 async function movimentar(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
@@ -46,7 +69,8 @@ const input =
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
 const btnGhost = "rounded-lg border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function EstoquePage() {
+export default async function EstoquePage({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
+  const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
 
@@ -76,6 +100,12 @@ export default async function EstoquePage() {
             </>
           }
         />
+
+        {sp?.erro ? (
+          <p role="alert" data-testid="aviso-erro" className="mt-4 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-800">
+            {sp.erro}
+          </p>
+        ) : null}
 
         <section className="mt-6">
           <h2 className="mb-3 text-lg font-semibold">Novo produto de estoque</h2>
@@ -112,6 +142,22 @@ export default async function EstoquePage() {
                     <select name="tipo" aria-label={`Movimento de ${p.nome}`} className={input}><option value="entrada">entrada</option><option value="saida">saída</option></select>
                     <input name="quantidade" type="number" min={1} defaultValue={1} aria-label={`Quantidade de ${p.nome}`} data-testid={`est-qtd-${p.id}`} className={`${input} w-16`} />
                     <button type="submit" className={btnGhost}>Mover</button>
+                  </form>
+                  <form action={salvarProduto} className="flex items-end gap-1">
+                    <input type="hidden" name="id" value={p.id} />
+                    <input name="nome" defaultValue={p.nome} aria-label={`Nome de ${p.nome}`} className={`${input} w-32`} />
+                    <select name="unidade" defaultValue={p.unidade} aria-label={`Unidade de ${p.nome}`} className={input}>
+                      {UNIDADES_ESTOQUE.map((u) => (
+                        <option key={u.sigla} value={u.sigla}>{u.sigla}</option>
+                      ))}
+                    </select>
+                    <button type="submit" data-salvar-estoque={p.nome} className={btnGhost}>Salvar</button>
+                  </form>
+                  <form action={excluirProduto} className="flex items-end">
+                    <input type="hidden" name="id" value={p.id} />
+                    <button type="submit" data-excluir-estoque={p.nome} className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50">
+                      Excluir
+                    </button>
                   </form>
                   <form action={contar} className="flex items-end gap-1">
                     <input type="hidden" name="id" value={p.id} />

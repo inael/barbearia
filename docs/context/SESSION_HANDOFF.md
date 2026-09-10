@@ -1,5 +1,43 @@
 # SESSION_HANDOFF
 
+## 2026-09-10 — Menu hierárquico com ícones, login com a marca e CRUD completo
+
+### 1. Menu (o pedido: "menu e submenu na mesma hierarquia, está confuso")
+- **lucide-react** como biblioteca de ícones (nada de emoji). Todo item tem ícone.
+- `lib/nav.ts` virou **hierárquico** (`ItemNav.filhos`): **Cadastros** é pai de
+  serviços/produtos/clientes/profissionais/usuários/horários; **Agenda** → Minha
+  agenda; **Assinaturas** → Pote.
+- `AppFrame` desenha o pai com ícone e os filhos **indentados com guia vertical**,
+  igual à referência. O bloco abre sozinho quando o pai ou um filho está na rota.
+- `nav.test.ts` reescrito: hierarquia, ícone em todo item e o invariante de que
+  **todo href visível é acessível ao papel**.
+
+### 2. Login com a identidade da marca
+Fundo preto + detalhes em cobre, logo no topo. **A logo espera o arquivo em
+`public/logo-faith.png`** — enquanto ele não existir, aparece um monograma "F".
+O fallback usa checagem depois da montagem porque `onError` se perde quando a
+imagem falha antes da hidratação do React.
+
+### 3. CRUD completo (spec `crud-completo.md`, 8 ACs)
+Auditoria por entidade encontrou criar/listar em tudo, mas faltava editar/excluir.
+Fechado em: **cliente** (excluir), **usuário** (editar nome/e-mail + excluir),
+**estoque** (editar + excluir), **plano** (editar, desativar, excluir),
+**assinatura** (trocar de plano), **vale** (editar + excluir), **tela de TV**
+(editar + excluir).
+
+**Regra de ouro:** o que virou dinheiro ou compromisso não se apaga. A exclusão é
+recusada com o motivo na tela quando há vínculo (cliente com venda, plano com
+assinante, produto com saldo) e o caminho é **desativar**. O último dono nunca é
+excluído — senão o sistema fica sem administrador.
+
+Estado: **45 features · 304 ACs · 304 PASS**.
+
+### Pendências
+- **Arquivo da logo**: falta `public/logo-faith.png` (a imagem veio pelo chat, não
+  tenho o binário).
+- **Remarcar agendamento** (mudar horário sem cancelar) ficou fora desta rodada.
+- Modo teste (`NEXT_PUBLIC_DEMO_LOGINS`) segue ligado em produção — remover na entrega.
+
 ## 2026-08-27 (fim do dia) — Modo teste + 3 correções de UX (feedback do Inael no ar)
 
 O Inael testou em produção como **recepção** e apontou problemas reais. Tudo

@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
-import { listarTelas, criarTela, adicionarItem, removerItem, listarItens } from "@/lib/tv";
+import { listarTelas, criarTela, editarTela, removerTela, adicionarItem, removerItem, listarItens } from "@/lib/tv";
 import { uploadMidia, getStorageClient } from "@/lib/tv-upload";
 import PageHeader from "@/components/PageHeader";
 
@@ -22,6 +22,26 @@ async function novaTela(formData: FormData) {
   const vel = Number(formData.get("velocidade"));
   if (!nome || !Number.isInteger(vel) || vel <= 0) return;
   await criarTela(getDb(), nome, vel);
+  revalidatePath(ROTA);
+}
+
+async function salvarTela(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const id = Number(formData.get("id"));
+  const nome = String(formData.get("nome") || "").trim();
+  const vel = Number(formData.get("velocidade"));
+  if (!Number.isInteger(id) || !nome || !Number.isInteger(vel) || vel <= 0) return;
+  await editarTela(getDb(), id, nome, vel);
+  revalidatePath(ROTA);
+}
+
+async function excluirTela(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return;
+  await removerTela(getDb(), id);
   revalidatePath(ROTA);
 }
 
@@ -126,6 +146,18 @@ export default async function AdminTvPage() {
                   >
                     Abrir player desta tela
                   </a>
+                </div>
+                <div className="mt-2 flex flex-wrap items-end gap-2">
+                  <form action={salvarTela} className="flex flex-wrap items-end gap-1">
+                    <input type="hidden" name="id" value={t.id} />
+                    <input name="nome" defaultValue={t.nome} aria-label={`Nome da tela ${t.nome}`} className={`${inputCls} w-40`} />
+                    <input name="velocidade" type="number" min={1} defaultValue={t.velocidadeSegundos} aria-label={`Velocidade da tela ${t.nome}`} className={`${inputCls} w-20`} />
+                    <button type="submit" data-salvar-tela={t.nome} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100">Salvar</button>
+                  </form>
+                  <form action={excluirTela}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <button type="submit" data-excluir-tela={t.nome} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50">Excluir tela</button>
+                  </form>
                 </div>
                 <p className="mt-1 text-xs text-neutral-600">
                   Na Smart TV, abra o navegador e acesse <code className="rounded bg-neutral-100 px-1 dark:bg-neutral-800">{`/tv/${t.id}`}</code> no

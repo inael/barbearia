@@ -15,7 +15,7 @@ test.describe("COB — fila de assinatura (e2e)", () => {
     // plano + cliente + pedido na fila
     await page.goto("/assinaturas");
     await page.getByTestId("ass-nome").fill("Plano COB E2E");
-    await page.getByLabel("Preço").fill("180,00");
+    await page.getByLabel("Preço", { exact: true }).fill("180,00");
     await page.getByRole("button", { name: "Criar plano" }).click();
     await expect(page.locator('div[data-plano="Plano COB E2E"]')).toBeVisible();
 
