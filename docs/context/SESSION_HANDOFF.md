@@ -1,5 +1,69 @@
 # SESSION_HANDOFF
 
+## 2026-09-10 (fim do dia) — Confirmação em toda ação, mural de recados e player da TV
+
+Commit `c2cea2f` · spec `.specs/features/feedback-e-recados.md` (7 ACs) ·
+STATE **46 features / 310 ACs / 310 PASS** · gate: unit 121, integration 118, e2e 90.
+
+### O que entrou
+- **Confirmação de ação (FDB-001/002).** O Inael editou o nome de uma playlist,
+  salvou e "nada aconteceu" — só soube que salvou dando F5. Agora as **49 ações**
+  do sistema confirmam na tela: faixa verde no sucesso, vermelha no erro, com ícone
+  e botão de fechar, sumindo sozinha (6s / 10s) e limpando o `?ok=` da URL para o
+  F5 não repetir a mensagem. Componente `components/Aviso.tsx`.
+- **Mural de recados (FDB-003, REC-001/002).** Faixa no topo para toda a equipe,
+  publicada pelo dono em Avisos → Recados da equipe. Tabela `recados`, motor em
+  `lib/recados.ts`, UI em `components/MuralRecados.tsx` e `app/notificacoes/recados`.
+  Dispensar é por navegador (localStorage), não por usuário.
+- **Player da TV (FDB-004).** Link do YouTube dava **tela preta**: o player
+  renderizava tudo como `<img>`. `lib/midia.ts` classifica a mídia e o player usa
+  iframe / `<video>` / `<img>`. A playlist mostra rótulo legível e botão "Abrir mídia";
+  o upload que falhava em silêncio (catch vazio) agora diz o motivo.
+
+### Armadilhas que custaram tempo (não repetir)
+- **Ler o resumo do Playwright filtrado esconde falha.** Um `grep` meu mostrou só
+  "83 passed" e escondeu "6 failed | 1 flaky" — quase reportei gate verde. Ler o
+  bloco inteiro do resumo, sempre.
+- **Caixa e agenda tinham aviso próprio** (`?fechada=1`, `?ok=1`). Ao aplicar o
+  padrão novo eu removi os antigos sem migrar e quebrei os testes que esperavam
+  "Conta fechada." e "Agendamento criado.". Migrados.
+- **`setState` dentro de effect** reprova no lint: `Aviso` remonta por `key`,
+  `MuralRecados` usa `useSyncExternalStore`.
+
+### INCIDENTE DE CREDENCIAL — 2026-09-10 (fechado)
+Um script meu de diagnóstico (`chk.tmp.mjs`) com a **senha do Postgres de produção
+em texto puro** foi commitado e enviado ao GitHub, que é **repositório público**.
+Ficou exposto por poucos minutos.
+- Contenção: arquivo removido, commit reescrito (`--amend` + `push --force-with-lease`,
+  `2bfca18` → `c2cea2f`), `.gitignore` passou a barrar `*.tmp.mjs` e `chk.tmp.*`.
+- Atenuante: a porta 5432 está fechada para a internet desde a SEC-04
+  (regra `DOCKER-USER`), confirmada ativa na hora do incidente.
+- **Senha rotacionada** no mesmo dia (Postgres + `DATABASE_URL` no Coolify + vault).
+- Regra que fica: script temporário que toca produção vive no diretório de
+  scratch, nunca na árvore do repositório, e credencial só entra por variável
+  de ambiente lida do vault.
+
+### Estado da produção
+- http://179.198.113.115.sslip.io no commit `c2cea2f`. Tabela `recados` aplicada.
+- O túnel SSH do runbook **travou de novo** (não foi só "Address already in use"):
+  o caminho que funciona hoje é `ssh + docker exec psql` no container
+  `tud3ivhyb95ubzdexu85delt`. Vale corrigir o runbook.
+- 24 clientes cadastrados (20 de demonstração).
+
+### Pendente antes de entregar ao Rodrigo
+1. **Remover `NEXT_PUBLIC_DEMO_LOGINS=1`** do Coolify e trocar as senhas de
+   demonstração. Hoje o seletor "Entrar como" expõe as três senhas na URL pública.
+2. Salvar a logo enviada pelo Inael como `public/logo-faith.png` (o login já aponta
+   para ela e cai num monograma enquanto o arquivo não existe).
+3. Três dúvidas para o Rodrigo sobre regras de cortesia/vale, redigidas e ainda não
+   enviadas (precisam do aval do Inael antes de ir).
+4. Go-live: QR do SimplesZap, Asaas produção, emissor de NFS-e, agendador de
+   lembretes, bucket de mídia da TV, domínio próprio com HTTPS e cadastro em
+   status.toolpad.cloud.
+
+---
+
+
 ## 2026-09-10 — Menu hierárquico com ícones, login com a marca e CRUD completo
 
 ### 1. Menu (o pedido: "menu e submenu na mesma hierarquia, está confuso")
