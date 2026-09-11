@@ -34,7 +34,7 @@
 | TVPLR — Player da TV | tv-player.md | 2 | 2 | sim (SHELL) | existe, sem link |
 | AUTH — Auth/RBAC + login | auth.md | 19 | 19 | sim | login + logout no menu (SHELL) |
 | SHELL — Navegação por papel | shell-navegacao.md | 6 | 6 | sim | **Fase 1** — matou as órfãs |
-| SVC — CRUD serviços/combos | catalogo-crud.md | 7 | 7 | sim | **Fase 1** (cadastro) |
+| SVC — CRUD serviços/combos | catalogo-crud.md | 8 | 7 | sim | **Fase 1** (cadastro) · **SVC-008 PENDING (2026-09-11)**: editar nome existe mas o Rodrigo não achou |
 | PRO — CRUD profissionais | profissionais-crud.md | 6 | 6 | sim | **Fase 1** (dono) |
 | CLI — Cadastro de clientes | clientes-crud.md | 6 | 6 | sim | **Fase 1** (cadastro) |
 | USR — Gestão de usuários | usuarios-admin.md | 6 | 6 | sim | **Fase 1** (dono) |
@@ -69,9 +69,14 @@
 | LEA — Agendador dos lembretes | lembretes-agendador.md | 8 | WhatsApp | nada: **próximo a fazer**. Destrava a IWA, que hoje está pronta e ociosa |
 | NFA — Nota fiscal pelo Asaas | nota-fiscal-asaas.md | 7 | Fiscal | **Rodrigo**: conta Asaas própria, certificado digital, inscrição municipal, código de serviço |
 | MTV — Mídia da TV em bucket | midia-tv-bucket.md | 7 | TV | subir o Garage na VPS do cliente + teto de armazenamento combinado |
-| **Subtotal B** | | **22** | | |
+| AHL — Agenda em horário livre | agenda-horario-livre.md | 8 | Agenda | **Rodrigo 11/09**: grade de 30 min faz corte de 40 comer 2 lugares. Perda de faturamento |
+| VDN — Vale em dinheiro | vale-dinheiro.md | 6 | Financeiro | **Rodrigo 11/09**: só há vale de produto; adiantamento em dinheiro não tem onde lançar |
+| BCL — Achar cliente digitando | busca-cliente.md | 7 | Caixa/Agenda | **Rodrigo 11/09** (2 áudios): `<select>` com todos os clientes trava o caixa no movimento |
+| CNA — Comanda pela agenda | comanda-na-agenda.md | 7 | Caixa/Agenda | **Rodrigo 11/09**: medo declarado de "fechar comandas erradas de clientes errados" |
+| SVC-008 — Descoberta da edição | catalogo-crud.md | 1 | Cadastros | **Rodrigo 11/09**: o recurso existe; ele procurou e não achou |
+| **Subtotal B** | | **51** | | |
 
-**Total: 50 features · 344 ACs · 322 PASS / 22 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
+**Total: 54 features · 373 ACs · 322 PASS / 51 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
 
 **Auditoria 2026-08-26 (`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`):** os 14 áudios + 21 respostas do Rodrigo foram cruzados requisito-a-requisito (RF1–RF31) com as specs e o código; os 4 gaps encontrados (comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia) viraram a feature OPR e estão fechados. **Simulação de 1 mês de operação** (236 comandas, R$ 21.461,90) validada em `docs/context/SIMULACAO-2026-08-26.md`. **Resta só EXECUÇÃO** (credenciais/go-live), não código.
 
@@ -80,8 +85,13 @@ unit+property, integration (Postgres real), e2e (browser real), coverage 100% em
 
 ## EXIT_SIGNAL: true para o escopo contratado — revisado 2026-09-11
 
-> O backlog B **não reabre o escopo entregue**: LEA, NFA e MTV são as três frentes
-> de go-live que dependiam de credencial ou decisão e agora têm spec própria.
+> **Revisado 2026-09-11 depois do teste do Rodrigo.** O backlog B agora tem duas
+> naturezas: LEA/NFA/MTV são go-live (dependiam de credencial ou decisão), e
+> **AHL/VDN/BCL/CNA + SVC-008 são lacunas de produto que ele encontrou usando**.
+> Ele testou um dia real e disse *"tá basicamente tudo igual, não vi mudanças"*;
+> conferência item a item deu **razão a ele em 4 dos 5 pontos**. Enquanto AHL e VDN
+> não entrarem, **o sistema não cobre a operação dele de verdade**.
+> Transcrições e conferência: `docs/produto/FEEDBACK-RODRIGO-2026-09-11.md`.
 > Plano e ordem em `docs/context/ACTIVE_PLAN.md`.
 Todas as **322 ACs** estão PASS com teste verde nomeado, o produto é **navegável ponta a
 ponta** por papel (sem páginas órfãs, tudo atrás de login) e a **auditoria integral dos
