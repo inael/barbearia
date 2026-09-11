@@ -1,6 +1,7 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { execSync, spawn } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, openSync } from "node:fs";
+import { createServer } from "node:net";
 import path from "node:path";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -26,7 +27,35 @@ async function waitFor(url: string, ms: number) {
   throw new Error(`E2E: servidor nao respondeu em ${url} apos ${ms}ms`);
 }
 
+/**
+ * A porta do e2e tem de estar LIVRE antes de comecar.
+ *
+ * Um `next start` orfao de uma rodada anterior segurava a 3123: o servidor novo nao
+ * subia (EADDRINUSE), os testes rodavam contra o processo VELHO, com o banco daquela
+ * rodada ja destruido, e tudo falhava por "login nao funciona". A suite foi de 5 para
+ * 42 minutos e o motivo real estava escondido, porque o log do servidor ia para
+ * /dev/null. Falhar aqui, alto e cedo, e muito melhor.
+ */
+async function exigirPortaLivre() {
+  const teste = createServer();
+  await new Promise<void>((ok, erro) => {
+    teste.once("error", (e: NodeJS.ErrnoException) => {
+      erro(
+        e.code === "EADDRINUSE"
+          ? new Error(
+              `E2E: a porta ${PORT} ja esta em uso. Provavelmente sobrou um "next start" de ` +
+                `uma rodada anterior. Derrube o processo dessa porta e rode de novo.`,
+            )
+          : e,
+      );
+    });
+    teste.once("listening", () => teste.close(() => ok()));
+    teste.listen(PORT);
+  });
+}
+
 export default async function globalSetup() {
+  await exigirPortaLivre();
   // Postgres efemero, schema real + seed determinístico.
   const container = await new PostgreSqlContainer("postgres:16-alpine").start();
   const url = container.getConnectionUri();
@@ -57,9 +86,14 @@ export default async function globalSetup() {
   await client.end();
 
   // Sobe a app real (build ja feito pelo script test:e2e).
+  // O log do servidor ia para "ignore". Quando o login quebrou, a suite inteira caiu
+  // sem NENHUMA pista do lado do servidor e o diagnostico levou horas. Agora fica em
+  // arquivo, que e barato e salva a proxima investigacao.
+  const logPath = path.join(process.cwd(), "e2e", "servidor.log");
+  const logFd = openSync(logPath, "w");
   const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
     env,
-    stdio: "ignore",
+    stdio: ["ignore", logFd, logFd],
     shell: true,
   });
   await waitFor(`${BASE}/comissao`, 90_000);

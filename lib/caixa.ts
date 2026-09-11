@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, asc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt } from "drizzle-orm";
 import * as schema from "./db/schema";
 import {
   faixaComissaoServico,
@@ -8,6 +8,7 @@ import {
   comissaoProduto,
   comissaoDividida,
   isServicoDividido,
+  FAIXA_CORTESIA,
   valeServicoBarbeiroCentavos,
   fracaoComissaoItem,
   comissaoHidratacaoRecepcionista,
@@ -166,6 +167,12 @@ export async function fecharComanda(db: DB, comandaId: number, formaPagamento: s
       quando,
     });
   }
+
+  // CNA-008: fechar a conta marca o agendamento como atendido. E o que da ao Rodrigo o
+  // controle de quem veio: sem isso o agendamento fica pendurado e ele nao distingue
+  // atendido de faltou. Import tardio para nao criar ciclo com comanda-na-agenda.
+  const { marcarAtendidoPelaComanda } = await import("./comanda-na-agenda");
+  await marcarAtendidoPelaComanda(db, comandaId);
 }
 
 export interface ComandaResumo {
@@ -195,11 +202,41 @@ export async function listarComandasAbertas(db: DB): Promise<ComandaResumo[]> {
   return out;
 }
 
-/** Total (centavos) das vendas (comandas fechadas) com fechadaEm em [de, ate).
- * Só itens `normal`: cortesia e serviço-do-barbeiro não são dinheiro que entrou. */
+/**
+ * Total (centavos) das vendas (comandas fechadas) com fechadaEm em [de, ate).
+ *
+ * CRT-010 (resposta do Rodrigo em 2026-09-11): conta `normal` E `servico_barbeiro`.
+ * O servico que o barbeiro faz nele mesmo **e receita**, porque ele paga a parte da
+ * barbearia (vira vale). So a **cortesia** fica de fora: *"o que nao entra e a
+ * cortesia [...] so o que ele fizer nele ai entra"*.
+ */
+/**
+ * Quanto um item vira de RECEITA (centavos).
+ *
+ * CRT-010: item `normal` fatura o preco cheio. `servico_barbeiro` fatura apenas a
+ * **parte da barbearia** (o que o barbeiro paga, que vira vale) e nao o preco cheio,
+ * porque a parte dele e o desconto dele: *"o que ele vai pagar [...] isso ai entra
+ * como faturamento"*. Cortesia nao chega aqui: nao fatura nada.
+ */
+export function valorFaturado(item: {
+  v: number;
+  tipo: string;
+  slug: string | null;
+  lancamento: string;
+}): number {
+  if (item.lancamento !== "servico_barbeiro") return item.v;
+  if (item.tipo === "produto") return item.v; // produto do barbeiro usa o fluxo VAL
+  return valeServicoBarbeiroCentavos(item.v, item.tipo === "combo" ? "combo" : "servico", item.slug);
+}
+
 export async function totalVendas(db: DB, de: Date, ate: Date): Promise<number> {
   const rows = await db
-    .select({ v: schema.comandaItens.valorCentavos })
+    .select({
+      v: schema.comandaItens.valorCentavos,
+      tipo: schema.comandaItens.tipo,
+      slug: schema.comandaItens.slug,
+      lancamento: schema.comandaItens.lancamento,
+    })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
     .where(
@@ -207,10 +244,10 @@ export async function totalVendas(db: DB, de: Date, ate: Date): Promise<number> 
         eq(schema.comandas.status, "fechada"),
         gte(schema.comandas.fechadaEm, de),
         lt(schema.comandas.fechadaEm, ate),
-        eq(schema.comandaItens.lancamento, "normal"),
+        inArray(schema.comandaItens.lancamento, ["normal", "servico_barbeiro"]),
       ),
     );
-  return rows.reduce((s, r) => s + r.v, 0);
+  return rows.reduce((soma, r) => soma + valorFaturado(r), 0);
 }
 
 export interface ComissaoPeriodo {
@@ -281,9 +318,11 @@ export async function comissaoDoPeriodo(
 
   const faixaServico = faixaComissaoServico(opts?.faturamentoMesAnterior ?? 0);
   const faixaProduto = faixaComissaoProduto(opts?.produtosMesAnterior ?? 0);
+  // CRT-009: cortesia paga SEMPRE 40%, nao a faixa do mes. Quem abre mao e a
+  // barbearia, entao o barbeiro nao herda bonus de faixa por venda que nao houve.
   const comissaoCortesias =
-    comissaoServico(cortAvulsos, faixaServico) +
-    comissaoServico(cortCombos, faixaServico, true) +
+    comissaoServico(cortAvulsos, FAIXA_CORTESIA) +
+    comissaoServico(cortCombos, FAIXA_CORTESIA, true) +
     comissaoDividida(cortDivididos).barbeiro +
     comissaoProduto(cortProdutos, faixaProduto);
   const comissaoTotal =

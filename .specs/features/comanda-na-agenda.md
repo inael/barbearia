@@ -22,23 +22,23 @@ cliente identificado.
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| CNA-001 | Clicar no agendamento na grade abre a comanda daquele cliente, já com ele identificado | e2e | e2e/comanda-na-agenda.spec.ts | PENDING | — |
-| CNA-002 | Se o cliente já tem comanda aberta, vai para ela em vez de criar uma segunda | integration | lib/db/comanda-na-agenda.integration.test.ts | PENDING | — |
-| CNA-003 | O serviço do agendamento já entra como item sugerido na comanda | integration | lib/db/comanda-na-agenda.integration.test.ts | PENDING | — |
-| CNA-004 | O barbeiro do agendamento é o que recebe a comissão, sem precisar escolher de novo | integration | lib/db/comanda-na-agenda.integration.test.ts | PENDING | — |
-| CNA-005 | A grade mostra quem já tem comanda aberta e quem já foi fechado, para não atender duas vezes | e2e | e2e/comanda-na-agenda.spec.ts | PENDING | — |
-| CNA-006 | Agendamento cancelado não abre comanda | integration | lib/db/comanda-na-agenda.integration.test.ts | PENDING | — |
-| CNA-007 | Quem não tem acesso ao caixa não vê o atalho na agenda | e2e | e2e/comanda-na-agenda.spec.ts | PENDING | — |
-| CNA-008 | Fechar a comanda marca o agendamento como **atendido** na agenda, e quem não veio fica distinguível de quem foi atendido | integration + e2e | lib/db/comanda-na-agenda.integration.test.ts, e2e/comanda-na-agenda.spec.ts | PENDING | — |
+| CNA-001 | Clicar no agendamento na grade abre a comanda daquele cliente, já com ele identificado | e2e | e2e/agenda-comanda.spec.ts | PASS | verde (gate) |
+| CNA-002 | Se o cliente já tem comanda aberta, vai para ela em vez de criar uma segunda | integration | lib/db/comanda-na-agenda.integration.test.ts | PASS | verde (gate) |
+| CNA-003 | O serviço do agendamento já entra como item sugerido na comanda | integration | lib/db/comanda-na-agenda.integration.test.ts | PASS | verde (gate) |
+| CNA-004 | O barbeiro do agendamento é o que recebe a comissão, sem precisar escolher de novo | integration | lib/db/comanda-na-agenda.integration.test.ts | PASS | verde (gate) |
+| CNA-005 | A grade mostra quem já tem comanda aberta e quem já foi fechado, para não atender duas vezes | e2e | e2e/agenda-comanda.spec.ts | PASS | verde (gate) |
+| CNA-006 | Agendamento cancelado não abre comanda | integration | lib/db/comanda-na-agenda.integration.test.ts | PASS | verde (gate) |
+| CNA-007 | Quem não tem acesso ao caixa não vê o atalho na agenda | e2e | e2e/agenda-comanda.spec.ts | PASS | verde (gate) |
+| CNA-008 | Fechar a comanda marca o agendamento como **atendido** na agenda, e quem não veio fica distinguível de quem foi atendido | integration + e2e | lib/db/comanda-na-agenda.integration.test.ts, e2e/agenda-comanda.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (agenda leva ao caixa sem buscar de novo) → CNA-001 → e2e → e2e/comanda-na-agenda.spec.ts → PENDING
-REQUIREMENT (nunca duas comandas para o mesmo cliente) → CNA-002 → integration → lib/db/comanda-na-agenda.integration.test.ts → PENDING
-REQUIREMENT (trazer serviço e barbeiro do agendamento) → CNA-003,004 → integration → lib/db/comanda-na-agenda.integration.test.ts → PENDING
-REQUIREMENT (enxergar o estado na grade) → CNA-005 → e2e → e2e/comanda-na-agenda.spec.ts → PENDING
-REQUIREMENT (não abrir para cancelado) → CNA-006 → integration → lib/db/comanda-na-agenda.integration.test.ts → PENDING
-REQUIREMENT (respeitar o papel) → CNA-007 → e2e → e2e/comanda-na-agenda.spec.ts → PENDING
-REQUIREMENT (saber quem veio e quem faltou) → CNA-008 → integration + e2e → lib/db/comanda-na-agenda.integration.test.ts, e2e/comanda-na-agenda.spec.ts → PENDING
+REQUIREMENT (agenda leva ao caixa sem buscar de novo) → CNA-001 → e2e → e2e/agenda-comanda.spec.ts → PASS
+REQUIREMENT (nunca duas comandas para o mesmo cliente) → CNA-002 → integration → lib/db/comanda-na-agenda.integration.test.ts → PASS
+REQUIREMENT (trazer serviço e barbeiro do agendamento) → CNA-003,004 → integration → lib/db/comanda-na-agenda.integration.test.ts → PASS
+REQUIREMENT (enxergar o estado na grade) → CNA-005 → e2e → e2e/agenda-comanda.spec.ts → PASS
+REQUIREMENT (não abrir para cancelado) → CNA-006 → integration → lib/db/comanda-na-agenda.integration.test.ts → PASS
+REQUIREMENT (respeitar o papel) → CNA-007 → e2e → e2e/agenda-comanda.spec.ts → PASS
+REQUIREMENT (saber quem veio e quem faltou) → CNA-008 → integration + e2e → lib/db/comanda-na-agenda.integration.test.ts, e2e/agenda-comanda.spec.ts → PASS
 
 ## Gaps
 - Cliente que chega sem agendamento continua pelo caminho de hoje (abrir comanda no

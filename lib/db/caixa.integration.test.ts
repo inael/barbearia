@@ -162,10 +162,43 @@ describe("CX — caixa (integration)", () => {
     expect(cort.valorCentavos).toBe(6000); // concedido
     expect(cort.comissaoCentavos).toBe(2400); // 40% a pagar ao barbeiro
 
-    // dia 21 (CRT-004): 60 normal + 50 serviço-do-barbeiro → faturou só 60, sem cortesia
+    // dia 21 (CRT-004/010): 60 normal + 50 serviço-do-barbeiro (dividido).
+    // O serviço dele mesmo fatura a PARTE DA BARBEARIA (80% de 50 = 40), que é o que
+    // ele paga; a parte dele é o desconto e não é receita.
     const de21 = new Date("2026-09-21T00:00:00Z");
     const ate21 = new Date("2026-09-22T00:00:00Z");
-    expect(await totalVendas(db, de21, ate21)).toBe(6000);
+    expect(await totalVendas(db, de21, ate21)).toBe(6000 + 4000);
     expect((await cortesiasDoPeriodo(db, de21, ate21)).valorCentavos).toBe(0);
+  });
+
+  it("CRT-009 cortesia paga 40% FIXO, mesmo para barbeiro na faixa de 50%", async () => {
+    const id = await criarComanda(db, null);
+    await adicionarServico(db, id, corteId, pedroId, "cortesia"); // cortesia 60
+    await fecharComanda(db, id, "dinheiro", new Date("2026-09-23T15:00:00Z"));
+
+    const de = new Date("2026-09-23T00:00:00Z");
+    const ate = new Date("2026-09-24T00:00:00Z");
+
+    // barbeiro na faixa máxima: faturou 20 mil no mês anterior → faixa de 50%
+    const c = await comissaoDoPeriodo(db, pedroId, de, ate, { faturamentoMesAnterior: 20000 });
+    expect(c.faixaServico, "a faixa dele continua sendo 50% para as vendas reais").toBe(0.5);
+    expect(c.comissaoCortesias, "mas a cortesia paga 40%, não 50%").toBe(24);
+    expect(c.comissaoTotal).toBe(24);
+  });
+
+  it("CRT-010 serviço do barbeiro entra no faturamento pela parte da barbearia; cortesia não entra", async () => {
+    const de = new Date("2026-09-24T00:00:00Z");
+    const ate = new Date("2026-09-25T00:00:00Z");
+    const quando = new Date("2026-09-24T15:00:00Z");
+
+    const id = await criarComanda(db, null);
+    await adicionarServico(db, id, corteId, pedroId); // normal 60 → fatura 60
+    await adicionarServico(db, id, corteId, pedroId, "servico_barbeiro"); // 60 avulso → fatura 60% da casa = 36
+    await adicionarServico(db, id, corteId, pedroId, "cortesia"); // cortesia → fatura 0
+    await fecharComanda(db, id, "dinheiro", quando);
+
+    expect(await totalVendas(db, de, ate)).toBe(6000 + 3600);
+    expect(await faturamentoTotal(db, de, ate), "painel e caixa têm que bater").toBe(6000 + 3600);
+    expect((await cortesiasDoPeriodo(db, de, ate)).valorCentavos, "a cortesia segue fora").toBe(6000);
   });
 });

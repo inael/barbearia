@@ -46,6 +46,24 @@ export async function emitirNota(db: DB, comandaId: number): Promise<number> {
     .insert(schema.notasFiscais)
     .values({ comandaId, cpf: nota.cpf, valorCentavos: nota.valorTotalCentavos })
     .returning({ id: schema.notasFiscais.id });
+
+  // NFA: com a credencial fiscal configurada, emite de verdade no Asaas. Sem ela, a
+  // nota fica so registrada aqui e a VENDA NAO QUEBRA: o caixa precisa fechar mesmo
+  // que a prefeitura recuse, senao um problema fiscal vira um problema de atendimento.
+  const { lerConfigFiscal, oQueFalta, emitirNoAsaas } = await import("./nota-fiscal-asaas");
+  const cfg = await lerConfigFiscal(db);
+  if (oQueFalta(cfg).pronto) {
+    const r = await emitirNoAsaas(cfg, {
+      clienteNome: cli.nome,
+      cpf: nota.cpf,
+      valorCentavos: nota.valorTotalCentavos,
+      itens: itens.map((i) => i.descricao),
+    });
+    await db
+      .update(schema.notasFiscais)
+      .set({ asaasInvoiceId: r.invoiceId ?? null, asaasStatus: r.ok ? (r.status ?? "AGENDADA") : "RECUSADA", pdfUrl: r.pdfUrl ?? null })
+      .where(eq(schema.notasFiscais.id, row.id));
+  }
   return row.id;
 }
 

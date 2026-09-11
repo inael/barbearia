@@ -20,20 +20,20 @@ liste cliente em `<select>`.
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| BCL-001 | Digitar parte do nome filtra a lista; digitar parte do telefone também encontra | unit | lib/busca-cliente.test.ts | PENDING | — |
-| BCL-002 | A busca ignora acento e maiúscula ("jose" acha "José") | unit | lib/busca-cliente.test.ts | PENDING | — |
-| BCL-003 | Com a base grande, a lista devolve no máximo N sugestões, sem travar a tela | integration | lib/db/busca-cliente.integration.test.ts | PENDING | — |
-| BCL-004 | No caixa, a recepção digita, escolhe e abre a comanda do cliente certo | e2e | e2e/busca-cliente.spec.ts | PENDING | — |
-| BCL-005 | Sem resultado, a tela oferece cadastrar o cliente ali mesmo, sem perder o que foi digitado | e2e | e2e/busca-cliente.spec.ts | PENDING | — |
-| BCL-006 | Continua possível abrir comanda de balcão, sem cliente | e2e | e2e/busca-cliente.spec.ts | PENDING | — |
-| BCL-007 | Funciona com teclado (setas e Enter) e no celular | e2e | e2e/busca-cliente.spec.ts | PENDING | — |
+| BCL-001 | Digitar parte do nome filtra a lista; digitar parte do telefone também encontra | unit | lib/busca-cliente.test.ts | PASS | verde (gate) |
+| BCL-002 | A busca ignora acento e maiúscula ("jose" acha "José") | unit | lib/busca-cliente.test.ts | PASS | verde (gate) |
+| BCL-003 | Com a base grande, a lista devolve no máximo N sugestões, sem travar a tela | unit | lib/busca-cliente.test.ts | PASS | verde (gate) |
+| BCL-004 | No caixa, a recepção digita, escolhe e abre a comanda do cliente certo | e2e | e2e/busca-cliente.spec.ts | PASS | verde (gate) |
+| BCL-005 | Sem resultado, a tela oferece cadastrar o cliente ali mesmo, sem perder o que foi digitado | e2e | e2e/busca-cliente.spec.ts | PASS | verde (gate) |
+| BCL-006 | Continua possível abrir comanda de balcão, sem cliente | e2e | e2e/busca-cliente.spec.ts | PASS | verde (gate) |
+| BCL-007 | Funciona com teclado (setas e Enter) e no celular | e2e | e2e/busca-cliente.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (achar digitando) → BCL-001,002 → unit → lib/busca-cliente.test.ts → PENDING
-REQUIREMENT (aguentar base cheia) → BCL-003 → integration → lib/db/busca-cliente.integration.test.ts → PENDING
-REQUIREMENT (abrir a comanda certa) → BCL-004,006 → e2e → e2e/busca-cliente.spec.ts → PENDING
-REQUIREMENT (cliente novo no balcão) → BCL-005 → e2e → e2e/busca-cliente.spec.ts → PENDING
-REQUIREMENT (teclado e celular) → BCL-007 → e2e → e2e/busca-cliente.spec.ts → PENDING
+REQUIREMENT (achar digitando) → BCL-001,002 → unit → lib/busca-cliente.test.ts → PASS
+REQUIREMENT (aguentar base cheia) → BCL-003 → unit → lib/busca-cliente.test.ts → PASS
+REQUIREMENT (abrir a comanda certa) → BCL-004,006 → e2e → e2e/busca-cliente.spec.ts → PASS
+REQUIREMENT (cliente novo no balcão) → BCL-005 → e2e → e2e/busca-cliente.spec.ts → PASS
+REQUIREMENT (teclado e celular) → BCL-007 → e2e → e2e/busca-cliente.spec.ts → PASS
 
 ## Gaps
 - Homônimos: dois "João Silva" precisam de algo que os distinga na lista (telefone), ou

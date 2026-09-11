@@ -13,12 +13,12 @@ Fonte: `docs/produto/REQUISITOS.md` RF2. Hoje o catálogo é **read-only** (vem 
 | SVC-005 | Criar/editar combo (itens inclusos, preço, duração) persiste | integration | lib/db/catalogo-crud.integration.test.ts | PASS | verde (gate) |
 | SVC-006 | RBAC: só dono/recepção (recurso `cadastro`) acessam a tela; barbeiro é bloqueado | e2e | e2e/catalogo-crud.spec.ts | PASS | verde (gate) |
 | SVC-007 | Dono cria um serviço pela UI e ele aparece no painel `/` | e2e | e2e/catalogo-crud.spec.ts | PASS | verde (gate) |
-| SVC-008 | Editar o nome de um serviço é **descobrível**: o Rodrigo procurou e não achou, mesmo com o campo na tela | e2e | e2e/catalogo-crud.spec.ts | PENDING | — |
+| SVC-008 | Editar o nome de um serviço é **descobrível**: o Rodrigo procurou e não achou, mesmo com o campo na tela | e2e | e2e/catalogo-crud.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (CRUD serviço/combo + validação) → SVC-001..005 → integration (Postgres) → lib/db/catalogo-crud.integration.test.ts → PASS
 REQUIREMENT (tela protegida + fluxo real) → SVC-006,007 → e2e → e2e/catalogo-crud.spec.ts → PASS
-REQUIREMENT (a edição precisa ser achada, não só existir) → SVC-008 → e2e → e2e/catalogo-crud.spec.ts → PENDING
+REQUIREMENT (a edição precisa ser achada, não só existir) → SVC-008 → e2e → e2e/catalogo-crud.spec.ts → PASS
 
 ## Gaps
 - **2026-09-11:** o Rodrigo perguntou por áudio se "tem como editar o nome" de um

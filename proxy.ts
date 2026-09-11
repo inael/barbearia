@@ -10,5 +10,5 @@ const { auth } = NextAuth(authConfig);
 export default auth;
 
 export const config = {
-  matcher: ["/((?!login|tv|health|api/auth|api/webhook|_next|.*\\..*).*)"],
+  matcher: ["/((?!login|tv|midia|health|api/auth|api/webhook|api/tarefas|_next|.*\\..*).*)"],
 };

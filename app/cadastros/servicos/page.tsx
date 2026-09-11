@@ -145,7 +145,14 @@ export default async function CadastroServicosPage({ searchParams }: { searchPar
 
         {/* Lista de serviços com edição inline */}
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold">Serviços ativos ({servicos.length})</h2>
+          <h2 className="text-lg font-semibold">Serviços ativos ({servicos.length})</h2>
+          {/* SVC-008: o Rodrigo perguntou por áudio se dava pra editar o nome. Dava, mas a
+              edição fica embutida na linha e não havia nada dizendo isso. Recurso que o dono
+              não encontra vale o mesmo que recurso inexistente. */}
+          <p className="mb-3 mt-1 text-sm text-neutral-600" data-testid="svc-dica-edicao">
+            Para <strong>editar</strong>, altere o campo na linha do serviço (nome, preço,
+            duração) e clique em <strong>Salvar</strong> na própria linha.
+          </p>
           <div className="flex flex-col gap-2">
             {servicos.map((s) => (
               <form key={s.id} action={salvarServico} data-servico={s.nome} className="flex flex-wrap items-end gap-2 rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
@@ -166,7 +173,7 @@ export default async function CadastroServicosPage({ searchParams }: { searchPar
                   <input name="pontos" type="number" defaultValue={s.pontosPote} aria-label={`Pontos de ${s.nome}`} className={`${input} w-16`} />
                 </label>
                 <span className="ml-auto text-xs text-neutral-500">{brl(s.precoCentavos)}</span>
-                <button type="submit" className={btnGhost}>Salvar</button>
+                <button type="submit" aria-label={`Salvar ${s.nome}`} data-salvar-servico={s.nome} className={btnGhost}>Salvar</button>
                 <button type="submit" formAction={removerServico} className="rounded-lg px-2 py-1.5 text-xs font-medium text-red-700 underline hover:text-red-900 dark:text-red-400">Inativar</button>
               </form>
             ))}

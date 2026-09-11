@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { valorComDesconto } from "./vales";
+import { valorComDesconto, valorDoVale, TIPOS_VALE } from "./vales";
 
 describe("VAL — vale com desconto (puro)", () => {
   it("VAL-001 aplica 30% de desconto (round-half-up, centavos)", () => {
@@ -17,5 +17,25 @@ describe("VAL — vale com desconto (puro)", () => {
         expect(v).toBeLessThanOrEqual(p);
       }),
     );
+  });
+});
+
+describe("VDN — vale em dinheiro (adiantamento)", () => {
+  it("VDN-002 dinheiro NÃO tem desconto; produto continua com 30%", () => {
+    // o erro caro aqui seria aplicar o desconto de produto no dinheiro:
+    // R$ 100 adiantados viraram R$ 70 no acerto e o barbeiro sairia ganhando
+    expect(valorDoVale(10000, "dinheiro")).toBe(10000);
+    expect(valorDoVale(10000, "produto_cliente")).toBe(7000);
+    expect(valorDoVale(10000, "retirado_barbeiro")).toBe(7000);
+  });
+
+  it("VDN-002 o tipo dinheiro é lançável pela tela, junto dos de produto", () => {
+    expect(TIPOS_VALE).toContain("dinheiro");
+    expect(TIPOS_VALE, "servico_barbeiro nasce no caixa, não na tela").not.toContain("servico_barbeiro");
+  });
+
+  it("VDN-004 valor inválido é recusado, inclusive no dinheiro", () => {
+    expect(valorDoVale(1, "dinheiro")).toBe(1); // centavo é válido; quem barra <= 0 é registrarVale
+    expect(() => valorDoVale(0, "dinheiro")).not.toThrow();
   });
 });

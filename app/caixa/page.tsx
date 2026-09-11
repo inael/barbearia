@@ -23,6 +23,7 @@ import { emitirNota } from "@/lib/nf";
 import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
+import BuscaCliente from "@/components/BuscaCliente";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/caixa";
@@ -39,7 +40,8 @@ async function abrir(formData: FormData) {
   if (!(await autorizado())) return;
   const cid = Number(formData.get("clienteId"));
   const id = await criarComanda(getDb(), Number.isInteger(cid) && cid > 0 ? cid : null);
-  redirect(`${ROTA}?comanda=${id}`);
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?comanda=${id}&ok=${encodeURIComponent("Comanda aberta.")}`);
 }
 
 async function addServico(formData: FormData) {
@@ -261,12 +263,12 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
             <section className="mt-6">
               <h2 className="mb-3 text-lg font-semibold">Abrir comanda</h2>
               <form action={abrir} className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-                <label className="flex flex-col gap-1 text-xs font-medium">Cliente (opcional)
-                  <select name="clienteId" aria-label="Cliente" data-testid="cx-cliente" className={input}>
-                    <option value="">Balcão (sem cliente)</option>
-                    {clientes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                  </select>
-                </label>
+                <BuscaCliente
+                  clientes={clientes}
+                  label="Cliente (opcional)"
+                  testId="cx-cliente"
+                  permitirBalcao
+                />
                 <button type="submit" className={btn}>Abrir comanda</button>
               </form>
             </section>

@@ -16,6 +16,7 @@ const tipoLabel: Record<string, string> = {
   produto_cliente: "Produto p/ cliente",
   retirado_barbeiro: "Retirado pelo barbeiro",
   servico_barbeiro: "Serviço do barbeiro (caixa)",
+  dinheiro: "Dinheiro (adiantamento)",
 };
 
 async function podeLancarVale() {
@@ -97,6 +98,7 @@ export default async function ValesPage({ searchParams }: { searchParams: Promis
           ajuda={
             <>
               <p><strong>Produto p/ cliente</strong> e <strong>Retirado pelo barbeiro</strong> — produto que o barbeiro levou, com 30% de desconto sobre o preço (lançados aqui).</p>
+              <p><strong>Dinheiro (adiantamento)</strong> — o barbeiro pegou dinheiro. <strong>Não tem desconto</strong>: R$ 100 retirados são R$ 100 descontados no acerto. Só a recepção lança, e não há limite de valor.</p>
               <p><strong>Serviço do barbeiro (caixa)</strong> — quando ele faz um serviço nele mesmo, o caixa lança automaticamente um vale com a parte da barbearia. Não precisa lançar aqui.</p>
               <p>No fim do período, os vales entram no relatório de Metas junto com a comissão.</p>
             </>
@@ -119,11 +121,11 @@ export default async function ValesPage({ searchParams }: { searchParams: Promis
                   {TIPOS_VALE.map((t) => <option key={t} value={t}>{tipoLabel[t]}</option>)}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs font-medium">Produto
-                <input name="descricao" required aria-label="Produto" data-testid="val-descricao" className={input} />
+              <label className="flex flex-col gap-1 text-xs font-medium">Produto ou motivo
+                <input name="descricao" required placeholder="Ex.: Pomada, ou Adiantamento" aria-label="Produto ou motivo" data-testid="val-descricao" className={input} />
               </label>
-              <label className="flex flex-col gap-1 text-xs font-medium">Preço (R$)
-                <input name="preco" required inputMode="decimal" aria-label="Preço" data-testid="val-preco" className={`${input} w-24`} />
+              <label className="flex flex-col gap-1 text-xs font-medium">Valor (R$)
+                <input name="preco" required inputMode="decimal" aria-label="Valor" data-testid="val-preco" className={`${input} w-24`} />
               </label>
               <button type="submit" className={btn}>Lançar</button>
             </form>
@@ -139,7 +141,12 @@ export default async function ValesPage({ searchParams }: { searchParams: Promis
                 <span className="font-medium">{v.descricao}</span>
                 <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">{tipoLabel[v.tipo] ?? v.tipo}</span>
                 <span className="text-neutral-500">{v.profissionalNome}</span>
-                <span className="ml-auto"><s className="text-neutral-400">{brl(v.precoCentavos)}</s> <strong>{brl(v.valorCentavos)}</strong></span>
+                <span className="ml-auto">
+                  {v.valorCentavos === v.precoCentavos ? null : (
+                    <s className="text-neutral-400">{brl(v.precoCentavos)} </s>
+                  )}
+                  <strong>{brl(v.valorCentavos)}</strong>
+                </span>
                 {podeLancar && v.tipo !== "servico_barbeiro" ? (
                   <>
                     <form action={salvarVale} className="flex items-end gap-1">

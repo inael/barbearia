@@ -1,26 +1,22 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
+import { totalVendas } from "./caixa";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
-/** Faturamento total (centavos) das vendas (comandas fechadas) em [de, ate).
- * Só itens `normal` — cortesia e serviço-do-barbeiro não são dinheiro que entrou (CRT). */
+/**
+ * Faturamento total (centavos) das vendas (comandas fechadas) em [de, ate).
+ *
+ * CRT-010: delega para `totalVendas`, que fatura o preço cheio dos itens `normal` e
+ * apenas a **parte da barbearia** no serviço que o barbeiro faz nele mesmo. Antes as
+ * duas funções tinham a mesma regra escrita duas vezes e uma delas ficaria para trás.
+ * Cortesia continua fora: não é dinheiro que entrou.
+ */
 export async function faturamentoTotal(db: DB, de: Date, ate: Date): Promise<number> {
-  const [row] = await db
-    .select({ total: sql<number>`coalesce(sum(${schema.comandaItens.valorCentavos}), 0)` })
-    .from(schema.comandaItens)
-    .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
-    .where(
-      and(
-        eq(schema.comandas.status, "fechada"),
-        gte(schema.comandas.fechadaEm, de),
-        lt(schema.comandas.fechadaEm, ate),
-        eq(schema.comandaItens.lancamento, "normal"),
-      ),
-    );
-  return Number(row?.total ?? 0);
+  return totalVendas(db, de, ate);
 }
+
 
 export interface FaturamentoProfissional {
   profissionalId: number;

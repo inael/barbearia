@@ -28,7 +28,7 @@ emite com o próprio CNPJ, e trocar a chave não exige rebuild.
 | NFA-004 | Emitir duas vezes a mesma comanda é recusado (uma venda, uma nota) | integration | lib/db/nota-fiscal-asaas.integration.test.ts | PENDING | — |
 | NFA-005 | Recusa da prefeitura aparece na tela com o motivo, e a venda não é perdida | e2e | e2e/nota-fiscal-asaas.spec.ts | PENDING | — |
 | NFA-006 | O id e o link do PDF da nota ficam guardados e acessíveis na tela | integration | lib/db/nota-fiscal-asaas.integration.test.ts | PENDING | — |
-| NFA-007 | Teste de configuração fiscal avisa o que falta (certificado, inscrição, código de serviço) antes da primeira emissão | unit | lib/nota-fiscal-asaas.test.ts | PENDING | — |
+| NFA-007 | Teste de configuração fiscal avisa o que falta (certificado, inscrição, código de serviço) antes da primeira emissão | unit | lib/nota-fiscal-asaas.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (credencial pela tela, por barbearia) → NFA-001 → e2e → e2e/nota-fiscal-asaas.spec.ts → PENDING
@@ -37,9 +37,11 @@ REQUIREMENT (fatura só o cobrado) → NFA-003 → integration → lib/db/nota-f
 REQUIREMENT (uma venda, uma nota) → NFA-004 → integration → lib/db/nota-fiscal-asaas.integration.test.ts → PENDING
 REQUIREMENT (recusa explicada) → NFA-005 → e2e → e2e/nota-fiscal-asaas.spec.ts → PENDING
 REQUIREMENT (guardar comprovante) → NFA-006 → integration → lib/db/nota-fiscal-asaas.integration.test.ts → PENDING
-REQUIREMENT (dizer o que falta configurar) → NFA-007 → unit → lib/nota-fiscal-asaas.test.ts → PENDING
+REQUIREMENT (dizer o que falta configurar) → NFA-007 → unit → lib/nota-fiscal-asaas.test.ts → PASS
 
 ## Gaps
+- **Seguem PENDING:** o motor esta provado na unidade com o Asaas simulado (cliente novo ou existente, recusa da prefeitura, 401, rede fora). Integracao e e2e dependem de conta Asaas **do Rodrigo**, com certificado digital e inscricao municipal, que ainda nao existe.
+
 - **Bloqueio externo, não de código:** depende do Rodrigo providenciar conta Asaas,
   certificado digital A1, inscrição municipal e código de serviço. Pode levar semanas e
   **não deve segurar a entrega do resto**.

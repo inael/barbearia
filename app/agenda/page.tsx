@@ -9,9 +9,11 @@ import { listarProfissionais } from "@/lib/profissionais";
 import { criarAgendamento, criarAgendamentoSemPreferencia, cancelarAgendamento, listarAgendamentos } from "@/lib/agendamento";
 import { janelaDoDia, listarHorarios, listarFeriados, toISODate } from "@/lib/horarios";
 import { montarGradeDia } from "@/lib/agenda-grade-dia";
+import { abrirComandaDoAgendamento, situacaoDosAgendamentos, marcarFalta } from "@/lib/comanda-na-agenda";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
+import BuscaCliente from "@/components/BuscaCliente";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/agenda";
@@ -20,6 +22,41 @@ async function autorizado() {
   const session = await auth();
   const papel = session?.user?.papel;
   return Boolean(papel && podeAcessar(papel, "agenda"));
+}
+
+async function abrirComanda(formData: FormData) {
+  "use server";
+  const session = await auth();
+  const papel = session?.user?.papel;
+  if (!papel || !podeAcessar(papel, "caixa")) return;
+  const id = Number(formData.get("agendamentoId"));
+  try {
+    const { comandaId, reaproveitada } = await abrirComandaDoAgendamento(getDb(), id);
+    revalidatePath(ROTA);
+    revalidatePath("/caixa");
+    // o `comanda=` e obrigatorio: sem ele o caixa abre sem mostrar a comanda, e quem
+    // clicou "abrir comanda" na agenda cai numa tela que parece nao ter feito nada
+    redirect(
+      `/caixa?comanda=${comandaId}&ok=${encodeURIComponent(
+        reaproveitada ? "Comanda deste cliente aberta." : "Comanda aberta com o servico do agendamento.",
+      )}`,
+    );
+  } catch (e) {
+    if (e && typeof e === "object" && "digest" in e) throw e; // redirect do Next
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao abrir comanda")}`);
+  }
+}
+
+async function naoVeio(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  try {
+    await marcarFalta(getDb(), Number(formData.get("agendamentoId")));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro")}`);
+  }
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Marcado que o cliente nao veio.")}`);
 }
 
 async function agendar(formData: FormData) {
@@ -96,7 +133,14 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const barbeiros = profissionais.filter((p) => p.papel === "barbeiro" || p.papel === "dono");
   const janela = janelaDoDia(horarios, feriados.map((f) => f.data), dia);
   const agsDoDia = await listarAgendamentos(db, dia, new Date(dia.getTime() + 24 * 60 * 60 * 1000));
-  const grade = montarGradeDia(janela, dia, barbeiros, agsDoDia);
+  const grade = montarGradeDia(
+    janela,
+    dia,
+    barbeiros,
+    agsDoDia.map((a) => ({ ...a, agendamentoId: a.id })),
+  );
+  const situacao = await situacaoDosAgendamentos(db, agsDoDia.map((a) => a.id));
+  const podeCaixa = Boolean(papel && podeAcessar(papel, "caixa"));
 
   return (
     <main className={wrap}>
@@ -153,9 +197,56 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                       {linha.celulas.map((c) => (
                         <td key={c.profissionalId} className="px-2 py-1.5">
                           {c.ocupado ? (
-                            <span className={`block rounded px-1.5 py-0.5 ${c.ocupado.comeca ? "bg-emerald-100 font-medium text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"}`}>
-                              {c.ocupado.comeca ? `${c.ocupado.clienteNome} · ${c.ocupado.servicoNome}` : "…"}
-                            </span>
+                            (() => {
+                              const sit = c.ocupado.agendamentoId ? situacao.get(c.ocupado.agendamentoId) : undefined;
+                              const atendido = sit?.status === "atendido";
+                              const faltou = sit?.status === "faltou";
+                              const cor = atendido
+                                ? "bg-neutral-100 text-neutral-500 line-through"
+                                : faltou
+                                  ? "bg-amber-100 text-amber-800"
+                                  : c.ocupado.comeca
+                                    ? "bg-emerald-100 font-medium text-emerald-900"
+                                    : "bg-emerald-50 text-emerald-700";
+                              if (!c.ocupado.comeca) {
+                                return <span className={`block rounded px-1.5 py-0.5 ${cor}`}>{"…"}</span>;
+                              }
+                              const rotulo = `${c.ocupado.clienteNome} · ${c.ocupado.servicoNome}`;
+                              return (
+                                <div className="flex flex-col gap-1">
+                                  <span className={`block rounded px-1.5 py-0.5 ${cor}`} data-agendado={c.ocupado.clienteNome}>
+                                    {rotulo}
+                                    {atendido ? " · atendido" : faltou ? " · nao veio" : sit?.comandaAberta ? " · comanda aberta" : ""}
+                                  </span>
+                                  {/* CNA: o atalho que evita ir ao caixa e procurar o cliente de novo,
+                                      que era o risco de fechar a conta do cliente errado. */}
+                                  {podeCaixa && !atendido && !faltou && c.ocupado.agendamentoId ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      <form action={abrirComanda}>
+                                        <input type="hidden" name="agendamentoId" value={c.ocupado.agendamentoId} />
+                                        <button
+                                          type="submit"
+                                          data-abrir-comanda={c.ocupado.clienteNome}
+                                          className="rounded border border-emerald-700 px-1.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-50"
+                                        >
+                                          {sit?.comandaAberta ? "Ver comanda" : "Abrir comanda"}
+                                        </button>
+                                      </form>
+                                      <form action={naoVeio}>
+                                        <input type="hidden" name="agendamentoId" value={c.ocupado.agendamentoId} />
+                                        <button
+                                          type="submit"
+                                          data-nao-veio={c.ocupado.clienteNome}
+                                          className="rounded px-1.5 py-0.5 text-[11px] text-neutral-500 underline hover:text-neutral-800"
+                                        >
+                                          nao veio
+                                        </button>
+                                      </form>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })()
                           ) : (
                             <span className="text-neutral-300 dark:text-neutral-700">livre</span>
                           )}
@@ -184,13 +275,12 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
             </div>
           ) : (
             <form action={agendar} className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-              <label className="flex flex-col gap-1 text-xs font-medium">Cliente
-                <select name="clienteId" required aria-label="Cliente" data-testid="age-cliente" className={input}>
-                  {clientes.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
-                </select>
-              </label>
+              <BuscaCliente
+                clientes={clientes}
+                label="Cliente"
+                testId="age-cliente"
+                permitirBalcao={false}
+              />
               <label className="flex flex-col gap-1 text-xs font-medium">Serviço
                 <select name="servicoId" required aria-label="Serviço" data-testid="age-servico" className={input}>
                   {servicos.map((s) => (

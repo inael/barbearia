@@ -2,6 +2,15 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function login(page: Page, email: string, senha: string) {
   await page.goto("/login");
+  // Esperar a HIDRATACAO antes de clicar: sem isso o formulario e enviado
+  // nativamente e o teste volta pro /login sem erro nenhum.
+  // NAO usar networkidle: o Next fica pre-carregando rotas e a rede nunca
+  // fica ociosa, entao todo login esperava ate estourar o tempo (suite de 5min
+  // virou 42min). O sinal certo e o React ter montado no formulario.
+  await page.waitForFunction(() => {
+    const f = document.querySelector("form");
+    return !!f && Object.keys(f).some((k) => k.startsWith("__react"));
+  });
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(senha);
   await page.getByRole("button", { name: "Entrar" }).click();
@@ -20,6 +29,15 @@ test.describe("CX — caixa (e2e)", () => {
     await page.goto("/caixa");
     await expect(page.getByRole("heading", { name: "Caixa", exact: true })).toBeVisible();
 
+    // O total do dia é COMPARTILHADO com os outros testes que fecham venda hoje, então
+    // comparar com um valor fixo quebra quando alguém acrescenta um teste antes deste.
+    // O que importa aqui é que esta venda de R$60 ENTROU no total.
+    const lerTotal = async () => {
+      const txt = (await page.getByTestId("total-dia").innerText()).replace(/[^\d,]/g, "");
+      return Number(txt.replace(/\./g, "").replace(",", "."));
+    };
+    const antes = await lerTotal();
+
     await page.getByRole("button", { name: "Abrir comanda" }).click();
     await expect(page.getByTestId("comanda")).toBeVisible();
 
@@ -33,7 +51,7 @@ test.describe("CX — caixa (e2e)", () => {
     await page.getByRole("button", { name: "Fechar conta" }).click();
 
     await expect(page.getByText("Conta fechada.")).toBeVisible();
-    await expect(page.getByTestId("total-dia")).toContainText("60,00");
+    expect(await lerTotal(), "a venda de R$60 tem que entrar no total do dia").toBeCloseTo(antes + 60, 2);
   });
 
   test("CRT-008 cortesia: total a pagar fica R$0, badge aparece e o total do dia não sobe", async ({ page }) => {

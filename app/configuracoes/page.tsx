@@ -36,6 +36,12 @@ export default async function ConfiguracoesHubPage() {
               Token e instância do SimplesZap, para o sistema mandar lembrete ao cliente e aviso ao dono.
             </p>
           </Link>
+          <Link href="/configuracoes/fiscal" className={card} data-testid="cfg-fiscal">
+            <h2 className="font-semibold">Nota fiscal</h2>
+            <p className="mt-1 text-sm text-neutral-600">
+              Emissão da nota de serviço pelo Asaas, com o CNPJ da barbearia.
+            </p>
+          </Link>
         </div>
       </div>
     </main>

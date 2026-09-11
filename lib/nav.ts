@@ -96,7 +96,10 @@ export function gruposParaPapel(papel: Papel | null): GrupoNav[] {
       href: "/configuracoes",
       label: "Configurações",
       icone: "Settings",
-      filhos: [{ href: "/configuracoes/whatsapp", label: "WhatsApp", icone: "MessageCircle" }],
+      filhos: [
+        { href: "/configuracoes/whatsapp", label: "WhatsApp", icone: "MessageCircle" },
+        { href: "/configuracoes/fiscal", label: "Nota fiscal", icone: "Receipt" },
+      ],
     });
   }
 

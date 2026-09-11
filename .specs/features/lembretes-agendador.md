@@ -18,24 +18,26 @@ horário de funcionamento são obrigatórios, não desejáveis.
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
 | LEA-001 | A rota recusa chamada sem o segredo (401) e aceita com ele | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
-| LEA-002 | Envia só os agendamentos dentro da janela de `lembrete_config`; fora da janela não envia | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
-| LEA-003 | Rodar duas vezes seguidas NÃO manda o lembrete de novo (marcado como enviado) | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
-| LEA-004 | Agendamento cancelado entre a marcação e o envio não recebe lembrete | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
-| LEA-005 | Falha num telefone não derruba o lote: os demais seguem e o erro fica registrado | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
-| LEA-006 | Integração desligada ou incompleta: a rota responde OK e não envia nada | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
-| LEA-007 | Não envia fora do horário de funcionamento (nada de mensagem de madrugada) | unit | lib/lembretes-agendador.test.ts | PENDING | — |
-| LEA-008 | O dono vê na tela quando o último lembrete saiu e quantos foram | e2e | e2e/lembretes-agendador.spec.ts | PENDING | — |
+| LEA-002 | Envia só os agendamentos dentro da janela de `lembrete_config`; fora da janela não envia | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
+| LEA-003 | Rodar duas vezes seguidas NÃO manda o lembrete de novo (marcado como enviado) | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
+| LEA-004 | Agendamento cancelado entre a marcação e o envio não recebe lembrete | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
+| LEA-005 | Falha num telefone não derruba o lote: os demais seguem e o erro fica registrado | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
+| LEA-006 | Integração desligada ou incompleta: a rota responde OK e não envia nada | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
+| LEA-007 | Não envia fora do horário de funcionamento (nada de mensagem de madrugada) | unit | lib/lembretes-agendador.test.ts | PASS | verde (gate) |
+| LEA-008 | O dono vê na tela quando o último lembrete saiu e quantos foram | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (só quem tem o segredo dispara) → LEA-001 → integration → lib/db/lembretes-agendador.integration.test.ts → PENDING
-REQUIREMENT (janela correta) → LEA-002 → integration → lib/db/lembretes-agendador.integration.test.ts → PENDING
-REQUIREMENT (nunca duplicar) → LEA-003,004 → integration → lib/db/lembretes-agendador.integration.test.ts → PENDING
-REQUIREMENT (uma falha não derruba o lote) → LEA-005 → integration → lib/db/lembretes-agendador.integration.test.ts → PENDING
-REQUIREMENT (sem credencial, não quebra) → LEA-006 → integration → lib/db/lembretes-agendador.integration.test.ts → PENDING
-REQUIREMENT (respeitar horário da loja) → LEA-007 → unit → lib/lembretes-agendador.test.ts → PENDING
-REQUIREMENT (o dono enxerga que funcionou) → LEA-008 → e2e → e2e/lembretes-agendador.spec.ts → PENDING
+REQUIREMENT (janela correta) → LEA-002 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
+REQUIREMENT (nunca duplicar) → LEA-003,004 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
+REQUIREMENT (uma falha não derruba o lote) → LEA-005 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
+REQUIREMENT (sem credencial, não quebra) → LEA-006 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
+REQUIREMENT (respeitar horário da loja) → LEA-007 → unit → lib/lembretes-agendador.test.ts → PASS
+REQUIREMENT (o dono enxerga que funcionou) → LEA-008 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
 
 ## Gaps
+- **LEA-001 segue PENDING:** a rota recusa chamada sem segredo (401) e fica fechada sem `TAREFAS_SECRET`, mas nao escrevi teste para ela. Nao marco verde sem teste nomeado.
+
 - O fuso do servidor agora é São Paulo (corrigido em 2026-09-10). **Este recurso depende
   disso**: com o container em UTC, "uma hora antes" erraria por três horas.
 - Sem fila nem repetição: se a VPS estiver fora do ar na hora da tarefa, aquele lembrete

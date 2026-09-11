@@ -17,7 +17,7 @@ describe("UXS — grupos de navegação por papel (sidebar)", () => {
       "Painel do dono", "Catálogo", "Comissão", "Agenda", "Minha agenda", "Caixa", "Vales",
       "Cadastros", "Serviços e combos", "Produtos", "Clientes", "Profissionais", "Usuários",
       "Horários", "Metas", "Estoque", "Assinaturas", "Pote", "Avisos", "TVs",
-      "Configurações", "WhatsApp", "Conta",
+      "Configurações", "WhatsApp", "Nota fiscal", "Conta",
     ]) {
       expect(t, `dono deveria ver ${esperado}`).toContain(esperado);
     }
@@ -30,7 +30,7 @@ describe("UXS — grupos de navegação por papel (sidebar)", () => {
       expect(t).toContain(esperado);
     }
     for (const proibido of ["Painel do dono", "TVs", "Profissionais", "Usuários", "Horários", "Minha agenda",
-      "Configurações", "WhatsApp"]) {
+      "Configurações", "WhatsApp", "Nota fiscal"]) {
       expect(t, `recepção NÃO deveria ver ${proibido}`).not.toContain(proibido);
     }
   });

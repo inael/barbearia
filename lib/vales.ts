@@ -4,9 +4,32 @@ import * as schema from "./db/schema";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
-export type TipoVale = "produto_cliente" | "retirado_barbeiro" | "servico_barbeiro";
+export type TipoVale = "produto_cliente" | "retirado_barbeiro" | "servico_barbeiro" | "dinheiro";
 /** Tipos lançáveis pela tela de vales (o `servico_barbeiro` nasce no fechamento do caixa). */
-export const TIPOS_VALE: Exclude<TipoVale, "servico_barbeiro">[] = ["produto_cliente", "retirado_barbeiro"];
+export const TIPOS_VALE: Exclude<TipoVale, "servico_barbeiro">[] = [
+  "produto_cliente",
+  "retirado_barbeiro",
+  "dinheiro",
+];
+
+/**
+ * VDN: adiantamento em DINHEIRO ao barbeiro. Pedido do Rodrigo em 2026-09-11, porque
+ * *"se o cara pegar vale em dinheiro, o barbeiro pega vale em dinheiro mesmo"* e não
+ * havia onde lançar. Sem teto, por decisão dele: o controle é humano, só a recepção lança.
+ */
+export const TIPO_DINHEIRO = "dinheiro" as const;
+
+/**
+ * Valor do vale em centavos.
+ *
+ * Produto tem **30% de desconto** (o barbeiro paga menos que o cliente). Dinheiro
+ * **não tem desconto**: R$ 100 retirados são R$ 100 no acerto. Misturar as duas regras
+ * erraria o pagamento do barbeiro, que é o ponto mais sensível do sistema.
+ */
+export function valorDoVale(precoCentavos: number, tipo: TipoVale): number {
+  if (tipo === TIPO_DINHEIRO) return precoCentavos;
+  return valorComDesconto(precoCentavos);
+}
 
 /** Valor do vale = preço com 30% de desconto (round-half-up, em centavos). */
 export function valorComDesconto(precoCentavos: number): number {
@@ -32,7 +55,7 @@ export async function registrarVale(db: DB, d: DadosVale): Promise<number> {
       tipo: d.tipo,
       descricao: d.descricao.trim(),
       precoCentavos: d.precoCentavos,
-      valorCentavos: valorComDesconto(d.precoCentavos),
+      valorCentavos: valorDoVale(d.precoCentavos, d.tipo),
     })
     .returning({ id: schema.vales.id });
   return row.id;
@@ -67,16 +90,17 @@ export async function totalValesPorTipo(
   profissionalId: number,
   de: Date,
   ate: Date,
-): Promise<{ produto_cliente: number; retirado_barbeiro: number; servico_barbeiro: number }> {
+): Promise<{ produto_cliente: number; retirado_barbeiro: number; servico_barbeiro: number; dinheiro: number }> {
   const rows = await db
     .select({ tipo: schema.vales.tipo, valor: schema.vales.valorCentavos })
     .from(schema.vales)
     .where(and(eq(schema.vales.profissionalId, profissionalId), gte(schema.vales.criadoEm, de), lt(schema.vales.criadoEm, ate)));
-  const out = { produto_cliente: 0, retirado_barbeiro: 0, servico_barbeiro: 0 };
+  const out = { produto_cliente: 0, retirado_barbeiro: 0, servico_barbeiro: 0, dinheiro: 0 };
   for (const r of rows) {
     if (r.tipo === "produto_cliente") out.produto_cliente += r.valor;
     else if (r.tipo === "retirado_barbeiro") out.retirado_barbeiro += r.valor;
     else if (r.tipo === "servico_barbeiro") out.servico_barbeiro += r.valor;
+    else if (r.tipo === TIPO_DINHEIRO) out.dinheiro += r.valor;
   }
   return out;
 }
@@ -121,7 +145,7 @@ export async function editarVale(db: DB, id: number, d: { tipo: TipoVale; descri
   if (!Number.isInteger(d.precoCentavos) || d.precoCentavos <= 0) throw new Error("preço inválido");
   await db
     .update(schema.vales)
-    .set({ tipo: d.tipo, descricao: d.descricao.trim(), precoCentavos: d.precoCentavos, valorCentavos: valorComDesconto(d.precoCentavos) })
+    .set({ tipo: d.tipo, descricao: d.descricao.trim(), precoCentavos: d.precoCentavos, valorCentavos: valorDoVale(d.precoCentavos, d.tipo) })
     .where(eq(schema.vales.id, id));
 }
 

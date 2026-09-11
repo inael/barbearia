@@ -31,3 +31,4 @@ e2e/.runtime.json
 # scripts temporarios de diagnostico (NUNCA versionar: costumam levar credencial)
 *.tmp.mjs
 chk.tmp.*
+e2e/servidor.log

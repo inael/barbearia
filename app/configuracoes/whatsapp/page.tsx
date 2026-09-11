@@ -10,6 +10,7 @@ import {
   tokenMascarado,
   BASE_URL_PADRAO,
 } from "@/lib/integracao-whatsapp";
+import { resumoDeHoje } from "@/lib/lembretes-agendador";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 
@@ -76,6 +77,7 @@ export default async function WhatsappConfigPage({
 
   const cfg = await lerIntegracao(getDb());
   const temToken = Boolean(cfg.token);
+  const lembretes = await resumoDeHoje(getDb());
 
   return (
     <main className={wrap}>
@@ -196,6 +198,16 @@ export default async function WhatsappConfigPage({
             {cfg.ativo && temToken && cfg.instancia
               ? "Ligada. O sistema tenta enviar pelo WhatsApp configurado."
               : "Desligada. Nenhuma mensagem é enviada; o resto do sistema funciona normalmente."}
+          </p>
+          {/* LEA-008: sem isto o dono nao tem como saber se os lembretes estao saindo. */}
+          <p className="mt-2" data-testid="wa-lembretes">
+            <strong>Lembretes hoje:</strong>{" "}
+            {lembretes.enviadosHoje === 0
+              ? "nenhum enviado ainda."
+              : `${lembretes.enviadosHoje} enviado(s), o último às ${lembretes.ultimoEnvio?.toLocaleTimeString(
+                  "pt-BR",
+                  { hour: "2-digit", minute: "2-digit" },
+                )}.`}
           </p>
         </section>
       </div>

@@ -6,7 +6,22 @@ import { janelaDoDia, listarHorarios, listarFeriados } from "@/lib/horarios";
 
 export const dynamic = "force-dynamic";
 
-const PASSO_MIN = 30;
+// AHL: horarios livres de 5 em 5 minutos, decisao do Rodrigo em 11/09. Com passo de
+// 30 o sistema so oferecia hora cheia e meia, e quem tem corte de 40 minutos perdia as
+// brechas. Ele quer isso fino tambem porque o atendente por IA encaixa cliente nos vaos.
+const PASSO_MIN = 5;
+
+/** Agrupa horarios livres por hora, preservando a ordem. */
+function agruparPorHora(slots: Date[]): [string, Date[]][] {
+  const mapa = new Map<string, Date[]>();
+  for (const s of slots) {
+    const hora = String(s.getHours()).padStart(2, "0");
+    const atual = mapa.get(hora);
+    if (atual) atual.push(s);
+    else mapa.set(hora, [s]);
+  }
+  return [...mapa.entries()];
+}
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 export default async function GradePage({
@@ -99,17 +114,26 @@ export default async function GradePage({
             {slots.length === 0 ? (
               <p className="text-sm text-neutral-600">Sem horários livres nesse dia.</p>
             ) : (
-              <ul className="flex flex-wrap gap-2">
-                {slots.map((s, i) => (
-                  <li
-                    key={i}
-                    data-slot
-                    className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-sm dark:border-neutral-800 dark:bg-neutral-900"
-                  >
-                    {fmtHora(s)}
-                  </li>
+              // AHL: com passo de 5 minutos sao ~140 horarios num dia. Soltos viram
+              // parede; agrupados por hora continuam escanaveis.
+              <div className="flex flex-col gap-3">
+                {agruparPorHora(slots).map(([hora, doGrupo]) => (
+                  <div key={hora} className="flex flex-wrap items-center gap-2">
+                    <span className="w-12 shrink-0 text-sm font-semibold text-neutral-500">{hora}h</span>
+                    <ul className="flex flex-wrap gap-2">
+                      {doGrupo.map((s, i) => (
+                        <li
+                          key={i}
+                          data-slot
+                          className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-sm dark:border-neutral-800 dark:bg-neutral-900"
+                        >
+                          {fmtHora(s)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         ) : null}

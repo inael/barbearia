@@ -97,6 +97,8 @@ export const itensPlaylist = pgTable(
 export const comandas = pgTable("comandas", {
   id: serial("id").primaryKey(),
   clienteId: integer("cliente_id").references(() => clientes.id, { onDelete: "set null" }),
+  /** CNA: comanda aberta a partir de um agendamento. Opcional — comanda de balcão não tem. */
+  agendamentoId: integer("agendamento_id"),
   status: text("status").notNull().default("aberta"),
   formaPagamento: text("forma_pagamento"),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
@@ -182,6 +184,10 @@ export const notasFiscais = pgTable("notas_fiscais", {
     .references(() => comandas.id, { onDelete: "cascade" }),
   cpf: text("cpf").notNull(),
   valorCentavos: integer("valor_centavos").notNull(),
+  /** NFA: retorno do Asaas. Null = nota so registrada aqui, ainda nao emitida. */
+  asaasInvoiceId: text("asaas_invoice_id"),
+  asaasStatus: text("asaas_status"),
+  pdfUrl: text("pdf_url"),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -236,6 +242,9 @@ export const agendamentos = pgTable("agendamentos", {
   inicio: timestamp("inicio", { withTimezone: true }).notNull(),
   fim: timestamp("fim", { withTimezone: true }).notNull(),
   status: text("status").notNull().default("agendado"),
+  /** LEA: quando o lembrete deste agendamento foi enviado. Null = ainda nao saiu.
+   * E o que garante que rodar a tarefa duas vezes nao manda dois WhatsApp pro cliente. */
+  lembreteEnviadoEm: timestamp("lembrete_enviado_em", { withTimezone: true }),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -387,3 +396,19 @@ export const integracaoWhatsapp = pgTable("integracao_whatsapp", {
 });
 
 export type IntegracaoWhatsapp = typeof integracaoWhatsapp.$inferSelect;
+
+/** NFA: credencial fiscal da barbearia. Linha unica, pelo mesmo motivo da IWA: cada
+ * barbearia emite com o PROPRIO CNPJ, e trocar a chave nao pode exigir rebuild. */
+export const configFiscal = pgTable("config_fiscal", {
+  id: serial("id").primaryKey(),
+  ambiente: text("ambiente").notNull().default("sandbox"),
+  chave: text("chave"),
+  codigoServico: text("codigo_servico"),
+  descricaoServico: text("descricao_servico"),
+  /** numeric em texto para nao perder centavo de aliquota no ida e volta. */
+  issPercent: text("iss_percent").notNull().default("0"),
+  ativo: boolean("ativo").notNull().default(false),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ConfigFiscalRow = typeof configFiscal.$inferSelect;

@@ -18,8 +18,8 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 |-------|------------------------|-----------|-----------|--------|----------|
 | MTV-001 | Upload grava no bucket e a playlist guarda só a URL, não o conteúdo | integration | lib/db/midia-tv-bucket.integration.test.ts | PENDING | — |
 | MTV-002 | Vídeo grande (acima do que cabia antes) sobe e toca no player | e2e | e2e/midia-tv-bucket.spec.ts | PENDING | — |
-| MTV-003 | Arquivo acima do teto é recusado com o motivo e o espaço livre | e2e | e2e/midia-tv-bucket.spec.ts | PENDING | — |
-| MTV-004 | Tipo não suportado é recusado antes de subir (não ocupa espaço à toa) | unit | lib/midia-tv-bucket.test.ts | PENDING | — |
+| MTV-003 | Arquivo acima do teto é recusado com o motivo e o limite em MB | unit | lib/midia-tv-bucket.test.ts | PASS | verde (gate) |
+| MTV-004 | Tipo não suportado é recusado antes de subir (não ocupa espaço à toa) | unit | lib/midia-tv-bucket.test.ts | PASS | verde (gate) |
 | MTV-005 | Remover item da playlist apaga o arquivo do bucket (não deixa lixo ocupando disco) | integration | lib/db/midia-tv-bucket.integration.test.ts | PENDING | — |
 | MTV-006 | As mídias que já estão no banco continuam tocando depois da migração | integration | lib/db/midia-tv-bucket.integration.test.ts | PENDING | — |
 | MTV-007 | Bucket fora do ar: a tela diz o que houve e a playlist antiga continua tocando | e2e | e2e/midia-tv-bucket.spec.ts | PENDING | — |
@@ -27,11 +27,14 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PENDING
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → e2e → e2e/midia-tv-bucket.spec.ts → PENDING
-REQUIREMENT (proteger o disco da VPS) → MTV-003,004,005 → e2e + unit + integration → e2e/midia-tv-bucket.spec.ts, lib/midia-tv-bucket.test.ts, lib/db/midia-tv-bucket.integration.test.ts → PENDING
+REQUIREMENT (recusar arquivo ruim antes de subir) → MTV-003,004 → unit → lib/midia-tv-bucket.test.ts → PASS
+REQUIREMENT (nao deixar lixo no disco) → MTV-005 → integration → lib/db/midia-tv-bucket.integration.test.ts → PENDING
 REQUIREMENT (não perder o que já existe) → MTV-006 → integration → lib/db/midia-tv-bucket.integration.test.ts → PENDING
 REQUIREMENT (falha explicada, TV não apaga) → MTV-007 → e2e → e2e/midia-tv-bucket.spec.ts → PENDING
 
 ## Gaps
+- **Seguem PENDING:** provados so na unidade (validacao, nome do objeto, assinatura S3, erro do bucket). Integracao e e2e de verdade exigem um Garage no ambiente de teste, que hoje so existe na VPS do cliente.
+
 - Backup do bucket é responsabilidade do cliente, como o banco. Combinar com o Rodrigo.
 - A TV puxa a mídia do bucket pela rede local da loja. Se a internet dele cair, a TV
   fica sem mídia nova; cache no player seria a evolução.

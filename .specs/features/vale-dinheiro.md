@@ -24,21 +24,23 @@ R$ 100 descontados. Misturar os dois na mesma regra erraria o acerto.
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| VDN-001 | Existe o tipo `dinheiro` e ele é lançável pela recepção | integration | lib/db/vale-dinheiro.integration.test.ts | PENDING | — |
-| VDN-002 | Vale em dinheiro desconta o valor cheio: R$ 100 retirados viram R$ 100 no acerto, sem desconto de produto | unit | lib/vales.test.ts | PENDING | — |
-| VDN-003 | O vale em dinheiro entra no total de vales do relatório de metas do barbeiro | integration | lib/db/vale-dinheiro.integration.test.ts | PENDING | — |
-| VDN-004 | Valor zero ou negativo é recusado com o motivo | unit | lib/vales.test.ts | PENDING | — |
+| VDN-001 | Existe o tipo `dinheiro` e ele é lançável pela recepção | integration | lib/db/vale-dinheiro.integration.test.ts | PASS | verde (gate) |
+| VDN-002 | Vale em dinheiro desconta o valor cheio: R$ 100 retirados viram R$ 100 no acerto, sem desconto de produto | unit | lib/vales.test.ts | PASS | verde (gate) |
+| VDN-003 | O vale em dinheiro entra no total de vales do relatório de metas do barbeiro | integration | lib/db/vale-dinheiro.integration.test.ts | PASS | verde (gate) |
+| VDN-004 | Valor zero ou negativo é recusado com o motivo | unit | lib/vales.test.ts | PASS | verde (gate) |
 | VDN-005 | A recepção lança e vê a confirmação; o barbeiro vê o próprio vale e não lança para os outros | e2e | e2e/vale-dinheiro.spec.ts | PENDING | — |
-| VDN-006 | Editar e excluir vale em dinheiro funciona, sem afetar os vales de outro tipo | integration | lib/db/vale-dinheiro.integration.test.ts | PENDING | — |
+| VDN-006 | Editar e excluir vale em dinheiro funciona, sem afetar os vales de outro tipo | integration | lib/db/vale-dinheiro.integration.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (lançar adiantamento em dinheiro) → VDN-001 → integration → lib/db/vale-dinheiro.integration.test.ts → PENDING
-REQUIREMENT (dinheiro não tem desconto de produto) → VDN-002,004 → unit → lib/vales.test.ts → PENDING
-REQUIREMENT (aparece no acerto) → VDN-003 → integration → lib/db/vale-dinheiro.integration.test.ts → PENDING
+REQUIREMENT (lançar adiantamento em dinheiro) → VDN-001 → integration → lib/db/vale-dinheiro.integration.test.ts → PASS
+REQUIREMENT (dinheiro não tem desconto de produto) → VDN-002,004 → unit → lib/vales.test.ts → PASS
+REQUIREMENT (aparece no acerto) → VDN-003 → integration → lib/db/vale-dinheiro.integration.test.ts → PASS
 REQUIREMENT (papéis corretos) → VDN-005 → e2e → e2e/vale-dinheiro.spec.ts → PENDING
-REQUIREMENT (CRUD completo) → VDN-006 → integration → lib/db/vale-dinheiro.integration.test.ts → PENDING
+REQUIREMENT (CRUD completo) → VDN-006 → integration → lib/db/vale-dinheiro.integration.test.ts → PASS
 
 ## Gaps
+- **VDN-005 segue PENDING:** o motor e o CRUD estao provados na integracao, falta o e2e do fluxo pela tela (recepcao lanca, barbeiro nao lanca).
+
 - **Respondido em 11/09: sem teto.** *"não precisa botar limite [...] quem vai fazer esse
   vale é só a recepcionista"*. O controle dele é humano, não do sistema: só a recepção
   lança. Isso reforça VDN-005 (barbeiro não lança vale para si mesmo).

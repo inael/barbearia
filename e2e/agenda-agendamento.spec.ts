@@ -1,7 +1,17 @@
 import { test, expect, type Page } from "@playwright/test";
+import { escolherCliente, escolherPrimeiroCliente } from "./ajuda-busca-cliente";
 
 async function login(page: Page, email: string, senha: string) {
   await page.goto("/login");
+  // Esperar a HIDRATACAO antes de clicar: sem isso o formulario e enviado
+  // nativamente e o teste volta pro /login sem erro nenhum.
+  // NAO usar networkidle: o Next fica pre-carregando rotas e a rede nunca
+  // fica ociosa, entao todo login esperava ate estourar o tempo (suite de 5min
+  // virou 42min). O sinal certo e o React ter montado no formulario.
+  await page.waitForFunction(() => {
+    const f = document.querySelector("form");
+    return !!f && Object.keys(f).some((k) => k.startsWith("__react"));
+  });
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(senha);
   await page.getByRole("button", { name: "Entrar" }).click();
@@ -36,7 +46,7 @@ test.describe("AGE — agenda ao vivo (e2e)", () => {
     // agenda
     await page.goto("/agenda");
     await expect(page.getByRole("heading", { name: "Agenda", exact: true })).toBeVisible();
-    await page.getByTestId("age-cliente").selectOption({ label: "Cliente Agenda E2E" });
+    await escolherCliente(page, "age-cliente", "Cliente Agenda E2E");
     await page.getByTestId("age-servico").selectOption({ label: "Corte" });
     await page.getByTestId("age-profissional").selectOption({ label: "Pedro" });
     await page.getByTestId("age-inicio").fill(futuroLocal(5, 10));
@@ -61,7 +71,7 @@ test.describe("AGE — agenda ao vivo (e2e)", () => {
     const base = new Date();
     base.setDate(base.getDate() + 6);
     const adiante = base.getDay() === 0 ? 7 : 6;
-    await page.getByTestId("age-cliente").selectOption({ index: 0 });
+    await escolherPrimeiroCliente(page, "age-cliente", "Cliente");
     await page.getByTestId("age-servico").selectOption({ label: "Barba" });
     await page.getByTestId("age-profissional").selectOption({ label: "Sem preferência (rodízio)" });
     await page.getByTestId("age-inicio").fill(futuroLocal(adiante, 11));

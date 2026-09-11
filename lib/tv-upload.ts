@@ -1,6 +1,7 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "./db/schema";
 import { adicionarItem } from "./tv";
+import { configDoAmbiente, enviarParaBucket, nomeDoObjeto, validarArquivo, type ConfigBucket } from "./midia-tv-bucket";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -27,10 +28,29 @@ export const localDataUrlStorage: StorageClient = {
   },
 };
 
-/** Resolve o storage. Bucket do cliente (S3/Supabase/R2) = go-live; sem config → local. */
+/**
+ * Storage no bucket do cliente (MTV). O Garage roda na VPS do próprio Rodrigo, com
+ * teto de 8 GB; nada de mídia dele na infra da IT Booster.
+ */
+export function bucketStorage(cfg: ConfigBucket): StorageClient {
+  return {
+    async salvar(nome: string, bytes: Uint8Array, tipo: string) {
+      const checagem = validarArquivo(tipo, bytes.byteLength);
+      if (!checagem.ok) throw new Error(checagem.motivo);
+      return enviarParaBucket(cfg, nomeDoObjeto(nome), bytes, tipo);
+    },
+  };
+}
+
+/**
+ * Resolve o storage: bucket quando houver credencial, senão data URL.
+ *
+ * O fallback existe de propósito: se o bucket cair ou não estiver configurado, o dono
+ * continua conseguindo subir imagem pequena em vez de ficar sem recurso nenhum.
+ */
 export function getStorageClient(): StorageClient {
-  // Sem transcodar vídeo na infra IT Booster; o bucket é do cliente.
-  return localDataUrlStorage;
+  const cfg = configDoAmbiente();
+  return cfg ? bucketStorage(cfg) : localDataUrlStorage;
 }
 
 /** Sobe a mídia para o storage e adiciona à playlist da tela. Retorna item + URL. */

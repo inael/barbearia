@@ -53,6 +53,14 @@ export function comissaoProduto(valor: number, faixa: FaixaProduto): number {
   return round2(valor * faixa);
 }
 
+/**
+ * Faixa fixa que a CORTESIA paga ao barbeiro (CRT-009).
+ * Resposta do Rodrigo em 2026-09-11: *"vai ser sempre 40% dele"*. Não usa a faixa do
+ * mês: na cortesia quem abre mão é a barbearia, então o barbeiro recebe o de sempre e
+ * não herda bônus de faixa por um serviço que não gerou caixa.
+ */
+export const FAIXA_CORTESIA: FaixaServico = 0.4;
+
 /** True se o serviço tem comissão dividida (Limpeza Detox / Acidificação). */
 export function isServicoDividido(servicoSlug: string): servicoSlug is ServicoDividido {
   return (SERVICOS_DIVIDIDOS as readonly string[]).includes(servicoSlug);

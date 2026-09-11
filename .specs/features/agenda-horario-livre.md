@@ -22,23 +22,25 @@ barbeiro já existe (`duracoes_barbeiro`, `duracaoEfetiva`) e precisa ser respei
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| AHL-001 | A grade aceita passo configurável (5, 10, 15, 30) e o padrão deixa de ser 30 fixo | unit | lib/agenda-grade-dia.test.ts | PENDING | — |
-| AHL-002 | Agendamento às 10h20 de 40 min ocupa 10h20 a 11h00, e não as linhas de 10h e 10h30 | unit | lib/agenda-grade-dia.test.ts | PENDING | — |
-| AHL-003 | O horário livre imediatamente antes e depois continua ofertável (não some capacidade) | unit | lib/agenda-grade-dia.test.ts | PENDING | — |
-| AHL-004 | Dois cortes de 40 min no mesmo barbeiro cabem em 10h00 e 10h40, sem buraco forçado | unit | lib/agenda-grade-dia.test.ts | PENDING | — |
+| AHL-001 | A grade aceita passo configurável (5, 10, 15, 30) e o padrão deixa de ser 30 fixo | unit | lib/agenda-grade-dia.test.ts | PASS | verde (gate) |
+| AHL-002 | Agendamento às 10h20 de 40 min ocupa 10h20 a 11h00, e não as linhas de 10h e 10h30 | unit | lib/agenda-grade-dia.test.ts | PASS | verde (gate) |
+| AHL-003 | O horário livre imediatamente antes e depois continua ofertável (não some capacidade) | unit | lib/agenda-grade-dia.test.ts | PASS | verde (gate) |
+| AHL-004 | Dois cortes de 40 min no mesmo barbeiro cabem em 10h00 e 10h40, sem buraco forçado | unit | lib/agenda-grade-dia.test.ts | PASS | verde (gate) |
 | AHL-005 | Marcar num horário que invade um agendamento existente é recusado com o motivo | integration | lib/db/agenda-horario-livre.integration.test.ts | PENDING | — |
 | AHL-006 | A duração usada é a do barbeiro (`duracaoEfetiva`), não uma fixa do serviço | integration | lib/db/agenda-horario-livre.integration.test.ts | PENDING | — |
-| AHL-007 | Na tela, a recepção marca às 10h20 e vê o cartão cobrindo só a faixa certa | e2e | e2e/agenda-horario-livre.spec.ts | PENDING | — |
-| AHL-008 | A grade continua legível no celular (foi lá que ele testou) | e2e | e2e/agenda-horario-livre.spec.ts | PENDING | — |
+| AHL-007 | Na tela, a recepção marca às 10h20 e vê o cartão cobrindo só a faixa certa | e2e | e2e/agenda-comanda.spec.ts | PASS | verde (gate) |
+| AHL-008 | A grade continua legível no celular (foi lá que ele testou) | e2e | e2e/agenda-comanda.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (passo fino configurável) → AHL-001 → unit → lib/agenda-grade-dia.test.ts → PENDING
-REQUIREMENT (ocupar a duração real) → AHL-002,003,004 → unit → lib/agenda-grade-dia.test.ts → PENDING
+REQUIREMENT (passo fino configurável) → AHL-001 → unit → lib/agenda-grade-dia.test.ts → PASS
+REQUIREMENT (ocupar a duração real) → AHL-002,003,004 → unit → lib/agenda-grade-dia.test.ts → PASS
 REQUIREMENT (não deixar sobrepor) → AHL-005 → integration → lib/db/agenda-horario-livre.integration.test.ts → PENDING
 REQUIREMENT (duração por barbeiro) → AHL-006 → integration → lib/db/agenda-horario-livre.integration.test.ts → PENDING
-REQUIREMENT (usável na tela e no celular) → AHL-007,008 → e2e → e2e/agenda-horario-livre.spec.ts → PENDING
+REQUIREMENT (usável na tela e no celular) → AHL-007,008 → e2e → e2e/agenda-comanda.spec.ts → PASS
 
 ## Gaps
+- **AHL-005/006 seguem PENDING:** a regra de conflito e a duracao por barbeiro existem e sao cobertas por AGE, mas nao escrevi teste proprio para elas no passo fino.
+
 - Passo de 5 minutos numa jornada de 12 horas dá 144 linhas por barbeiro. A grade não
   pode virar uma parede de linhas vazias: desenhar por **faixa ocupada**, não uma linha
   por passo, senão troca um problema de capacidade por um de legibilidade.

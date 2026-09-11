@@ -24,16 +24,16 @@ com o Rodrigo; a conta é parametrizada nos helpers puros de `lib/comissao.ts`).
 | CRT-006 | NF do fechamento fatura apenas itens `normal`; comanda sem item faturável não emite nota | integration | lib/db/nf.integration.test.ts | PASS | verde (gate) |
 | CRT-007 | INVARIANTE (property): para qualquer mistura de lançamentos, total a pagar = soma dos itens normais positivos; nunca aumenta com cortesia/serviço-do-barbeiro | property | lib/caixa.test.ts | PASS | verde (gate) |
 | CRT-008 | UI: recepção lança cortesia pela tela do caixa (total a pagar não sobe, badge visível) e fecha; total do dia não sobe | e2e | e2e/caixa.spec.ts | PASS | verde (gate) |
-| CRT-009 | Cortesia paga **40% fixo** ao barbeiro, mesmo para quem está na faixa de 45% ou 50% (resposta do Rodrigo em 11/09; hoje usa a faixa do mês) | unit + integration | lib/comissao.test.ts, lib/db/caixa.integration.test.ts | PENDING | — |
-| CRT-010 | Serviço do barbeiro nele mesmo **entra** no faturamento dele (conta para subir de faixa), porque ele paga a parte da barbearia; a cortesia continua fora | integration | lib/db/caixa.integration.test.ts | PENDING | — |
+| CRT-009 | Cortesia paga **40% fixo** ao barbeiro, mesmo para quem está na faixa de 45% ou 50% (resposta do Rodrigo em 11/09; hoje usa a faixa do mês) | unit + integration | lib/comissao.test.ts, lib/db/caixa.integration.test.ts | PASS | verde (gate) |
+| CRT-010 | Serviço do barbeiro nele mesmo **entra** no faturamento dele (conta para subir de faixa), porque ele paga a parte da barbearia; a cortesia continua fora | integration | lib/db/caixa.integration.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (total a pagar puro) → CRT-001,007 → unit/property → lib/caixa.test.ts → PASS
 REQUIREMENT (conta da comissão/vale pura) → CRT-002 → unit → lib/comissao.test.ts → PASS
 REQUIREMENT (comissão cheia da cortesia + vale no fechamento) → CRT-003,004 → integration → lib/db/caixa.integration.test.ts → PASS
 REQUIREMENT (fora do faturamento + custo de cortesias) → CRT-005 → integration → lib/db/caixa.integration.test.ts → PASS
-REQUIREMENT (cortesia paga 40% fixo) → CRT-009 → unit + integration → lib/comissao.test.ts, lib/db/caixa.integration.test.ts → PENDING
-REQUIREMENT (serviço do barbeiro conta como faturamento dele) → CRT-010 → integration → lib/db/caixa.integration.test.ts → PENDING
+REQUIREMENT (cortesia paga 40% fixo) → CRT-009 → unit + integration → lib/comissao.test.ts, lib/db/caixa.integration.test.ts → PASS
+REQUIREMENT (serviço do barbeiro conta como faturamento dele) → CRT-010 → integration → lib/db/caixa.integration.test.ts → PASS
 REQUIREMENT (NF só do que foi cobrado) → CRT-006 → integration → lib/db/nf.integration.test.ts → PASS
 REQUIREMENT (fluxo na tela + painel) → CRT-008 → e2e → e2e/caixa.spec.ts → PASS
 

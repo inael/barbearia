@@ -30,6 +30,17 @@ for (const f of files) {
     if (!/\.(ts|tsx)\b/.test(r) && !/stryker/i.test(r)) {
       errors.push(`${f}: AC sem arquivo de teste referenciado -> ${r.trim().slice(0, 60)}...`);
     }
+    // AC marcada PASS precisa apontar para um arquivo que EXISTE. Antes bastava citar um
+    // nome, entao dava para declarar verde apontando para um teste nunca escrito -- foi
+    // o que aconteceu com PTG-004/005. Citar nao e provar.
+    // PENDING pode citar o arquivo que ainda vai ser escrito: ali o nome e um plano.
+    if (/\bPASS\b/.test(r)) {
+      for (const ref of r.match(/(?:lib|e2e|app|tools)\/[A-Za-z0-9._/-]+\.(?:ts|tsx)/g) ?? []) {
+        if (!existsSync(path.join(root, ref))) {
+          errors.push(`${f}: AC marcada PASS cita teste inexistente -> ${ref}`);
+        }
+      }
+    }
   }
 }
 
