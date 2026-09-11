@@ -29,6 +29,7 @@ cliente identificado.
 | CNA-005 | A grade mostra quem já tem comanda aberta e quem já foi fechado, para não atender duas vezes | e2e | e2e/comanda-na-agenda.spec.ts | PENDING | — |
 | CNA-006 | Agendamento cancelado não abre comanda | integration | lib/db/comanda-na-agenda.integration.test.ts | PENDING | — |
 | CNA-007 | Quem não tem acesso ao caixa não vê o atalho na agenda | e2e | e2e/comanda-na-agenda.spec.ts | PENDING | — |
+| CNA-008 | Fechar a comanda marca o agendamento como **atendido** na agenda, e quem não veio fica distinguível de quem foi atendido | integration + e2e | lib/db/comanda-na-agenda.integration.test.ts, e2e/comanda-na-agenda.spec.ts | PENDING | — |
 
 ## Test Coverage Matrix
 REQUIREMENT (agenda leva ao caixa sem buscar de novo) → CNA-001 → e2e → e2e/comanda-na-agenda.spec.ts → PENDING
@@ -37,11 +38,15 @@ REQUIREMENT (trazer serviço e barbeiro do agendamento) → CNA-003,004 → inte
 REQUIREMENT (enxergar o estado na grade) → CNA-005 → e2e → e2e/comanda-na-agenda.spec.ts → PENDING
 REQUIREMENT (não abrir para cancelado) → CNA-006 → integration → lib/db/comanda-na-agenda.integration.test.ts → PENDING
 REQUIREMENT (respeitar o papel) → CNA-007 → e2e → e2e/comanda-na-agenda.spec.ts → PENDING
+REQUIREMENT (saber quem veio e quem faltou) → CNA-008 → integration + e2e → lib/db/comanda-na-agenda.integration.test.ts, e2e/comanda-na-agenda.spec.ts → PENDING
 
 ## Gaps
 - Cliente que chega sem agendamento continua pelo caminho de hoje (abrir comanda no
   caixa). A ligação resolve o atendimento marcado, não substitui o balcão.
 - Vincular comanda a agendamento pede uma coluna nova. Precisa ser opcional, senão
   quebra a comanda de balcão, que não tem agendamento nenhum.
-- Combinar com o Rodrigo se o agendamento deve ser marcado como **atendido** ao fechar a
-  comanda. Faz sentido, mas é decisão de operação dele.
+- **Respondido em 11/09: sim, automático.** *"quando fecha a comanda tem que estar lá como
+  atendido [...] pra ter aquele controle de que atendeu mesmo aquele cliente, às vezes o
+  cliente não foi, aí fica lá [...] vai misturar"*. Ou seja, ele quer distinguir **quem
+  veio de quem faltou**, o que pede um estado explícito de falta, não só "atendido".
+  Vira CNA-008.

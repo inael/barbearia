@@ -81,6 +81,50 @@ cliente marcado às 10h20 e agenda de três barbeiros. Nenhum é pedido de enfei
 - R1 é operação diária: barbeiro pede adiantamento em dinheiro, e hoje não há onde lançar.
 - R3 já incomoda com 24 clientes; com a base cheia, inviabiliza o caixa no movimento.
 
+## Respostas dele (mesmo dia, 14h)
+
+Mandei as 6 perguntas separadas, uma por mensagem, e ele respondeu tudo em 6 áudios.
+
+| # | Pergunta | Resposta |
+|---|----------|----------|
+| 1 | Passo da agenda: 5 ou 10 min? | **5 minutos** |
+| 2 | Vale em dinheiro tem teto? | **Sem teto**, só a recepção lança |
+| 3 | Fechar comanda marca como atendido? | **Sim, automático** |
+| 4 | Cortesia: 40% fixo ou faixa do mês? | **Sempre 40%** |
+| 5 | Serviço do barbeiro: preço menos a comissão dele? | **Sim**, ele paga a parte da barbearia |
+| 6 | Cortesia e serviço do barbeiro entram no faturamento? | **Serviço do barbeiro entra; cortesia não** |
+
+### Duas premissas minhas estavam erradas
+
+As perguntas 4 e 6 estavam implementadas de outro jeito desde agosto, com defaults que
+**eu assumi** enquanto ele não respondia:
+
+| | Eu assumi | Ele quer |
+|---|---|---|
+| Comissão na cortesia | faixa do mês (40/45/50%) | **sempre 40%** |
+| Serviço do barbeiro no faturamento | fora | **dentro** (do faturamento dele) |
+
+A lógica dele é consistente: na cortesia **quem abre mão é a barbearia**, então o barbeiro
+recebe o de sempre e não herda bônus de faixa por um serviço que não gerou caixa. Já no
+serviço que ele faz nele mesmo **ele está pagando**, então aquilo é receita.
+
+Viraram CRT-009 e CRT-010. As perguntas 1, 2 e 3 fecharam lacunas que estavam abertas
+nas specs AHL, VDN e CNA.
+
+### Um detalhe que ele soltou de passagem
+
+Na pergunta do passo da agenda, o motivo dele foi: *"a própria IA no atendimento
+consegue organizar melhor a agenda, sem bloquear tantos horários"*. Ou seja, ele já conta
+com o atendente automático encaixando cliente nas brechas. Vale ter isso em mente ao
+fazer a AHL: a grade fina não é preferência estética, é insumo do agendamento por IA.
+
+### Resposta 3 pede mais do que "atendido"
+
+> "às vezes o cliente não foi, aí fica lá, entendeu? Vai misturar."
+
+Ele quer distinguir **quem veio de quem faltou**, não só marcar atendido. Isso pede um
+estado explícito de falta. Virou CNA-008.
+
 ## Mapeado em
 
 `.specs/features/vale-dinheiro.md` (VDN), `.specs/features/agenda-horario-livre.md`

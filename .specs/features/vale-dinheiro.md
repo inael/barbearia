@@ -39,7 +39,8 @@ REQUIREMENT (papéis corretos) → VDN-005 → e2e → e2e/vale-dinheiro.spec.ts
 REQUIREMENT (CRUD completo) → VDN-006 → integration → lib/db/vale-dinheiro.integration.test.ts → PENDING
 
 ## Gaps
-- Confirmar com o Rodrigo se o vale em dinheiro tem **teto** por barbeiro ou por período.
-  Barbearia costuma ter limite informal; sem regra, o sistema aceita qualquer valor.
+- **Respondido em 11/09: sem teto.** *"não precisa botar limite [...] quem vai fazer esse
+  vale é só a recepcionista"*. O controle dele é humano, não do sistema: só a recepção
+  lança. Isso reforça VDN-005 (barbeiro não lança vale para si mesmo).
 - Não há caixa de dinheiro modelado: o vale registra a dívida do barbeiro, mas não baixa
   a sangria do caixa do dia. Se ele quiser essa amarração, é outra conversa.

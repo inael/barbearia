@@ -28,6 +28,19 @@ Fonte: áudio PTT no WhatsApp (WAHA `pessoal_inael`, chat `38345937793261@lid`, 
 2. **Serviço do barbeiro**: o "valor que a barbearia recebe" = preço cheio − comissão do barbeiro? Ou é a % de produto (5/10%)? Ou o preço cheio menos só a mão de obra?
 3. Cortesia e serviço-do-barbeiro entram no faturamento do mês (pra faixa de comissão) ou ficam fora?
 
+## RESPONDIDO pelo Rodrigo em 2026-09-11
+
+As 3 perguntas abaixo ficaram abertas por 20 dias e foram respondidas por áudio.
+**Duas das premissas assumidas estavam erradas:**
+
+1. **Cortesia** → comissão **sempre 40%**, não a faixa do mês. (premissa P1 errada)
+2. **Serviço do barbeiro** → preço cheio menos a comissão dele. (premissa P2 **certa**)
+3. **Faturamento** → serviço do barbeiro **entra**; cortesia **não entra**. (premissa P3
+   parcialmente errada: eu tinha deixado os dois fora)
+
+Correção especificada em `.specs/features/caixa-cortesia.md` (CRT-009 e CRT-010).
+Transcrições em `docs/produto/FEEDBACK-RODRIGO-2026-09-11.md`.
+
 ## Status
 **2026-08-25 — APROVADO pelo Inael e IMPLEMENTADO** (goal LoopX `barbearia-goal`).
 Spec TLC: `.specs/features/caixa-cortesia.md` (CRT, 8 ACs). Premissas assumidas

@@ -42,7 +42,9 @@ REQUIREMENT (usável na tela e no celular) → AHL-007,008 → e2e → e2e/agend
 - Passo de 5 minutos numa jornada de 12 horas dá 144 linhas por barbeiro. A grade não
   pode virar uma parede de linhas vazias: desenhar por **faixa ocupada**, não uma linha
   por passo, senão troca um problema de capacidade por um de legibilidade.
-- Decidir com o Rodrigo o passo padrão. Ele citou 5 e 10 minutos; começar em 10 e deixar
-  configurável parece o meio-termo, mas **é decisão dele**, não nossa.
+- **Respondido em 11/09: passo de 5 minutos.** Motivo dele: *"a própria IA no atendimento
+  consegue organizar melhor a agenda, sem bloquear tantos horários"*. Ou seja, ele já pensa
+  no atendente automático encaixando cliente nas brechas. Passo de 5 vira o padrão; a
+  configuração continua existindo.
 - Os agendamentos que já existem foram criados na grade de 30. Continuam válidos, só
   passam a ser desenhados pela duração real.

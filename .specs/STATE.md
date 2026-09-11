@@ -55,7 +55,7 @@
 | LEM — Lembretes ao cliente | lembretes.md | 5 | 5 | — | **Fase 2** — disparos+config+mock (scheduler=go-live) |
 | IA — Atendente IA no WhatsApp | atendente-ia.md | 8 | 8 | — | **ÂNCORA** — webhook/parse/agenda por conversa/escala (Hub mock) |
 | TVUP — TV com upload real | tv-upload.md | 5 | 5 | sim | **Fase 5** — upload → playlist → player |
-| CRT — Cortesia + serviço do barbeiro | caixa-cortesia.md | 8 | 8 | sim | **Escopo novo 2026-08-25** — cliente paga R$0, barbeiro comissiona valor cheio; serviço-do-barbeiro vira vale |
+| CRT — Cortesia + serviço do barbeiro | caixa-cortesia.md | 10 | 8 | sim | **Escopo novo 2026-08-25** — cliente paga R$0, barbeiro comissiona valor cheio; serviço-do-barbeiro vira vale · **CRT-009/010 PENDING (11/09)**: cortesia passa a pagar 40% fixo e serviço do barbeiro entra no faturamento |
 | UXS — Shell SaaS v2 + onboarding + explicações | ux-shell-v2.md | 17 | 17 | sim | **Feedback UX 2026-08-26** — sidebar escura por papel, onboarding real, toda tela explica, filtros/unidades/metas-qtd/planos seed |
 | OPR — Gaps da auditoria dos áudios do Rodrigo | operacao-rodrigo.md | 9 | 9 | sim | **Auditoria 2026-08-26** — comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia |
 | CRUD — Cadastro, edição e exclusão completos | crud-completo.md | 8 | 8 | sim | **2026-09-10** — editar/excluir em cliente, usuário, estoque, plano, assinatura, vale e TV; recusa apagar histórico e orienta desativar |
@@ -72,11 +72,11 @@
 | AHL — Agenda em horário livre | agenda-horario-livre.md | 8 | Agenda | **Rodrigo 11/09**: grade de 30 min faz corte de 40 comer 2 lugares. Perda de faturamento |
 | VDN — Vale em dinheiro | vale-dinheiro.md | 6 | Financeiro | **Rodrigo 11/09**: só há vale de produto; adiantamento em dinheiro não tem onde lançar |
 | BCL — Achar cliente digitando | busca-cliente.md | 7 | Caixa/Agenda | **Rodrigo 11/09** (2 áudios): `<select>` com todos os clientes trava o caixa no movimento |
-| CNA — Comanda pela agenda | comanda-na-agenda.md | 7 | Caixa/Agenda | **Rodrigo 11/09**: medo declarado de "fechar comandas erradas de clientes errados" |
+| CNA — Comanda pela agenda | comanda-na-agenda.md | 8 | Caixa/Agenda | **Rodrigo 11/09**: medo declarado de "fechar comandas erradas de clientes errados" |
 | SVC-008 — Descoberta da edição | catalogo-crud.md | 1 | Cadastros | **Rodrigo 11/09**: o recurso existe; ele procurou e não achou |
-| **Subtotal B** | | **51** | | |
+| **Subtotal B** | | **54** | | |
 
-**Total: 54 features · 373 ACs · 322 PASS / 51 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
+**Total: 54 features · 376 ACs · 322 PASS / 54 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
 
 **Auditoria 2026-08-26 (`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`):** os 14 áudios + 21 respostas do Rodrigo foram cruzados requisito-a-requisito (RF1–RF31) com as specs e o código; os 4 gaps encontrados (comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia) viraram a feature OPR e estão fechados. **Simulação de 1 mês de operação** (236 comandas, R$ 21.461,90) validada em `docs/context/SIMULACAO-2026-08-26.md`. **Resta só EXECUÇÃO** (credenciais/go-live), não código.
 
