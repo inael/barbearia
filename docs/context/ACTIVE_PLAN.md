@@ -1,96 +1,101 @@
-# ACTIVE_PLAN — Integração do WhatsApp configurável pela tela (2026-09-10)
+# ACTIVE_PLAN — Backlog mapeado em tarefas e specs (2026-09-11)
 
-> Planos anteriores concluídos: CRT (cortesia/vale), UXS (shell SaaS + onboarding),
-> OPR (auditoria dos áudios), SEC-03/04/05, CRUD completo, FDB/REC (confirmação de
-> ação, mural de recados, player da TV). App no ar em
-> **https://barbearia.itbooster.com.br**. Estado: 46 features · 310 ACs · 310 PASS.
+> Concluído e no ar em **https://barbearia.itbooster.com.br** (commit `619b631`):
+> CRT, UXS, OPR, SEC-03/04/05, CRUD completo, FDB/REC (confirmação de ação, mural de
+> recados, player da TV), IWA (WhatsApp configurável pela tela), domínio próprio com
+> HTTPS. Estado: **47 features · 322 ACs · 322 PASS**.
 
-## Pedido do Inael (2026-09-10)
+## Aviso sobre este plano
 
-> "Quero que permita fazer a integração, informando a API aqui do SimplesZap, e
-> dentro da própria aplicação a gente informe qual que é a instância, pode ser o ID
-> da instância por exemplo. E aí eu vou criar uma conta do SimplesZap pro Rodrigo e
-> vou pedir pra ele escanear o QR Code."
+O Inael pediu para ler as **últimas mensagens do Rodrigo** e mapear em tarefas e specs.
+A conversa com o Rodrigo vive na sessão **`pessoal_inael`** do WAHA, que está pedindo
+**QR** (perdeu as credenciais). Enquanto ela não voltar, **não li nada novo dele**.
 
-Hoje a credencial do WhatsApp vive em **variável de ambiente** (`SIMPLESZAP_URL`,
-`SIMPLESZAP_TOKEN`, `SIMPLESZAP_INSTANCE`) e o `getSender()` de `lib/whatsapp.ts`
-**não é chamado por ninguém** — a integração está pronta no motor e desligada na prática.
+O que está mapeado abaixo é o backlog **já acordado**, não o que ele possa ter pedido
+nas últimas mensagens. Quando a sessão voltar, releio e acrescento.
 
-Trocar credencial hoje exige: entrar no Coolify, editar variável, **rebuildar** (~7 min).
-Isso não serve para o Rodrigo, que vai escanear o QR e precisa ver funcionando.
+---
 
-## Decisão
+## T1 — Agendador dos lembretes (bloqueia o valor da IWA)
 
-A configuração passa a morar **no banco**, editável por uma tela do dono. Variável de
-ambiente vira só **semente** para quem já tinha (retrocompatível), e o banco ganha
-precedência. Sem rebuild, sem acesso ao Coolify.
+**Por que primeiro:** a integração do WhatsApp está pronta, provada e **ociosa**. Nada
+dispara lembrete sozinho. Sem isto, o Rodrigo escaneia o QR e não vê nada acontecer.
 
-## Onda A — Motor
+- Rota interna protegida por segredo (`/api/tarefas/lembretes`), que varre agendamentos
+  na janela configurada em `lembrete_config` e envia pelo `senderDoBanco`.
+- **Idempotência é o ponto crítico**: rodar duas vezes não pode mandar dois lembretes.
+  Marcar o envio no banco (coluna/tabela de lembrete enviado) e filtrar por ela.
+- Disparo por **tarefa agendada do Coolify**, na VPS do cliente. **Não usar o n8n da IT
+  Booster**: dado de cliente não passa pela nossa infra.
+- Tratar falha de envio sem derrubar o lote: um telefone inválido não pode parar os outros.
+- Spec: `.specs/features/lembretes-agendador.md` (LEA).
 
-- **Schema**: tabela `integracao_whatsapp`, **linha única** (`id` fixo em 1, padrão do
-  `upsert`): `base_url`, `token`, `instancia`, `ativo`, `atualizado_em`.
-- **`lib/integracao-whatsapp.ts`** (puro + acesso a banco, testável):
-  - `lerIntegracao(db)` — devolve a config (ou o default com a URL do SimplesZap).
-  - `salvarIntegracao(db, dados)` — valida e grava. Validação: URL http(s) bem formada,
-    instância não vazia, token não vazio **na primeira gravação**.
-  - `tokenMascarado(token)` — só os 4 últimos caracteres. **Nunca** devolver o token
-    inteiro para o navegador.
-  - `verificarInstancia(cfg, fetchImpl)` — bate em `GET {base}/instances` com o token e
-    procura a instância informada. Devolve `{ok, status, nome, numero}` ou o motivo da
-    falha. `fetchImpl` injetável para o teste não depender de rede.
-- **`lib/whatsapp.ts`**: novo `senderDoBanco(db)`, que lê a config e devolve o
-  `SimplesZapSender` quando `ativo` e completa; senão o `noopSender` de sempre.
-  `getSender()` (env) permanece como fallback e não quebra nada.
+## T2 — Nota fiscal de verdade pelo Asaas
 
-## Onda B — Tela
+**Estado hoje:** `lib/nf.ts` só **registra** a nota no banco. Não emite nada.
 
-- **`/configuracoes/whatsapp`**, só `config` (dono). Campos: URL da API, token
-  (campo de senha; mostra mascarado o que já está salvo e **só sobrescreve se digitar
-  algo novo**), ID da instância, chave liga/desliga.
-- Dois botões: **Salvar** e **Testar conexão**. O teste é o que importa para o Rodrigo:
-  diz se o token vale, se a instância existe e **se o QR já foi escaneado**
-  (`status` da instância) — sem isso ele fica no escuro.
-- Texto explicativo na tela, no padrão das outras (o que é, onde pegar, o que fazer).
-- Confirmação de ação pelo componente `Aviso`, como o resto do sistema.
+**Descoberta que muda o plano:** a conta Asaas configurada é a **IT BOOSTER GLOBAL
+LTDA** (CNPJ 40949316000149). Emitir por ela faria a nota sair com o **nosso** CNPJ, não
+com o do Rodrigo. Confirmei na API que o Asaas emite NFS-e (`/invoices`) e que a conta
+já tem nota autorizada, então a via é boa; o que falta é **de quem**.
 
-## Onda C — Navegação
+- **Bloqueio externo (Rodrigo):** conta Asaas própria, certificado digital, inscrição
+  municipal e código de serviço da barbearia (item 6.01, barbearia e congêneres).
+- Código: cliente Asaas a partir do nosso cliente, emissão da NFS-e com os itens
+  cobrados (cortesia e serviço-do-barbeiro ficam fora, como já é hoje), guardar o id e o
+  link do PDF, e tratar recusa da prefeitura com mensagem na tela.
+- Configuração pela tela, no mesmo padrão da IWA (chave e ambiente no banco, não em env).
+- Spec: `.specs/features/nota-fiscal-asaas.md` (NFA).
 
-- Grupo novo **Configurações** (só dono), com filho **WhatsApp**.
-- `IconeNav` ganha `Settings` e `MessageCircle` (lucide, nada de emoji).
-- Invariante já testado em `nav.test.ts` continua valendo: todo href visível é
-  acessível ao papel.
+## T3 — Mídia da TV em bucket
 
-## Arquivos afetados
+**Estado hoje:** o upload guarda o arquivo como texto dentro do banco. Serve para imagem
+pequena; **vídeo grande falha** (limite de 50MB vira ~67MB de texto na coluna).
 
-| arquivo | mudança |
-|---|---|
-| `lib/db/schema.ts` | tabela `integracao_whatsapp` |
-| `lib/integracao-whatsapp.ts` | novo (motor) |
-| `lib/whatsapp.ts` | `senderDoBanco(db)` |
-| `lib/nav.ts` | grupo Configurações + 2 ícones |
-| `app/configuracoes/whatsapp/page.tsx` | novo (tela) |
-| `.specs/features/integracao-whatsapp.md` | spec TLC |
-| `lib/integracao-whatsapp.test.ts` | unit |
-| `lib/db/integracao-whatsapp.integration.test.ts` | integration |
-| `e2e/integracao-whatsapp.spec.ts` | e2e |
+- **Garage** na VPS do cliente, não MinIO: bem mais leve e o MinIO tirou o painel da
+  versão comunitária. Sobe pelo Coolify.
+- Folga atual da VPS: disco 28 GB de 48, memória 2,5 GB de 3,9, 1 vCPU. Cabe, apertado:
+  combinar um **teto de armazenamento** com o Rodrigo antes de liberar vídeo.
+- Migrar o que já está no banco e passar a guardar só a URL.
+- Spec: `.specs/features/midia-tv-bucket.md` (MTV).
 
-## Riscos
+## T4 — Tirar o atalho de logins de demonstração
 
-- **Token em texto puro no banco.** É o banco do cliente, na VPS do cliente, e o acesso
-  é só do dono. Mitigação: nunca renderizar o token de volta (só mascarado) e não
-  escrever em log. Cifrar exigiria uma chave que viveria no mesmo lugar, o que não
-  aumentaria a segurança de verdade.
-- **Teste de conexão depende de rede.** No teste automatizado o `fetch` é injetado; na
-  tela, falha de rede vira mensagem de erro explicando, não exceção.
-- **Guardar credencial de um produto nosso no banco do cliente.** É o desenho pedido.
-  O token é de escopo de envio de mensagem; se vazar, revoga no painel do SimplesZap.
+Decisão do Inael: **fica ligado enquanto o Rodrigo testa**. Antes da entrega final,
+remover `NEXT_PUBLIC_DEMO_LOGINS` do Coolify e trocar as três senhas. Hoje elas estão
+numa URL pública. Sem spec nova: o AC **UXS-014** já cobre os dois estados.
+
+## T5 — Três dúvidas do Rodrigo (cortesia e vale)
+
+Texto reescrito e aprovado pelo Inael. Falta **decidir o canal**: o histórico está no
+WhatsApp pessoal dele e não temos o número do Rodrigo no canal da IT Booster (o número
+apareceu agora como **+55 61 8147-1095**, do código do SimplesZap). Enquanto não
+responde, valem os defaults documentados em `REQUISITOS-NOVOS-2026-08-22.md`.
+
+## T6 — Conta do SimplesZap do Rodrigo
+
+Em andamento pelo Inael: o código de verificação saiu hoje para +55 61 8147-1095. Depois
+que ele escanear o QR, é só preencher token e ID da instância em **Configurações →
+WhatsApp** e usar o **Testar conexão**, que diz se o QR pegou.
+
+---
+
+## Ordem sugerida
+
+T1 primeiro, porque destrava o valor do que já foi construído. T3 em seguida, que é
+infraestrutura e não depende de terceiros. T2 fica atrás do que o Rodrigo providenciar.
+T4 é o último passo antes de entregar.
 
 ## Validação
 
-`npm run tlc` + gate completo (unit, integration, e2e, lint, typecheck). A tabela nova
-vai para produção pelo túnel SSH do runbook antes do deploy.
+Cada tarefa entra pelo mesmo portão: spec TLC → teste → `npm run tlc` → unit,
+integration, e2e, lint e typecheck verdes → commit → deploy → conferência em produção.
 
-## Fora de escopo (decisão do Inael, não minha)
+## Riscos
 
-Criar a conta do SimplesZap do Rodrigo e fazer ele escanear o QR. O Inael faz isso; a
-tela só recebe o token e o ID da instância.
+- **T1 é o que mais pode incomodar o cliente**: lembrete duplicado ou fora de hora chega
+  no WhatsApp do cliente final dele. Idempotência e janela de horário são obrigatórias,
+  não opcionais.
+- **T2 depende de documento de terceiro** (certificado digital, prefeitura). Pode
+  demorar semanas e não deve bloquear a entrega do resto.
+- **T3 mexe em disco de uma VPS pequena.** Teto de armazenamento antes de liberar vídeo.
