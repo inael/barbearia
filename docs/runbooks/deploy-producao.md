@@ -83,6 +83,29 @@ O sistema atende em **https://barbearia.itbooster.com.br**. O endereço antigo p
   os dois endereços continuam funcionando.
 - URL registrada no painel https://status.toolpad.cloud (categoria "Clientes — Produção").
 
+### Todo domínio do app tem de ser HTTPS (senão o login quebra)
+
+Ao publicar em HTTPS, o Auth.js passa a emitir os cookies com prefixo `__Host-` e
+`__Secure-`. **O navegador descarta esses cookies quando a página vem por HTTP puro.**
+O cookie de CSRF some, o POST de login chega sem ele e o servidor responde
+`MissingCSRF`. Para quem está usando, o sintoma é só "o login não funciona": nenhuma
+mensagem de erro aparece na tela.
+
+Foi o que aconteceu em 10/09, quando o domínio novo entrou como HTTPS e o endereço
+antigo continuou como `http://`. Correção: **todos** os domínios da aplicação entram
+como `https://`, e o Coolify gera sozinho o redirecionamento de http para https.
+
+Hoje o `fqdn` tem os dois, ambos com certificado próprio:
+`https://barbearia.itbooster.com.br,https://179.198.113.115.sslip.io`.
+
+### Como conferir login de verdade
+
+`curl` e `fetch` **não servem** para validar login: eles não aplicam a regra que
+descarta cookie seguro em HTTP, então passam mesmo com o site quebrado. Use navegador
+de verdade. E espere a hidratação antes de clicar: com `domcontentloaded` o clique
+acontece antes do React montar, o formulário é enviado nativamente e o teste acusa uma
+falha que não existe. Use `networkidle` mais uma pausa curta.
+
 Para trocar o domínio de novo: PATCH `domains` em `/api/v1/applications/<uuid>`, ajustar
 `AUTH_URL`, e **redeploy** (só reiniciar não reaplica os labels novos no container).
 

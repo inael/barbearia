@@ -38,6 +38,24 @@ Teste corrigido para montar a data em horário local.
 
 **Lição que fica:** neste projeto, data de calendário nunca sai de `toISOString()`.
 
+### INCIDENTE: login quebrado em produção (11/09, fechado)
+
+O Inael reportou "os usuários não estão funcionando". **Causa fui eu**: ao publicar o
+domínio novo em HTTPS, o Auth.js passou a emitir cookies `__Host-`/`__Secure-`, e o
+endereço antigo continuou servindo em **HTTP puro**. O navegador descarta cookie seguro
+em HTTP, o de CSRF sumia, e o login falhava com `MissingCSRF` **sem mensagem na tela**.
+
+Correção: os dois domínios passaram a ser `https://` (cada um com seu certificado) e o
+Coolify gerou o redirecionamento de http para https. Verificado com navegador real:
+3 perfis × 3 endereços = 9 logins, todos entrando. Zero `MissingCSRF` desde então.
+
+**Dois erros meus de diagnóstico, que custaram tempo e quase me fizeram reportar errado:**
+1. Validei login por `fetch`. Passou, porque `fetch` **não** aplica a regra de cookie
+   seguro. Só navegador de verdade reproduz esse defeito.
+2. Depois de corrigir, meu próprio teste de navegador acusou falha em 9 de 9. Era o
+   teste: ele usava `domcontentloaded` e clicava **antes da hidratação**, o que envia o
+   formulário nativamente. Cheguei a suspeitar do produto sem motivo.
+
 ### Outras armadilhas desta rodada
 - **`npx playwright test` não builda.** O build está no script `test:e2e`
   (`next build && playwright test`). Rodar o Playwright direto testa o **build anterior**
