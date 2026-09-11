@@ -49,8 +49,19 @@ describe("REC — mural de recados para a equipe (integration)", () => {
   });
 
   it("REC-002 a equipe só vê o que está no ar: fora do ar e vencido não aparecem", async () => {
-    const ontem = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    // Data em horário LOCAL, nunca por toISOString(). A validade é interpretada como
+    // fim do dia local (`${data}T23:59:59`), então misturar com a data UTC quebra o
+    // teste só depois das 21h no Brasil: "ontem" em UTC ainda é hoje aqui, e o recado
+    // vencido passava a valer. Foi exatamente assim que este teste falhou às 21h47.
+    const diaLocal = (deslocamentoEmDias: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + deslocamentoEmDias);
+      const mes = String(d.getMonth() + 1).padStart(2, "0");
+      const dia = String(d.getDate()).padStart(2, "0");
+      return `${d.getFullYear()}-${mes}-${dia}`;
+    };
+    const ontem = diaLocal(-1);
+    const amanha = diaLocal(1);
 
     const semValidade = await criarRecado(db, { mensagem: "Festa na sexta!", tipo: "comemoracao" });
     const valeAmanha = await criarRecado(db, { mensagem: "Meta nova do mês.", tipo: "info", expiraEm: amanha });

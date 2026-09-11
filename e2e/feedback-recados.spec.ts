@@ -89,6 +89,9 @@ test.describe("FDB — confirmação de ação, mural de recados e player da TV 
     await page.getByTestId("rec-mensagem").fill(texto);
     await page.getByTestId("rec-tipo").selectOption("comemoracao");
     await page.getByRole("button", { name: "Publicar" }).click();
+    // confirma a publicação ANTES de olhar o mural: sem isso, uma publicação lenta ou
+    // falha aparece como "recado não encontrado", que aponta para o lugar errado
+    await expect(page.getByTestId("aviso-ok")).toContainText(/publicado/i);
 
     await page.goto("/conta");
     const faixa = page.locator("[data-recado]").filter({ hasText: texto });

@@ -3,6 +3,11 @@
  * A implementação real exige credencial (SMOKE-REAL / go-live). Sem credencial,
  * `getSender()` devolve um sender no-op (não quebra o app); os testes injetam um mock.
  */
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type * as schema from "./db/schema";
+
+type DbIntegracao = PostgresJsDatabase<typeof schema>;
+
 export interface WhatsAppSender {
   enviarTexto(telefone: string, texto: string): Promise<void>;
 }
@@ -36,7 +41,19 @@ export const noopSender: WhatsAppSender = {
   },
 };
 
-/** Resolve o sender a partir do ambiente. Sem URL/TOKEN/INSTANCE → no-op (não quebra). */
+/**
+ * Resolve o sender a partir do BANCO (tela do dono em /configuracoes/whatsapp).
+ * É a fonte de verdade desde 2026-09-10: trocar credencial não pode exigir rebuild.
+ * Integração desligada ou incompleta → no-op, o app segue funcionando sem WhatsApp.
+ */
+export async function senderDoBanco(db: DbIntegracao): Promise<WhatsAppSender> {
+  const { lerIntegracao } = await import("./integracao-whatsapp");
+  const cfg = await lerIntegracao(db);
+  if (!cfg.ativo || !cfg.token || !cfg.instancia) return noopSender;
+  return new SimplesZapSender(cfg.baseUrl, cfg.token, cfg.instancia);
+}
+
+/** Fallback por ambiente, de antes da tela existir. Mantido para não quebrar quem usa. */
 export function getSender(): WhatsAppSender {
   const base = process.env.SIMPLESZAP_URL;
   const token = process.env.SIMPLESZAP_TOKEN;

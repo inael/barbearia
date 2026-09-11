@@ -11,7 +11,7 @@ export type IconeNav =
   | "LayoutDashboard" | "BookOpen" | "Calculator" | "CalendarDays" | "CalendarClock"
   | "ShoppingCart" | "Receipt" | "FolderCog" | "Scissors" | "Package" | "Users"
   | "UserCog" | "IdCard" | "Clock" | "Target" | "Boxes" | "CreditCard" | "PiggyBank"
-  | "Bell" | "MonitorPlay" | "CircleUser" | "Megaphone";
+  | "Bell" | "MonitorPlay" | "CircleUser" | "Megaphone" | "Settings" | "MessageCircle";
 
 export interface ItemNav {
   href: string;
@@ -90,6 +90,16 @@ export function gruposParaPapel(papel: Papel | null): GrupoNav[] {
   const tv: ItemNav[] = [];
   if (pode("tv")) tv.push({ href: "/admin/tv", label: "TVs", icone: "MonitorPlay" });
 
+  const config: ItemNav[] = [];
+  if (pode("config")) {
+    config.push({
+      href: "/configuracoes",
+      label: "Configurações",
+      icone: "Settings",
+      filhos: [{ href: "/configuracoes/whatsapp", label: "WhatsApp", icone: "MessageCircle" }],
+    });
+  }
+
   const conta: ItemNav[] = [{ href: "/conta", label: "Conta", icone: "CircleUser" }];
 
   const grupos: GrupoNav[] = [
@@ -98,6 +108,7 @@ export function gruposParaPapel(papel: Papel | null): GrupoNav[] {
     { titulo: "Cadastros", itens: cadastros },
     { titulo: "Gestão", itens: gestao },
     { titulo: "TV", itens: tv },
+    { titulo: "Sistema", itens: config },
     { titulo: null, itens: conta },
   ];
   return grupos.filter((g) => g.itens.length > 0);

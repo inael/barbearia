@@ -60,7 +60,8 @@
 | OPR — Gaps da auditoria dos áudios do Rodrigo | operacao-rodrigo.md | 9 | 9 | sim | **Auditoria 2026-08-26** — comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia |
 | CRUD — Cadastro, edição e exclusão completos | crud-completo.md | 8 | 8 | sim | **2026-09-10** — editar/excluir em cliente, usuário, estoque, plano, assinatura, vale e TV; recusa apagar histórico e orienta desativar |
 | FDB — Confirmação de ação + mural de recados + player da TV | feedback-e-recados.md | 7 | 7 | sim | **2026-09-10** — toda ação confirma na tela; recado do dono aparece pra equipe; YouTube toca no player (antes dava tela preta) |
-| **Subtotal A** | | **310** | **310** | | |
+| IWA — Integração do WhatsApp pela tela | integracao-whatsapp.md | 12 | 12 | sim | **2026-09-10** — token e ID da instância do SimplesZap viram tela do dono, não variável de ambiente; "Testar conexão" diz se o QR já foi escaneado |
+| **Subtotal A** | | **322** | **322** | | |
 
 ### B) Backlog do produto real (PENDING — o que falta)
 | Feature | Arquivo | #ACs | Módulo | Depende de |
@@ -68,7 +69,7 @@
 | _(vazio — tudo implementado)_ | | 0 | | |
 | **Subtotal B** | | **0** | | |
 
-**Total: 46 features · 310 ACs · 310 PASS / 0 PENDING.** unit 121, integration 111, e2e 90 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
+**Total: 47 features · 322 ACs · 322 PASS / 0 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
 
 **Auditoria 2026-08-26 (`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`):** os 14 áudios + 21 respostas do Rodrigo foram cruzados requisito-a-requisito (RF1–RF31) com as specs e o código; os 4 gaps encontrados (comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia) viraram a feature OPR e estão fechados. **Simulação de 1 mês de operação** (236 comandas, R$ 21.461,90) validada em `docs/context/SIMULACAO-2026-08-26.md`. **Resta só EXECUÇÃO** (credenciais/go-live), não código.
 
@@ -76,7 +77,7 @@
 unit+property, integration (Postgres real), e2e (browser real), coverage 100% em `lib/`, mutation ~98.84% no motor de dinheiro. Isso continua verdadeiro **para as fatias construídas** — é qualidade do que existe, não cobertura do produto.
 
 ## EXIT_SIGNAL: true (código) — 2026-08-26 (revisado 27/08)
-Todas as **310 ACs** estão PASS com teste verde nomeado, o produto é **navegável ponta a
+Todas as **322 ACs** estão PASS com teste verde nomeado, o produto é **navegável ponta a
 ponta** por papel (sem páginas órfãs, tudo atrás de login) e a **auditoria integral dos
 pedidos do Rodrigo** (14 áudios + 21 respostas, RF1–RF31) não deixou gap de código:
 - [x] Navegação por papel + shell SaaS + onboarding — SHELL/UXS
@@ -95,9 +96,10 @@ pedidos do Rodrigo** (14 áudios + 21 respostas, RF1–RF31) não deixou gap de 
 Validado end-to-end por **simulação de 1 mês** (`docs/context/SIMULACAO-2026-08-26.md`):
 236 comandas, R$ 21.461,90, com conferência automática painel == caixa == esperado.
 
-**O que falta NÃO é código** (depende do Inael/Rodrigo): SMOKE-REAL (QR do SimplesZap,
-Hub de IA, Asaas produção), emissor NFS-e do MEI, scheduler dos lembretes, storage da
-TV, e GO-LIVE (deploy da versão atual + treinar o dono). Ver `.ralph/fix_plan.md`.
+**O que falta NÃO é código** (depende do Inael/Rodrigo): escanear o QR do SimplesZap
+(a tela que recebe token e instância já existe, IWA), Hub de IA, Asaas produção e NFS-e
+em conta do próprio Rodrigo, scheduler dos lembretes, storage da TV, e treinar o dono.
+Ver `.ralph/fix_plan.md`.
 
 ## Método daqui pra frente
 Especificação atualizada (este arquivo + Bloco B) é o **backlog do loopx**. Cada feature: spec → TDD → gate verde → **linkada e clicável** → só então "pronta". Ordem sugerida em `docs/context/ACTIVE_PLAN.md`.

@@ -1,5 +1,73 @@
 # SESSION_HANDOFF
 
+## 2026-09-10 (noite) — WhatsApp configurável pela tela + fuso do servidor corrigido
+
+Spec `.specs/features/integracao-whatsapp.md` (12 ACs) · STATE **47 features / 322 ACs /
+322 PASS** · gate: unit 129, integration 123, e2e 96, lint e typecheck limpos.
+
+### Pedido do Inael
+> "Permita fazer a integração informando a API do SimplesZap e, dentro da própria
+> aplicação, o ID da instância. Vou criar a conta do SimplesZap pro Rodrigo e pedir
+> pra ele escanear o QR Code."
+
+### O que entrou (IWA)
+- **Configurações → WhatsApp** (menu novo, só dono): URL da API, token, ID da instância
+  e chave liga/desliga. Tabela `integracao_whatsapp`, linha única.
+- **A credencial saiu do ambiente e virou dado.** Antes trocar token exigia editar o
+  Coolify e rebuildar (~7 min). `senderDoBanco(db)` é a fonte de verdade; `getSender()`
+  por env ficou como retrocompatibilidade.
+- **Token nunca volta pra tela** (só os 4 últimos). Campo vazio mantém o salvo, então dá
+  pra corrigir a instância sem redigitar o token que ninguém mais vê.
+- **"Testar conexão"** é o que resolve o caso do Rodrigo: diz se o token vale, se a
+  instância existe e **se o QR já foi escaneado**. Instância encontrada mas desconectada
+  **reprova** de propósito: ela não envia nada, não pode passar como sucesso.
+
+### BUG DE PRODUÇÃO ENCONTRADO: servidor em UTC, barbearia em UTC-3
+O container não tinha fuso definido e rodava em **UTC**. Como `semanaAtual()` usa
+`setHours(0,0,0,0)` e a validade do recado é `${data}T23:59:59` **local**, a virada de
+dia e de semana acontecia às **21h de Brasília, com a loja aberta**: venda das 21h30
+podia cair no dia seguinte no relatório.
+
+Corrigido com `TZ=America/Sao_Paulo` nas envs do Coolify (uma variável, sem mudança de
+código; os timestamps são `timestamptz`, então nada de histórico se desloca).
+
+**Como apareceu:** o teste REC-002 começou a falhar às 21h47 e passava de dia. Ele
+calculava "ontem" com `toISOString()` (UTC) e comparava com fim de dia local. Depois das
+21h no Brasil, "ontem" em UTC ainda é hoje aqui, e o recado vencido voltava a valer.
+Teste corrigido para montar a data em horário local.
+
+**Lição que fica:** neste projeto, data de calendário nunca sai de `toISOString()`.
+
+### Outras armadilhas desta rodada
+- **`npx playwright test` não builda.** O build está no script `test:e2e`
+  (`next build && playwright test`). Rodar o Playwright direto testa o **build anterior**
+  e as telas novas aparecem como 404 — 6 testes falharam por isso, sem relação com o código.
+- **`role=alert` é ambíguo**: o Next tem o próprio anunciador de rota com esse papel.
+  Para "Sem acesso" use `getByText`, como o resto da suíte já faz.
+- **Rodar integration e e2e ao mesmo tempo nesta máquina gera flake** (ambos usam Docker
+  e 1 máquina). Rodar em série.
+- **Código de saída 0 não significa suíte verde** no Playwright aqui: ler o resumo inteiro,
+  nunca um `grep` do "passed".
+
+### Pendente
+1. **Agendador dos lembretes.** O envio existe e está provado, mas nada dispara sozinho:
+   a integração fica configurada e ociosa. Plano: tarefa agendada do Coolify na VPS do
+   cliente chamando uma rota protegida (não usar o n8n da IT Booster — dado do cliente).
+2. **Conta do SimplesZap do Rodrigo + escanear o QR** (Inael faz; a tela já recebe).
+3. **NFS-e**: o Asaas emite, mas a conta cadastrada é a **IT Booster Global**. Nota sairia
+   com o nosso CNPJ. O Rodrigo precisa de conta própria, certificado digital, inscrição
+   municipal e código de serviço. Hoje `lib/nf.ts` só registra internamente.
+4. **Bucket da TV**: Garage (mais leve que MinIO, que tirou o painel da versão
+   comunitária) na VPS do cliente. Livre hoje: 28 GB de disco, 2,5 GB de RAM, 1 vCPU.
+5. **Remover `NEXT_PUBLIC_DEMO_LOGINS`** antes da entrega final (fica ligado por decisão
+   do Inael enquanto o Rodrigo testa).
+6. **3 dúvidas do Rodrigo** (cortesia/vale): texto reescrito e aprovado para envio, falta
+   decidir o canal — o histórico está no WhatsApp pessoal do Inael e não temos o número
+   dele no canal da IT Booster.
+
+---
+
+
 ## 2026-09-10 (fim do dia) — Confirmação em toda ação, mural de recados e player da TV
 
 Commit `c2cea2f` · spec `.specs/features/feedback-e-recados.md` (7 ACs) ·

@@ -373,3 +373,17 @@ export const recados = pgTable("recados", {
 });
 
 export type Recado = typeof recados.$inferSelect;
+
+/** Credencial do WhatsApp (SimplesZap) editavel pela tela do dono, em vez de variavel
+ * de ambiente: trocar token/instancia nao pode exigir rebuild no Coolify. Linha unica
+ * (id = 1); o token fica em texto puro no banco DO CLIENTE e nunca volta pra tela. */
+export const integracaoWhatsapp = pgTable("integracao_whatsapp", {
+  id: serial("id").primaryKey(),
+  baseUrl: text("base_url").notNull().default("https://back.simpleszap.com/api"),
+  token: text("token"),
+  instancia: text("instancia"),
+  ativo: boolean("ativo").notNull().default(false),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type IntegracaoWhatsapp = typeof integracaoWhatsapp.$inferSelect;

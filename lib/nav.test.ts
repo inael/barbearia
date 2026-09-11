@@ -16,11 +16,12 @@ describe("UXS — grupos de navegação por papel (sidebar)", () => {
     for (const esperado of [
       "Painel do dono", "Catálogo", "Comissão", "Agenda", "Minha agenda", "Caixa", "Vales",
       "Cadastros", "Serviços e combos", "Produtos", "Clientes", "Profissionais", "Usuários",
-      "Horários", "Metas", "Estoque", "Assinaturas", "Pote", "Avisos", "TVs", "Conta",
+      "Horários", "Metas", "Estoque", "Assinaturas", "Pote", "Avisos", "TVs",
+      "Configurações", "WhatsApp", "Conta",
     ]) {
       expect(t, `dono deveria ver ${esperado}`).toContain(esperado);
     }
-    expect(gruposParaPapel("dono").map((g) => g.titulo)).toEqual([null, "Operação", "Cadastros", "Gestão", "TV", null]);
+    expect(gruposParaPapel("dono").map((g) => g.titulo)).toEqual([null, "Operação", "Cadastros", "Gestão", "TV", "Sistema", null]);
   });
 
   it("UXS-001 recepção opera e cadastra, mas não vê Painel do dono, TVs nem cadastros de config", () => {
@@ -28,7 +29,8 @@ describe("UXS — grupos de navegação por papel (sidebar)", () => {
     for (const esperado of ["Agenda", "Caixa", "Vales", "Cadastros", "Serviços e combos", "Clientes", "Estoque", "Assinaturas"]) {
       expect(t).toContain(esperado);
     }
-    for (const proibido of ["Painel do dono", "TVs", "Profissionais", "Usuários", "Horários", "Minha agenda"]) {
+    for (const proibido of ["Painel do dono", "TVs", "Profissionais", "Usuários", "Horários", "Minha agenda",
+      "Configurações", "WhatsApp"]) {
       expect(t, `recepção NÃO deveria ver ${proibido}`).not.toContain(proibido);
     }
   });
