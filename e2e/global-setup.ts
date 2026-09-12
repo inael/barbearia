@@ -83,6 +83,12 @@ export default async function globalSetup() {
   await adicionarItem(db, telaId, "http://ex/p1.png");
   await adicionarItem(db, telaId, "http://ex/p2.png");
 
+  // MTV-002: tela com video no formato que o bucket gera (/midia/ano/mes/arquivo.mp4).
+  // Prova que o player monta <video> e nao <img> para a midia vinda do bucket, que era
+  // o bug antigo (tudo virava <img> e video dava tela preta).
+  const telaBucket = await criarTela(db, "Tela Bucket E2E", 1);
+  await adicionarItem(db, telaBucket, "/midia/2026/09/promo-da-loja.mp4");
+
   await client.end();
 
   // Sobe a app real (build ja feito pelo script test:e2e).

@@ -46,8 +46,13 @@ export function rotuloDaMidia(url: string): string {
   if (tipo === "youtube") return "Vídeo do YouTube";
   if (url.startsWith("data:")) return tipo === "video" ? "Vídeo enviado" : "Imagem enviada";
   try {
-    const nome = new URL(url).pathname.split("/").filter(Boolean).pop();
-    return nome ? `${tipo === "video" ? "Vídeo" : "Imagem"}: ${nome}` : tipo === "video" ? "Vídeo (link)" : "Imagem (link)";
+    // A midia do bucket chega como caminho ABSOLUTO do site ("/midia/2026/09/x.mp4")
+    // e `new URL` sozinho estoura nesse formato: o dono via "Video (link)" em vez do
+    // nome do arquivo que ele subiu. A base so entra para caminho comecado em "/";
+    // texto solto continua caindo no rotulo generico, como antes.
+    const base = url.startsWith("/") ? "http://interno.invalido" : undefined;
+    const nome = new URL(url, base).pathname.split("/").filter(Boolean).pop();
+    return nome ? `${tipo === "video" ? "Vídeo" : "Imagem"}: ${decodeURIComponent(nome)}` : tipo === "video" ? "Vídeo (link)" : "Imagem (link)";
   } catch {
     return tipo === "video" ? "Vídeo (link)" : "Imagem (link)";
   }

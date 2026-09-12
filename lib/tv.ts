@@ -1,6 +1,7 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { asc, eq, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
+import { apagarDoBucket, configDoAmbiente, objetoDaUrl } from "./midia-tv-bucket";
 
 /**
  * Índice do item que uma tela deve mostrar em `segundosDecorridos`, dado o total
@@ -66,9 +67,54 @@ export async function adicionarItem(
   return row.id;
 }
 
-/** Remove um item da playlist. */
-export async function removerItem(db: PostgresJsDatabase<typeof schema>, itemId: number): Promise<void> {
+/**
+ * Apaga no bucket o arquivo de uma URL de playlist, quando ela for nossa.
+ *
+ * Data URL das midias antigas e link externo passam batido (objetoDaUrl devolve null):
+ * a migracao para o bucket nao pode quebrar o que ja estava tocando.
+ */
+export async function apagarMidiaDaUrl(url: string): Promise<void> {
+  const cfg = configDoAmbiente();
+  if (!cfg) return;
+  const objeto = objetoDaUrl(cfg, url);
+  if (!objeto) return;
+  await apagarDoBucket(cfg, objeto);
+}
+
+/**
+ * Remove o item da playlist E o arquivo dele no bucket.
+ *
+ * Antes apagava so a linha do banco. O arquivo continuava no disco da VPS do Rodrigo
+ * para sempre: a playlist ficava limpa e o disco enchia sozinho, e com video isso vai
+ * rapido. MTV-005.
+ *
+ * A linha sai do banco MESMO se o bucket recusar. A intencao do dono e "tirar isso da
+ * TV"; prender essa acao a um bucket fora do ar deixaria a arte no ar sem ele poder
+ * tirar. O que sobra e um arquivo orfao, e o aviso volta para a tela contar isso.
+ */
+export async function removerItem(
+  db: PostgresJsDatabase<typeof schema>,
+  itemId: number,
+  apagar: (url: string) => Promise<void> = apagarMidiaDaUrl,
+): Promise<{ avisoArquivo?: string }> {
+  const [item] = await db
+    .select({ url: schema.itensPlaylist.url })
+    .from(schema.itensPlaylist)
+    .where(eq(schema.itensPlaylist.id, itemId));
+
   await db.delete(schema.itensPlaylist).where(eq(schema.itensPlaylist.id, itemId));
+  if (!item) return {};
+
+  try {
+    await apagar(item.url);
+  } catch (e) {
+    return {
+      avisoArquivo: `Item removido da playlist, mas o arquivo continua no disco: ${
+        e instanceof Error ? e.message : "erro no bucket"
+      }`,
+    };
+  }
+  return {};
 }
 
 /** Itens da playlist de uma tela (com id, pro admin). Ordenados por `ordem`. */

@@ -17,7 +17,7 @@ horário de funcionamento são obrigatórios, não desejáveis.
 ## Acceptance Criteria
 | AC ID | Statement (mensurável) | Test type | Test file | Status | Evidence |
 |-------|------------------------|-----------|-----------|--------|----------|
-| LEA-001 | A rota recusa chamada sem o segredo (401) e aceita com ele | integration | lib/db/lembretes-agendador.integration.test.ts | PENDING | — |
+| LEA-001 | A rota recusa chamada sem o segredo (401), aceita com ele (header ou Bearer) e fica FECHADA (503) se o segredo nao estiver no ambiente | unit | app/api/tarefas/lembretes/route.test.ts | PASS | verde (gate) |
 | LEA-002 | Envia só os agendamentos dentro da janela de `lembrete_config`; fora da janela não envia | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
 | LEA-003 | Rodar duas vezes seguidas NÃO manda o lembrete de novo (marcado como enviado) | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
 | LEA-004 | Agendamento cancelado entre a marcação e o envio não recebe lembrete | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
@@ -27,7 +27,7 @@ horário de funcionamento são obrigatórios, não desejáveis.
 | LEA-008 | O dono vê na tela quando o último lembrete saiu e quantos foram | integration | lib/db/lembretes-agendador.integration.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
-REQUIREMENT (só quem tem o segredo dispara) → LEA-001 → integration → lib/db/lembretes-agendador.integration.test.ts → PENDING
+REQUIREMENT (só quem tem o segredo dispara) → LEA-001 → unit → app/api/tarefas/lembretes/route.test.ts → PASS
 REQUIREMENT (janela correta) → LEA-002 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
 REQUIREMENT (nunca duplicar) → LEA-003,004 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
 REQUIREMENT (uma falha não derruba o lote) → LEA-005 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
@@ -36,7 +36,7 @@ REQUIREMENT (respeitar horário da loja) → LEA-007 → unit → lib/lembretes-
 REQUIREMENT (o dono enxerga que funcionou) → LEA-008 → integration → lib/db/lembretes-agendador.integration.test.ts → PASS
 
 ## Gaps
-- **LEA-001 segue PENDING:** a rota recusa chamada sem segredo (401) e fica fechada sem `TAREFAS_SECRET`, mas nao escrevi teste para ela. Nao marco verde sem teste nomeado.
+- LEA-001 fechado em 12/09 com 4 testes na porta de entrada. O que importa nao e so o codigo 401: o teste verifica que um pedido recusado NAO chega a chamar `processarLembretes`, ou seja, nao dispara WhatsApp para ninguem.
 
 - O fuso do servidor agora é São Paulo (corrigido em 2026-09-10). **Este recurso depende
   disso**: com o container em UTC, "uma hora antes" erraria por três horas.

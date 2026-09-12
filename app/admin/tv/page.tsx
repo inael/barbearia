@@ -67,9 +67,15 @@ async function excluirItem(formData: FormData) {
   if (!(await autorizado())) return;
   const itemId = Number(formData.get("itemId"));
   if (!Number.isInteger(itemId)) return;
-  await removerItem(getDb(), itemId);
+  const r = await removerItem(getDb(), itemId);
   revalidatePath(ROTA);
-  redirect(`${ROTA}?ok=${encodeURIComponent("Mídia removida da playlist.")}`);
+  // Sai da playlist de qualquer jeito; se o arquivo ficou no disco, o dono precisa
+  // saber, senao o espaco some sem explicacao.
+  redirect(
+    r.avisoArquivo
+      ? `${ROTA}?erro=${encodeURIComponent(r.avisoArquivo)}`
+      : `${ROTA}?ok=${encodeURIComponent("Mídia removida da playlist.")}`,
+  );
 }
 
 async function enviarMidia(formData: FormData) {

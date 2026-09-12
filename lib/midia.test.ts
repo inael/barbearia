@@ -37,5 +37,8 @@ describe("FDB-004 — classificação da mídia da TV", () => {
     expect(rotuloDaMidia("data:video/mp4;base64,AAAA")).toBe("Vídeo enviado");
     expect(rotuloDaMidia("https://cdn.test/promo.mp4")).toContain("promo.mp4");
     expect(rotuloDaMidia("nao-e-url")).toBe("Imagem (link)");
+    // MTV: a midia do bucket e caminho do proprio site, nao URL completa
+    expect(rotuloDaMidia("/midia/2026/09/promo-da-loja.mp4")).toBe("Vídeo: promo-da-loja.mp4");
+    expect(rotuloDaMidia("/midia/2026/09/arte%20nova.png")).toBe("Imagem: arte nova.png");
   });
 });

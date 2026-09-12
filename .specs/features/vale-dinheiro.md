@@ -28,7 +28,7 @@ R$ 100 descontados. Misturar os dois na mesma regra erraria o acerto.
 | VDN-002 | Vale em dinheiro desconta o valor cheio: R$ 100 retirados viram R$ 100 no acerto, sem desconto de produto | unit | lib/vales.test.ts | PASS | verde (gate) |
 | VDN-003 | O vale em dinheiro entra no total de vales do relatório de metas do barbeiro | integration | lib/db/vale-dinheiro.integration.test.ts | PASS | verde (gate) |
 | VDN-004 | Valor zero ou negativo é recusado com o motivo | unit | lib/vales.test.ts | PASS | verde (gate) |
-| VDN-005 | A recepção lança e vê a confirmação; o barbeiro vê o próprio vale e não lança para os outros | e2e | e2e/vale-dinheiro.spec.ts | PENDING | — |
+| VDN-005 | A recepção lança e vê a confirmação; o barbeiro vê o próprio vale, não vê o de outro barbeiro e não tem formulário para lançar | e2e | e2e/vale-dinheiro.spec.ts | PASS | verde (gate) |
 | VDN-006 | Editar e excluir vale em dinheiro funciona, sem afetar os vales de outro tipo | integration | lib/db/vale-dinheiro.integration.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
@@ -39,7 +39,7 @@ REQUIREMENT (papéis corretos) → VDN-005 → e2e → e2e/vale-dinheiro.spec.ts
 REQUIREMENT (CRUD completo) → VDN-006 → integration → lib/db/vale-dinheiro.integration.test.ts → PASS
 
 ## Gaps
-- **VDN-005 segue PENDING:** o motor e o CRUD estao provados na integracao, falta o e2e do fluxo pela tela (recepcao lanca, barbeiro nao lanca).
+- VDN-005 fechado em 12/09. O e2e de vales que ja existia usava `retirado_barbeiro` (produto); este cobre o tipo `dinheiro`, que e o do pedido do Rodrigo, e ainda prova que um barbeiro nao enxerga o vale de outro.
 
 - **Respondido em 11/09: sem teto.** *"não precisa botar limite [...] quem vai fazer esse
   vale é só a recepcionista"*. O controle dele é humano, não do sistema: só a recepção

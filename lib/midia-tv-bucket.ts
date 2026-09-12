@@ -108,7 +108,7 @@ export function urlPublica(cfg: ConfigBucket, objeto: string): string {
 /** Cabecalhos assinados (S3 V4) para um metodo/objeto. Extraido para servir GET e PUT. */
 async function assinar(
   cfg: ConfigBucket,
-  metodo: "GET" | "PUT",
+  metodo: "GET" | "PUT" | "DELETE",
   objeto: string,
   corpo: Uint8Array | null,
   tipo: string | null,
@@ -159,6 +159,46 @@ export async function baixarDoBucket(
 ): Promise<Response> {
   const { url, headers } = await assinar(cfg, "GET", objeto, null, null, agora);
   return fetchImpl(url.toString(), { headers });
+}
+
+/**
+ * Descobre qual objeto do bucket uma URL da playlist aponta.
+ *
+ * Devolve null para o que NAO e nosso: data URL das midias antigas e link externo.
+ * E o que impede a limpeza de tentar apagar (ou pior, apagar errado) a midia que
+ * existia antes do bucket. Ver MTV-006.
+ */
+export function objetoDaUrl(cfg: ConfigBucket, url: string): string | null {
+  const prefixo = `${cfg.basePublica}/`;
+  if (!url || !url.startsWith(prefixo)) return null;
+  const objeto = url.slice(prefixo.length);
+  // ".." abriria caminho para apagar objeto de outra pasta a partir de uma URL torta
+  if (!objeto || objeto.includes("..")) return null;
+  return objeto;
+}
+
+/**
+ * Apaga o objeto no bucket.
+ *
+ * Sem isso, trocar a arte da TV deixava o arquivo antigo ocupando o disco da VPS do
+ * Rodrigo para sempre: a playlist ficava limpa e o disco enchia sozinho. Video torna
+ * isso rapido.
+ *
+ * Objeto que ja nao existe (404) conta como sucesso: o fim desejado e "nao ocupa mais
+ * espaco", e ele ja nao ocupa.
+ */
+export async function apagarDoBucket(
+  cfg: ConfigBucket,
+  objeto: string,
+  agora: Date = new Date(),
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const { url, headers } = await assinar(cfg, "DELETE", objeto, null, null, agora);
+  const resp = await fetchImpl(url.toString(), { method: "DELETE", headers });
+  if (!resp.ok && resp.status !== 404) {
+    const detalhe = await resp.text().catch(() => "");
+    throw new Error(`nao consegui apagar do bucket (${resp.status}): ${detalhe.slice(0, 160)}`);
+  }
 }
 
 export async function enviarParaBucket(
