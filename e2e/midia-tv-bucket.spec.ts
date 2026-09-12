@@ -53,4 +53,17 @@ test.describe("MTV — mídia do bucket na tela (e2e)", () => {
     await expect(page.locator("body")).toContainText("Tela Bucket E2E");
     await expect(page.getByTestId("aviso-erro")).toHaveCount(0);
   });
+  test("MTV-008 a tela diz o limite de tamanho, e enviar sem escolher arquivo explica o motivo", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/admin/tv");
+
+    // o Rodrigo nao tinha como saber ate quanto cabia; o erro do framework era mudo
+    await expect(page.getByTestId("tv-limite").first()).toContainText(/50 MB/);
+
+    // clicar em enviar sem escolher arquivo recarregava a tela igual, parecendo
+    // botao quebrado. Agora diz o que fazer.
+    const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Enviar mídia" }) }).first();
+    await form.getByRole("button", { name: "Enviar mídia" }).click();
+    await expect(page.getByTestId("aviso-erro")).toContainText(/Escolha um arquivo/i);
+  });
 });

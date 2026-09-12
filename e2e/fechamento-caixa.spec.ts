@@ -14,24 +14,39 @@ async function login(page: Page, email: string, senha: string) {
   await expect(page).toHaveURL(/\/conta/);
 }
 
+const emReais = async (page: Page, seletor: string) => {
+  const txt = await page.locator(seletor).innerText();
+  const m = txt.match(/R\$\s*([\d.]+,\d{2})/);
+  return m ? Number(m[1].replace(/\./g, "").replace(",", ".")) : 0;
+};
+
 /** Fecha uma venda na forma pedida e devolve o valor cobrado, em reais. */
-async function venderComo(page: Page, forma: string) {
+async function venderComo(page: Page, forma: string): Promise<number> {
   await page.goto("/caixa");
   await page.getByRole("button", { name: "Abrir comanda" }).click();
   await expect(page.getByTestId("comanda")).toBeVisible();
   await page.getByTestId("cx-servico").selectOption({ index: 0 });
   await page.getByTestId("cx-servico-prof").selectOption({ index: 0 });
   await page.getByRole("button", { name: "Adicionar serviço" }).click();
+
+  // Esperar a confirmacao ANTES de ler o total. Adicionar servico e server action com
+  // redirect: o clique volta antes da tela recarregar, e a leitura pegava a pagina
+  // velha, com total R$ 0. A comanda entao fechava vazia e o teste so reclamava tres
+  // passos depois, dizendo que o credito nao subiu.
+  await expect(page.getByTestId("aviso-ok")).toBeVisible();
+  await expect
+    .poll(() => emReais(page, '[data-testid="total-comanda"]'), {
+      message: "o serviço não entrou na comanda: fechar agora venderia R$ 0",
+    })
+    .toBeGreaterThan(0);
+  const total = await emReais(page, '[data-testid="total-comanda"]');
+
   await page.getByTestId("cx-pagamento").selectOption(forma);
   await page.getByRole("button", { name: "Fechar conta" }).click();
   await expect(page.getByTestId("aviso-ok")).toBeVisible();
+  return total;
 }
 
-const emReais = async (page: Page, seletor: string) => {
-  const txt = await page.locator(seletor).innerText();
-  const m = txt.match(/R\$\s*([\d.]+,\d{2})/);
-  return m ? Number(m[1].replace(/\./g, "").replace(",", ".")) : 0;
-};
 
 test.describe("CXP — fechamento do caixa por forma de pagamento (e2e)", () => {
   test("CXP-008 a recepção vê crédito, débito, dinheiro e PIX separados, com o total", async ({ page }) => {
@@ -51,12 +66,13 @@ test.describe("CXP — fechamento do caixa por forma de pagamento (e2e)", () => 
     const creditoAntes = await emReais(page, '[data-forma="credito"]');
     const debitoAntes = await emReais(page, '[data-forma="debito"]');
 
-    await venderComo(page, "credito");
+    const vendido = await venderComo(page, "credito");
 
     await page.goto("/caixa");
     const creditoDepois = await emReais(page, '[data-forma="credito"]');
     const debitoDepois = await emReais(page, '[data-forma="debito"]');
-    expect(creditoDepois, "a venda tem que aparecer no credito").toBeGreaterThan(creditoAntes);
+    // comparar o DELTA exato, nao so "subiu": assim o teste diz quanto faltou
+    expect(creditoDepois - creditoAntes, "a venda tem que aparecer no credito, pelo valor cheio").toBeCloseTo(vendido, 2);
     expect(debitoDepois, "e NAO pode cair no debito").toBe(debitoAntes);
   });
 

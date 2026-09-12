@@ -17,6 +17,7 @@ let db: PostgresJsDatabase<typeof schema>;
 let corteId: number; // entraPote, 30 pts
 let progressivaId: number; // NÃO entra no pote
 let pedroId: number;
+let assinanteId: number;
 
 const de = new Date("2026-10-05T00:00:00Z");
 const ate = new Date("2026-10-06T00:00:00Z");
@@ -37,7 +38,8 @@ beforeAll(async () => {
   pedroId = pedro.id;
 
   const planoId = await criarPlano(db, { nome: "Premium", tipo: "premium", precoCentavos: 12000, descontoServicoPct: 20, descontoProdutoPct: 10, dias: "" });
-  const assinante = await criarCliente(db, { nome: "Assinante", telefone: "61999990600" });
+  assinanteId = await criarCliente(db, { nome: "Assinante", telefone: "61999990600" });
+  const assinante = assinanteId;
   await criarAssinatura(db, assinante, planoId);
   const naoAssinante = await criarCliente(db, { nome: "Avulso", telefone: "61999990601" });
 
@@ -50,6 +52,7 @@ beforeAll(async () => {
   const c2 = await criarComanda(db, naoAssinante);
   await adicionarServico(db, c2, corteId, pedroId);
   await fecharComanda(db, c2, "pix", quando);
+
 }, 200_000);
 
 afterAll(async () => {
@@ -75,5 +78,42 @@ describe("PTG — pote real (integration)", () => {
     const pedro = rel.linhas.find((l) => l.profissionalId === pedroId);
     expect(pedro?.pontos).toBe(30);
     expect(pedro?.valor).toBe(48);
+  });
+  it("PTG-006 conta quantos ASSINANTES cada barbeiro atendeu, separado do numero de visitas", async () => {
+    // Janela e barbeiros PROPRIOS: mexer nos dados de PTG-001/002/003 mudaria os
+    // pontos e a divisao, e os testes vizinhos quebrariam por dados, nao por regra.
+    const de2 = new Date("2026-11-10T00:00:00Z");
+    const ate2 = new Date("2026-11-11T00:00:00Z");
+    const quando2 = new Date("2026-11-10T15:00:00Z");
+
+    const [joao] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "Joao PTG", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+    const [tiago] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "Tiago PTG", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+
+    // o MESMO assinante volta duas vezes no Joao, e uma vez no Tiago
+    for (const prof of [joao.id, joao.id, tiago.id]) {
+      const c = await criarComanda(db, assinanteId);
+      await adicionarServico(db, c, corteId, prof);
+      await fecharComanda(db, c, "pix", quando2);
+    }
+
+    const rel = await relatorioPote(db, de2, ate2);
+    const linhaJoao = rel.linhas.find((l) => l.profissionalId === joao.id);
+    const linhaTiago = rel.linhas.find((l) => l.profissionalId === tiago.id);
+
+    expect(linhaJoao?.atendimentos, "duas visitas sao dois atendimentos").toBe(2);
+    expect(linhaJoao?.clientes, "mas o mesmo assinante e UM cliente").toBe(1);
+    expect(linhaTiago?.atendimentos).toBe(1);
+    expect(linhaTiago?.clientes).toBe(1);
+
+    expect(rel.totalAtendimentos).toBe(3);
+    // o mesmo assinante conta na linha de cada barbeiro que o atendeu: e assim que
+    // o Rodrigo le ("fulano atendeu tantos"), nao como cliente unico da barbearia
+    expect(rel.totalClientes).toBe(2);
   });
 });

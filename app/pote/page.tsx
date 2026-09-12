@@ -74,7 +74,13 @@ export default async function PotePage({ searchParams }: { searchParams: Promise
               linhas.map((l) => (
                 <div key={l.profissionalId} data-pote-barbeiro={l.nome} className={linha}>
                   <span className="w-24 font-medium">{l.nome}</span>
-                  <span className="text-neutral-600">{l.pontos} pts</span>
+                  {/* pedido do Rodrigo (audio 12/09): ele queria ver quantos assinantes
+                      cada um atendeu, nao so os pontos, que sao um numero interno. */}
+                  <span className="text-neutral-600" data-pote-clientes={l.clientes}>
+                    {l.clientes} {l.clientes === 1 ? "cliente" : "clientes"}
+                  </span>
+                  <span className="text-neutral-500">{l.atendimentos} atend.</span>
+                  <span className="text-neutral-500">{l.pontos} pts</span>
                   <span className="ml-auto font-bold">{brl(l.valor)}</span>
                 </div>
               ))

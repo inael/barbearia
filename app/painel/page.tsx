@@ -10,12 +10,18 @@ import {
   clientesEmChurn,
 } from "@/lib/dashboard";
 import { cortesiasDoPeriodo } from "@/lib/caixa";
+import { relatorioPote } from "@/lib/pote-gestao";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const JANELA_CHURN = 30;
+/**
+ * O painel inteiro trabalha em CENTAVOS, mas o motor do pote trabalha em REAIS.
+ * Misturar os dois faria o valor aparecer 100 vezes menor, e ninguem notaria de cara.
+ */
+const brlReais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /** Períodos do filtro (feedback UX 2026-08-26: ranking não pode ficar travado em 30d). */
 const PERIODOS = [
@@ -52,7 +58,7 @@ export default async function PainelDonoPage({ searchParams }: { searchParams: P
   const amanha = new Date(hojeInicio.getTime() + 24 * 60 * 60 * 1000);
   const inicioPeriodo = new Date(hojeInicio.getTime() - dias * 24 * 60 * 60 * 1000);
 
-  const [fatHoje, fatPeriodo, porProf, ranking, novos, visitas, cortesias] = await Promise.all([
+  const [fatHoje, fatPeriodo, porProf, ranking, novos, visitas, cortesias, pote] = await Promise.all([
     faturamentoTotal(db, hojeInicio, amanha),
     faturamentoTotal(db, inicioPeriodo, amanha),
     faturamentoPorProfissional(db, inicioPeriodo, amanha),
@@ -60,6 +66,9 @@ export default async function PainelDonoPage({ searchParams }: { searchParams: P
     novosClientes(db, inicioPeriodo, amanha),
     ultimaVisitaPorCliente(db),
     cortesiasDoPeriodo(db, inicioPeriodo, amanha),
+    // pedido do Rodrigo (audio 12/09): ele sentiu falta dos numeros da assinatura
+    // aqui no painel, sem ter de abrir a tela do pote.
+    relatorioPote(db, inicioPeriodo, amanha),
   ]);
   const churn = clientesEmChurn(visitas, agora, JANELA_CHURN);
 
@@ -122,6 +131,42 @@ export default async function PainelDonoPage({ searchParams }: { searchParams: P
             <div className="mt-1 text-sm text-neutral-600">
               {brl(cortesias.valorCentavos)} concedidos · comissão a pagar {brl(cortesias.comissaoCentavos)}
             </div>
+          </div>
+        </section>
+
+        <section className="mt-4">
+          <div className={card} data-testid="painel-assinaturas">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-sm font-semibold">Assinaturas ({rotulo})</span>
+              <a href="/pote" className="text-xs font-medium text-emerald-800 underline dark:text-emerald-400">
+                ver o pote
+              </a>
+            </div>
+            <div className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+              {pote.totalAtendimentos} atendimento(s) de assinante · pote de {brlReais(pote.poteTotal)}
+            </div>
+            {pote.linhas.length === 0 ? (
+              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                Nenhum assinante atendido neste período.
+              </p>
+            ) : (
+              <div className="mt-3 flex flex-col gap-1">
+                {pote.linhas.map((l) => (
+                  <div
+                    key={l.profissionalId}
+                    data-assinatura-barbeiro={l.nome}
+                    className="flex flex-wrap items-center gap-3 text-sm"
+                  >
+                    <span className="w-24 font-medium">{l.nome}</span>
+                    <span className="text-neutral-600 dark:text-neutral-400">
+                      {l.clientes} {l.clientes === 1 ? "cliente" : "clientes"}
+                    </span>
+                    <span className="text-neutral-500">{l.atendimentos} atend.</span>
+                    <span className="ml-auto font-semibold">{brlReais(l.valor)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

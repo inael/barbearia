@@ -22,6 +22,7 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | MTV-004 | Tipo não suportado é recusado antes de subir (não ocupa espaço à toa) | unit | lib/midia-tv-bucket.test.ts | PASS | verde (gate) |
 | MTV-005 | Remover item da playlist apaga o arquivo do bucket; objeto já inexistente conta como sucesso; bucket fora do ar não impede a remoção e avisa do arquivo órfão | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-006 | Mídia antiga (data URL) e link externo continuam na playlist, convivem com upload novo, e a limpeza nunca tenta apagá-los | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
+| MTV-008 | O teto de corpo do Server Action cabe o teto de mídia (50 MB), quem recusa arquivo grande é a nossa validação com o motivo em MB, e a tela mostra o limite | unit + e2e | lib/upload-limite.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 | MTV-007 | Bucket fora do ar ou chave sem permissão: o erro diz o status e a playlist antiga fica intacta; sem bucket configurado a tela segue operável | integration + e2e | lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
@@ -30,9 +31,21 @@ REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib
 REQUIREMENT (recusar arquivo ruim antes de subir) → MTV-003,004 → unit → lib/midia-tv-bucket.test.ts → PASS
 REQUIREMENT (nao deixar lixo no disco) → MTV-005 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (não perder o que já existe) → MTV-006 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
+REQUIREMENT (vídeo cabe no pedido, não só no código) → MTV-008 → unit + e2e → lib/upload-limite.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 REQUIREMENT (falha explicada, TV não apaga) → MTV-007 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 
 ## Gaps
+- **Bug em producao achado pelo Rodrigo (audio 12/09): nenhum video subia.** O bucket
+  estava de pe e a credencial certa; o corte vinha do **Next**, cujo limite padrao de
+  corpo de Server Action e **1 MB**, e o upload da TV e um Server Action. Imagem
+  pequena passava, video nunca, e o erro era mudo. Corrigido com
+  `experimental.serverActions.bodySizeLimit` de 64 MB, folga acima do nosso teto de
+  50 MB para que quem recuse seja a nossa validacao, que diz o tamanho. MTV-008 existe
+  para isso nao voltar a 1 MB em silencio numa mexida futura no next.config.
+- Enviar sem escolher arquivo era um `return` mudo: a tela recarregava igual e parecia
+  botao quebrado. Agora explica. E a validacao roda ANTES de ler o arquivo na memoria,
+  porque num servidor de 1 vCPU carregar um video gigante so para recusar derruba a
+  pagina.
 - Fechados em 12/09. O teste de integracao sobe um **Garage de verdade** em container
   (`lib/db/garage-de-teste.ts`): layout aplicado, bucket criado, chave criada e permissao
   dada, igual a VPS do Rodrigo. Nao e MinIO fingindo de Garage.

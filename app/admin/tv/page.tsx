@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarTelas, criarTela, editarTela, removerTela, adicionarItem, removerItem, listarItens } from "@/lib/tv";
-import { uploadMidia, getStorageClient } from "@/lib/tv-upload";
+import { uploadMidia, getStorageClient, validarMidia, LIMITE_BYTES } from "@/lib/tv-upload";
 import PageHeader from "@/components/PageHeader";
 import { rotuloDaMidia } from "@/lib/midia";
 import Aviso from "@/components/Aviso";
@@ -83,9 +83,16 @@ async function enviarMidia(formData: FormData) {
   if (!(await autorizado())) return;
   const telaId = Number(formData.get("telaId"));
   const arquivo = formData.get("arquivo");
-  if (!Number.isInteger(telaId) || !(arquivo instanceof File) || arquivo.size === 0) return;
-  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  // Antes isto era um `return` mudo: sem arquivo escolhido, a tela recarregava igual
+  // e parecia que o botao nao funcionava.
+  if (!Number.isInteger(telaId) || !(arquivo instanceof File) || arquivo.size === 0) {
+    redirect(`${ROTA}?erro=${encodeURIComponent("Escolha um arquivo de imagem ou vídeo antes de enviar.")}`);
+  }
   try {
+    // Validar ANTES de ler o arquivo na memoria: um video gigante seria carregado
+    // inteiro so para ser recusado, e num servidor de 1 vCPU isso derruba a pagina.
+    validarMidia(arquivo.type, arquivo.size);
+    const bytes = new Uint8Array(await arquivo.arrayBuffer());
     await uploadMidia(getDb(), getStorageClient(), telaId, { nome: arquivo.name, tipo: arquivo.type, tamanho: arquivo.size, bytes });
   } catch (e) {
     // antes o erro era engolido e o usuário achava que o botão não funcionava
@@ -214,6 +221,7 @@ export default async function AdminTvPage({ searchParams }: { searchParams: Prom
                     <span className="text-xs font-semibold">Enviar foto ou vídeo do computador</span>
                     <input type="hidden" name="telaId" value={t.id} />
                     <input name="arquivo" type="file" accept="image/*,video/*" aria-label={`Upload para ${t.nome}`} data-testid={`tv-upload-${t.id}`} className="text-xs" />
+                    <span className="text-xs text-neutral-500" data-testid="tv-limite">imagem ou vídeo, até {LIMITE_BYTES / 1024 / 1024} MB</span>
                     <button type="submit" className="self-start rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
                       Enviar mídia
                     </button>

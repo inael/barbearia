@@ -19,6 +19,10 @@ export interface PontosBarbeiro {
   profissionalId: number;
   nome: string;
   pontos: number;
+  /** Quantos serviços de assinante o barbeiro fez (uma visita pode ter mais de um). */
+  atendimentos: number;
+  /** Quantos assinantes DIFERENTES ele atendeu. Foi o numero que o Rodrigo pediu. */
+  clientes: number;
 }
 
 /**
@@ -31,6 +35,8 @@ export async function pontosDeAssinatura(db: DB, de: Date, ate: Date): Promise<P
       profissionalId: schema.comandaItens.profissionalId,
       nome: schema.profissionais.nome,
       pontos: sql<number>`sum(${schema.servicos.pontosPote})`,
+      atendimentos: sql<number>`count(*)`,
+      clientes: sql<number>`count(distinct ${schema.comandas.clienteId})`,
     })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
@@ -48,13 +54,22 @@ export async function pontosDeAssinatura(db: DB, de: Date, ate: Date): Promise<P
       ),
     )
     .groupBy(schema.comandaItens.profissionalId, schema.profissionais.nome);
-  return rows.map((r) => ({ profissionalId: r.profissionalId, nome: r.nome, pontos: Number(r.pontos) }));
+  return rows.map((r) => ({
+    profissionalId: r.profissionalId,
+    nome: r.nome,
+    pontos: Number(r.pontos),
+    atendimentos: Number(r.atendimentos),
+    clientes: Number(r.clientes),
+  }));
 }
 
 export interface RelatorioPote {
   receita: number;
   poteTotal: number;
-  linhas: { profissionalId: number; nome: string; pontos: number; valor: number }[];
+  linhas: (PontosBarbeiro & { valor: number })[];
+  /** Somas do periodo, para o painel do dono nao ter de recalcular. */
+  totalAtendimentos: number;
+  totalClientes: number;
 }
 
 /** Relatório do pote: receita de assinaturas, pote (40%) e divisão por pontos reais. */
@@ -69,5 +84,9 @@ export async function relatorioPote(db: DB, de: Date, ate: Date): Promise<Relato
     receita,
     poteTotal,
     linhas: pontos.map((p) => ({ ...p, valor: divisao[String(p.profissionalId)] ?? 0 })),
+    totalAtendimentos: pontos.reduce((s, p) => s + p.atendimentos, 0),
+    // soma dos distintos POR BARBEIRO: o mesmo assinante atendido por dois barbeiros
+    // conta nos dois, que e como o Rodrigo le a linha de cada um.
+    totalClientes: pontos.reduce((s, p) => s + p.clientes, 0),
   };
 }
