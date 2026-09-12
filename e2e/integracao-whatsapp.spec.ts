@@ -4,9 +4,6 @@ async function login(page: Page, email: string, senha: string) {
   await page.goto("/login");
   // Esperar a HIDRATACAO antes de clicar: sem isso o formulario e enviado
   // nativamente e o teste volta pro /login sem erro nenhum.
-  // NAO usar networkidle: o Next fica pre-carregando rotas e a rede nunca
-  // fica ociosa, entao todo login esperava ate estourar o tempo (suite de 5min
-  // virou 42min). O sinal certo e o React ter montado no formulario.
   await page.waitForFunction(() => {
     const f = document.querySelector("form");
     return !!f && Object.keys(f).some((k) => k.startsWith("__react"));
@@ -21,32 +18,24 @@ const ROTA = "/configuracoes/whatsapp";
 const unico = () => String(Date.now()).slice(-6);
 
 test.describe("IWA — integração do WhatsApp pela tela (e2e)", () => {
-  test("IWA-006 o dono configura sem sair do sistema: menu, salvar e confirmação", async ({ page }) => {
+  test("IWA-006 o dono chega pelo menu e salva a chave, sem sair do sistema", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
 
-    // o caminho é pelo menu, não por URL decorada
     await page.goto("/conta");
     await page.getByRole("link", { name: "Configurações", exact: true }).first().click();
     await page.getByTestId("cfg-whatsapp").click();
     await expect(page).toHaveURL(new RegExp(ROTA));
 
-    const inst = `inst-${unico()}`;
-    await page.getByTestId("wa-token").fill("sk_teste_e2e_1234");
-    await page.getByTestId("wa-instancia").fill(inst);
-    await page.getByTestId("wa-ativo").check();
-    await page.getByTestId("wa-salvar").click();
-
-    await expect(page.getByTestId("aviso-ok")).toContainText(/salva/i);
-    await expect(page.getByTestId("wa-instancia")).toHaveValue(inst);
-    await expect(page.getByTestId("wa-situacao")).toContainText(/Ligada/);
+    await page.getByTestId("wa-token").fill(`sk_teste_e2e_${unico()}`);
+    await page.getByTestId("wa-salvar-chave").click();
+    await expect(page.getByTestId("aviso-ok")).toContainText(/chave salva/i);
   });
 
-  test("IWA-007 o token salvo nunca volta para a tela, só mascarado", async ({ page }) => {
+  test("IWA-007 a chave salva nunca volta para a tela, só mascarada", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto(ROTA);
     await page.getByTestId("wa-token").fill("sk_segredo_abcd9999");
-    await page.getByTestId("wa-instancia").fill(`inst-${unico()}`);
-    await page.getByTestId("wa-salvar").click();
+    await page.getByTestId("wa-salvar-chave").click();
     await expect(page.getByTestId("aviso-ok")).toBeVisible();
 
     await page.goto(ROTA);
@@ -56,47 +45,46 @@ test.describe("IWA — integração do WhatsApp pela tela (e2e)", () => {
     await expect(page.locator("body")).not.toContainText("sk_segredo_abcd9999");
   });
 
-  test("IWA-008 salvar com token vazio mantém o token e troca só a instância", async ({ page }) => {
+  test("IWA-012 com chave inválida, a tela DIZ o motivo em vez de mostrar lista vazia", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto(ROTA);
-    await page.getByTestId("wa-token").fill("sk_mantem_7777");
-    await page.getByTestId("wa-instancia").fill("inst-antiga");
-    await page.getByTestId("wa-ativo").check();
-    await page.getByTestId("wa-salvar").click();
-    await expect(page.getByTestId("aviso-ok")).toBeVisible();
+    await page.getByTestId("wa-token").fill(`sk_invalida_${unico()}`);
+    await page.getByTestId("wa-salvar-chave").click();
 
     await page.goto(ROTA);
-    await page.getByTestId("wa-instancia").fill("inst-nova");
-    await page.getByTestId("wa-salvar").click();
-    await expect(page.getByTestId("aviso-ok")).toBeVisible();
-
-    await page.goto(ROTA);
-    await expect(page.getByTestId("wa-instancia")).toHaveValue("inst-nova");
-    await expect(page.getByTestId("wa-token-atual"), "o token não pode ter sumido").toContainText("7777");
+    const secao = page.getByTestId("wa-instancias");
+    await expect(secao).toBeVisible();
+    // chave falsa: ou a API recusa, ou nao ha instancia. Nos dois casos a tela explica,
+    // e o que nao pode e ficar em branco sem dizer nada.
+    const erro = page.getByTestId("wa-instancias-erro");
+    const vazio = page.getByTestId("wa-instancias-vazio");
+    await expect(async () => {
+      expect((await erro.count()) + (await vazio.count())).toBeGreaterThan(0);
+    }).toPass();
   });
 
-  test("IWA-009 ligar sem instância é recusado com o motivo na tela", async ({ page }) => {
+  test("IWA-013 sem chave nenhuma, a tela manda salvar a chave primeiro", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto(ROTA);
-    await page.getByTestId("wa-token").fill("sk_sem_instancia_0001");
-    await page.getByTestId("wa-instancia").fill("");
-    await page.getByTestId("wa-ativo").check();
-    await page.getByTestId("wa-salvar").click();
-    await expect(page.getByTestId("aviso-erro")).toContainText(/inst/i);
+    await expect(page.getByTestId("wa-instancias")).toContainText(/chave|inst/i);
+    await expect(page.getByTestId("wa-situacao")).toBeVisible();
   });
 
-  test("IWA-010 testar conexão com credencial falsa explica o problema, não estoura", async ({ page }) => {
+  test("IWA-010 enviar teste sem a integração ligada é recusado com o motivo", async ({ page }) => {
     await login(page, "dono@faith.com", "dono123");
     await page.goto(ROTA);
-    await page.getByTestId("wa-token").fill("sk_invalido_9999");
-    await page.getByTestId("wa-instancia").fill("inst-inexistente");
-    await page.getByTestId("wa-salvar").click();
-    await expect(page.getByTestId("aviso-ok")).toBeVisible();
-
-    await page.getByTestId("wa-testar").click();
-    // seja qual for a falha (token recusado, instância ausente, rede), a tela EXPLICA
+    await page.getByTestId("wa-teste-numero").fill("61999998888");
+    await page.getByTestId("wa-enviar-teste").click();
     await expect(page.getByTestId("aviso-erro")).toBeVisible();
     await expect(page.getByTestId("aviso-erro")).not.toHaveText("");
+  });
+
+  test("IWA-010 número curto no teste é recusado antes de tentar enviar", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto(ROTA);
+    await page.getByTestId("wa-teste-numero").fill("123");
+    await page.getByTestId("wa-enviar-teste").click();
+    await expect(page.getByTestId("aviso-erro")).toContainText(/DDD|n[uú]mero/i);
   });
 
   test("IWA-011 recepção não vê o menu nem entra na tela", async ({ page }) => {

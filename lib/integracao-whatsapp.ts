@@ -96,6 +96,103 @@ export interface ResultadoTeste {
   numero?: string;
 }
 
+/**
+ * Prazo maximo para o SimplesZap responder.
+ *
+ * A listagem roda no carregamento da tela de configuracao. Sem prazo, uma API lenta
+ * ou pendurada deixaria o dono olhando pagina em branco sem fim, porque `fetch` no
+ * servidor nao desiste sozinho. Melhor dizer que demorou e deixar ele tentar de novo.
+ */
+const PRAZO_MS = 8000;
+
+function comPrazo(): { signal: AbortSignal } | Record<string, never> {
+  // AbortSignal.timeout existe no Node 18+; a guarda evita quebrar em runtime antigo.
+  return typeof AbortSignal?.timeout === "function" ? { signal: AbortSignal.timeout(PRAZO_MS) } : {};
+}
+
+export interface Instancia {
+  id: string;
+  nome: string;
+  numero: string | null;
+  /** connected | connecting | disconnected ... vem cru do SimplesZap. */
+  status: string;
+  conectada: boolean;
+}
+
+export interface ListaInstancias {
+  ok: boolean;
+  /** Mensagem pronta pra tela quando algo deu errado. */
+  mensagem?: string;
+  instancias: Instancia[];
+}
+
+/**
+ * Lista as instancias da conta da chave (escopo `instances:read`).
+ *
+ * Substitui o "digite o ID da instancia": o dono escolhe numa lista com nome,
+ * numero e situacao, em vez de copiar um identificador de outro sistema.
+ */
+export async function listarInstancias(
+  cfg: { baseUrl: string; token: string | null },
+  fetchImpl: typeof fetch = fetch,
+): Promise<ListaInstancias> {
+  if (!cfg.token) return { ok: false, mensagem: "Salve a chave da API antes de listar.", instancias: [] };
+
+  let resp: Response;
+  try {
+    resp = await fetchImpl(`${cfg.baseUrl.replace(/\/+$/, "")}/instances`, {
+      headers: { authorization: `Bearer ${cfg.token}`, accept: "application/json" },
+      ...comPrazo(),
+    });
+  } catch (e) {
+    const demorou = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+    return {
+      ok: false,
+      mensagem: demorou
+        ? "O SimplesZap demorou demais para responder. Recarregue a pagina em instantes."
+        : "Nao consegui falar com o SimplesZap. Confira a internet da loja.",
+      instancias: [],
+    };
+  }
+
+  if (resp.status === 401) {
+    return { ok: false, mensagem: "A chave foi recusada. Gere outra no painel do SimplesZap.", instancias: [] };
+  }
+  if (resp.status === 403) {
+    // erro de escopo e o mais provavel aqui, e a mensagem generica esconderia a causa
+    return {
+      ok: false,
+      mensagem: "A chave nao tem permissao de ler instancias. Recrie com o escopo instances:read.",
+      instancias: [],
+    };
+  }
+  if (!resp.ok) {
+    return { ok: false, mensagem: `O SimplesZap respondeu erro ${resp.status}. Tente de novo.`, instancias: [] };
+  }
+
+  let cru: unknown;
+  try {
+    cru = await resp.json();
+  } catch {
+    return { ok: false, mensagem: "Resposta inesperada do SimplesZap. Confira a URL da API.", instancias: [] };
+  }
+  if (!Array.isArray(cru)) {
+    return { ok: false, mensagem: "Resposta inesperada do SimplesZap. Confira a URL da API.", instancias: [] };
+  }
+
+  const instancias = (cru as InstanciaRemota[])
+    .filter((i) => i?.id)
+    .map((i) => ({
+      id: String(i.id),
+      nome: i.name || String(i.id),
+      numero: i.phoneNumber ?? null,
+      status: i.status ?? "desconhecido",
+      conectada: String(i.status ?? "").toLowerCase() === "connected",
+    }));
+
+  return { ok: true, instancias };
+}
+
 interface InstanciaRemota {
   id?: string;
   name?: string;
@@ -120,9 +217,16 @@ export async function verificarInstancia(
   try {
     resp = await fetchImpl(`${cfg.baseUrl.replace(/\/+$/, "")}/instances`, {
       headers: { authorization: `Bearer ${cfg.token}`, accept: "application/json" },
+      ...comPrazo(),
     });
-  } catch {
-    return { ok: false, mensagem: "Não consegui falar com a API. Confira a URL e a internet da loja." };
+  } catch (e) {
+    const demorou = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+    return {
+      ok: false,
+      mensagem: demorou
+        ? "A API demorou demais para responder. Tente de novo em instantes."
+        : "Não consegui falar com a API. Confira a URL e a internet da loja.",
+    };
   }
 
   if (resp.status === 401 || resp.status === 403) {

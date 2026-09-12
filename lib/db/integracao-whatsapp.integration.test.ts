@@ -90,4 +90,30 @@ describe("IWA — credencial do WhatsApp no banco (integration)", () => {
     expect(sender).not.toBe(noopSender);
     expect(typeof sender.enviarTexto).toBe("function");
   });
+  it("IWA-008 o passo 2 da tela troca a instancia mandando token vazio, e a chave sobrevive", async () => {
+    await db.delete(schema.integracaoWhatsapp);
+    // passo 1 da tela: so a chave, instancia fica como estava (vazia)
+    await salvarIntegracao(db, { baseUrl: BASE_URL_PADRAO, token: "sk_do_rodrigo", instancia: "", ativo: false });
+    // passo 2 da tela: escolhe na lista e manda token vazio, porque o dono nao ve mais a chave
+    await salvarIntegracao(db, { baseUrl: BASE_URL_PADRAO, token: "", instancia: "54d175f4", ativo: true });
+
+    const cfg = await lerIntegracao(db);
+    expect(cfg.token, "escolher a instancia nao pode apagar a chave").toBe("sk_do_rodrigo");
+    expect(cfg.instancia).toBe("54d175f4");
+    expect(cfg.ativo).toBe(true);
+    expect(await senderDoBanco(db)).not.toBe(noopSender);
+  });
+
+  it("IWA-009 ligar sem escolher instancia e recusado, e o que ja valia nao muda", async () => {
+    await db.delete(schema.integracaoWhatsapp);
+    await salvarIntegracao(db, { baseUrl: BASE_URL_PADRAO, token: "sk_chave", instancia: "", ativo: false });
+    await expect(
+      salvarIntegracao(db, { baseUrl: BASE_URL_PADRAO, token: "", instancia: "", ativo: true }),
+    ).rejects.toThrow(/inst/i);
+
+    const cfg = await lerIntegracao(db);
+    expect(cfg.ativo, "recusa nao pode deixar a integracao meio ligada").toBe(false);
+    expect(cfg.token).toBe("sk_chave");
+    expect(await senderDoBanco(db)).toBe(noopSender);
+  });
 });
