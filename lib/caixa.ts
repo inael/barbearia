@@ -140,6 +140,31 @@ export async function listarItens(db: DB, comandaId: number): Promise<ItemView[]
 
 /** Fecha a conta (vira venda). Exige comanda aberta e com ao menos 1 item.
  * Itens `servico_barbeiro` viram VALE do barbeiro no fechamento (parte da barbearia). */
+/**
+ * Formas de pagamento aceitas no fechamento (CXP).
+ *
+ * O Rodrigo pediu credito e debito SEPARADOS: *"o que e pago no cartao de credito, o
+ * que e pago no cartao de debito, o que e pago em dinheiro e o que e pago em Pix"*.
+ * Antes existia so "cartao", juntando os dois.
+ *
+ * `cartao` continua aceito porque as vendas JA FECHADAS foram gravadas assim. Apagar o
+ * valor antigo seria reescrever historico de caixa; ele fica num balde proprio,
+ * rotulado como "cartao (antes da separacao)".
+ */
+export const FORMAS_PAGAMENTO = ["dinheiro", "pix", "credito", "debito", "cartao"] as const;
+export type FormaPagamento = (typeof FORMAS_PAGAMENTO)[number];
+
+/** Formas oferecidas na tela hoje. O `cartao` sai da lista: so existe no historico. */
+export const FORMAS_ATUAIS: FormaPagamento[] = ["dinheiro", "pix", "credito", "debito"];
+
+export const ROTULO_PAGAMENTO: Record<FormaPagamento, string> = {
+  dinheiro: "Dinheiro",
+  pix: "PIX",
+  credito: "Cartao de credito",
+  debito: "Cartao de debito",
+  cartao: "Cartao (antes da separacao)",
+};
+
 export async function fecharComanda(db: DB, comandaId: number, formaPagamento: string, quando: Date): Promise<void> {
   await exigirAberta(db, comandaId);
   const itens = await db
@@ -154,7 +179,7 @@ export async function fecharComanda(db: DB, comandaId: number, formaPagamento: s
     .from(schema.comandaItens)
     .where(eq(schema.comandaItens.comandaId, comandaId));
   if (itens.length === 0) throw new Error("comanda vazia");
-  if (!["dinheiro", "pix", "cartao"].includes(formaPagamento)) throw new Error("forma de pagamento inválida");
+  if (!(FORMAS_PAGAMENTO as readonly string[]).includes(formaPagamento)) throw new Error("forma de pagamento inválida");
   await db.update(schema.comandas).set({ status: "fechada", formaPagamento, fechadaEm: quando }).where(eq(schema.comandas.id, comandaId));
   // exigirAberta garante fechamento único, então os vales não duplicam.
   for (const it of itens) {
@@ -173,6 +198,73 @@ export async function fecharComanda(db: DB, comandaId: number, formaPagamento: s
   // atendido de faltou. Import tardio para nao criar ciclo com comanda-na-agenda.
   const { marcarAtendidoPelaComanda } = await import("./comanda-na-agenda");
   await marcarAtendidoPelaComanda(db, comandaId);
+}
+
+export interface FechamentoCaixa {
+  /** Centavos por forma de pagamento, na ordem de FORMAS_PAGAMENTO. */
+  porForma: Record<FormaPagamento, number>;
+  /** Soma de tudo. Confere com o total do dia. */
+  totalCentavos: number;
+  /** Quantas vendas em cada forma: ajuda a recepcao a bater a maquininha. */
+  quantidadePorForma: Record<FormaPagamento, number>;
+}
+
+/**
+ * CXP: fechamento do caixa separado por forma de pagamento.
+ *
+ * Pedido do Rodrigo em 11/09: *"pra mim ter uma base de dados e pra menina tambem
+ * poder fechar o caixa direitinho"*. Sem isso ela so via o total e nao tinha como
+ * conferir maquininha, Pix e gaveta.
+ *
+ * A soma usa a MESMA regra do total do dia (`valorFaturado`), senao a quebra nao
+ * bateria com o total exibido ao lado, que e justamente o que ela vai conferir.
+ */
+export async function fechamentoDoCaixa(db: DB, de: Date, ate: Date): Promise<FechamentoCaixa> {
+  const rows = await db
+    .select({
+      v: schema.comandaItens.valorCentavos,
+      tipo: schema.comandaItens.tipo,
+      slug: schema.comandaItens.slug,
+      lancamento: schema.comandaItens.lancamento,
+      forma: schema.comandas.formaPagamento,
+      comandaId: schema.comandas.id,
+    })
+    .from(schema.comandaItens)
+    .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+        inArray(schema.comandaItens.lancamento, ["normal", "servico_barbeiro"]),
+      ),
+    );
+
+  const zero = () =>
+    Object.fromEntries(FORMAS_PAGAMENTO.map((f) => [f, 0])) as Record<FormaPagamento, number>;
+  const porForma = zero();
+  const comandasVistas: Record<FormaPagamento, Set<number>> = Object.fromEntries(
+    FORMAS_PAGAMENTO.map((f) => [f, new Set<number>()]),
+  ) as Record<FormaPagamento, Set<number>>;
+
+  let totalCentavos = 0;
+  for (const r of rows) {
+    // forma desconhecida (dado velho ou torto) cai em "cartao", o balde do historico,
+    // em vez de sumir da conta: caixa que nao fecha e pior que rotulo impreciso.
+    const forma = ((FORMAS_PAGAMENTO as readonly string[]).includes(r.forma ?? "")
+      ? r.forma
+      : "cartao") as FormaPagamento;
+    const valor = valorFaturado(r);
+    porForma[forma] += valor;
+    totalCentavos += valor;
+    comandasVistas[forma].add(r.comandaId);
+  }
+
+  const quantidadePorForma = Object.fromEntries(
+    FORMAS_PAGAMENTO.map((f) => [f, comandasVistas[f].size]),
+  ) as Record<FormaPagamento, number>;
+
+  return { porForma, totalCentavos, quantidadePorForma };
 }
 
 export interface ComandaResumo {

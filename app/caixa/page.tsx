@@ -18,6 +18,10 @@ import {
   listarComandasAbertas,
   totalComanda,
   totalVendas,
+  fechamentoDoCaixa,
+  FORMAS_ATUAIS,
+  FORMAS_PAGAMENTO,
+  ROTULO_PAGAMENTO,
 } from "@/lib/caixa";
 import { emitirNota } from "@/lib/nf";
 import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
@@ -142,6 +146,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
   de.setHours(0, 0, 0, 0);
   const ate = new Date(de.getTime() + 24 * 60 * 60 * 1000);
   const totalDia = await totalVendas(db, de, ate);
+  const fechamento = await fechamentoDoCaixa(db, de, ate);
 
   const comandaId = sp.comanda ? Number(sp.comanda) : null;
   const comandaAberta = comandaId ? abertas.find((c) => c.id === comandaId) : null;
@@ -173,6 +178,39 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
         />
 
         <Aviso ok={sp?.ok} erro={sp?.erro} />
+
+        {/* CXP: fechamento separado por forma de pagamento. Pedido do Rodrigo: sem isso a
+            recepcao so via o total e nao tinha como conferir maquininha, Pix e gaveta. */}
+        <section className="mt-6" data-testid="fechamento-caixa">
+          <h2 className="mb-1 text-lg font-semibold">Fechamento do dia</h2>
+          <p className="mb-3 text-sm text-neutral-600">
+            Quanto entrou em cada forma de pagamento hoje. Confira com a maquininha, o app do
+            PIX e o dinheiro da gaveta antes de fechar.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {FORMAS_PAGAMENTO.filter(
+              (f) => fechamento.porForma[f] > 0 || FORMAS_ATUAIS.includes(f),
+            ).map((f) => (
+              <div
+                key={f}
+                data-forma={f}
+                className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                  {ROTULO_PAGAMENTO[f]}
+                </p>
+                <p className="mt-1 text-lg font-semibold">{brl(fechamento.porForma[f])}</p>
+                <p className="text-xs text-neutral-500">
+                  {fechamento.quantidadePorForma[f]}{" "}
+                  {fechamento.quantidadePorForma[f] === 1 ? "venda" : "vendas"}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-sm" data-testid="fechamento-total">
+            Total do dia: <strong>{brl(fechamento.totalCentavos)}</strong>
+          </p>
+        </section>
 
         {comandaAberta ? (
           <section className="mt-6 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900" data-testid="comanda">
@@ -249,9 +287,9 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
             <form action={fechar} className="mt-4 flex flex-wrap items-end gap-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
               <label className="flex flex-col gap-1 text-xs font-medium">Forma de pagamento
                 <select name="formaPagamento" aria-label="Forma de pagamento" data-testid="cx-pagamento" className={input}>
-                  <option value="dinheiro">Dinheiro</option>
-                  <option value="pix">PIX</option>
-                  <option value="cartao">Cartão</option>
+                  {FORMAS_ATUAIS.map((f) => (
+                    <option key={f} value={f}>{ROTULO_PAGAMENTO[f]}</option>
+                  ))}
                 </select>
               </label>
               <input type="hidden" name="comandaId" value={comandaAberta.id} />

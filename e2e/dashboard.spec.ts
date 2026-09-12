@@ -38,7 +38,9 @@ test.describe("DASH — painel do dono (e2e)", () => {
     await page.getByTestId("cx-servico-prof").selectOption({ label: "Pedro" });
     await page.getByRole("button", { name: "Adicionar serviço" }).click();
     await expect(page.getByTestId("total-comanda")).toContainText("150,00");
-    await page.getByTestId("cx-pagamento").selectOption("cartao");
+    // "cartao" saiu da tela em 12/09: o Rodrigo pediu credito e debito separados,
+    // e o valor antigo so existe no historico. Aqui usamos uma forma atual.
+    await page.getByTestId("cx-pagamento").selectOption("credito");
     await page.getByRole("button", { name: "Fechar conta" }).click();
     await expect(page.getByText("Conta fechada.")).toBeVisible();
 

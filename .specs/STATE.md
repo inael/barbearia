@@ -74,9 +74,10 @@
 | BCL — Achar cliente digitando | busca-cliente.md | 7 | Caixa/Agenda | **Rodrigo 11/09** (2 áudios): `<select>` com todos os clientes trava o caixa no movimento |
 | CNA — Comanda pela agenda | comanda-na-agenda.md | 8 | Caixa/Agenda | **Rodrigo 11/09**: medo declarado de "fechar comandas erradas de clientes errados" |
 | SVC-008 — Descoberta da edição | catalogo-crud.md | 1 | Cadastros | **Rodrigo 11/09**: o recurso existe; ele procurou e não achou |
+| CXP — Fechamento do caixa por forma | fechamento-caixa.md | 8 | Caixa | **Rodrigo 11/09**: sem a quebra a recepção não fecha o caixa; crédito e débito estavam juntos |
 | **Subtotal B** | | **54** | | |
 
-**Total: 54 features · 376 ACs · 322 PASS / 54 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
+**Total: 55 features · 384 ACs · 367 PASS / 17 PENDING.** unit 129, integration 123, e2e 96 — todos verdes (tlc-validate: OK). Operação inteira coberta: cadastros → agenda (com grade do dia e rodízio) → caixa (cortesia, consumo do barbeiro, desconto de assinante) → comissão do barbeiro E da recepção → metas/vales → painel do dono → estoque/notificações → nota fiscal → assinaturas/pote → TV.
 
 **Auditoria 2026-08-26 (`docs/context/AUDITORIA-REQUISITOS-2026-08-26.md`):** os 14 áudios + 21 respostas do Rodrigo foram cruzados requisito-a-requisito (RF1–RF31) com as specs e o código; os 4 gaps encontrados (comissão real da recepção, rodízio no fluxo, desconto de assinante no caixa, grade do dia) viraram a feature OPR e estão fechados. **Simulação de 1 mês de operação** (236 comandas, R$ 21.461,90) validada em `docs/context/SIMULACAO-2026-08-26.md`. **Resta só EXECUÇÃO** (credenciais/go-live), não código.
 
