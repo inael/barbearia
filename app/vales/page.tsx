@@ -7,11 +7,11 @@ import { listarProfissionais } from "@/lib/profissionais";
 import { registrarVale, listarVales, editarVale, removerVale, TIPOS_VALE, type TipoVale } from "@/lib/vales";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
+import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/vales";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const reaisParaCentavos = (v: string) => Math.round(parseFloat(String(v).replace(",", ".")) * 100);
 const tipoLabel: Record<string, string> = {
   produto_cliente: "Produto p/ cliente",
   retirado_barbeiro: "Retirado pelo barbeiro",
@@ -28,11 +28,13 @@ async function podeLancarVale() {
 async function salvarVale(formData: FormData) {
   "use server";
   if (!(await podeLancarVale())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   try {
     await editarVale(getDb(), Number(formData.get("id")), {
       tipo: String(formData.get("tipo")) as TipoVale,
       descricao: String(formData.get("descricao") || ""),
-      precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+      precoCentavos: preco,
     });
   } catch (e) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao salvar")}`);
@@ -51,11 +53,13 @@ async function excluirVale(formData: FormData) {
 async function novo(formData: FormData) {
   "use server";
   if (!(await podeLancarVale())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   await registrarVale(getDb(), {
     profissionalId: Number(formData.get("profissionalId")),
     tipo: String(formData.get("tipo") || "retirado_barbeiro") as TipoVale,
     descricao: String(formData.get("descricao") || ""),
-    precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+    precoCentavos: preco,
   });
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Vale lançado.")}`);

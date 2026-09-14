@@ -10,11 +10,11 @@ import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, typ
 import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/cobranca";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
+import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/assinaturas";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const reaisParaCentavos = (v: string) => Math.round(parseFloat(String(v).replace(",", ".")) * 100);
 
 async function podeGerenciar() {
   const session = await auth();
@@ -24,10 +24,12 @@ async function podeGerenciar() {
 async function novoPlano(formData: FormData) {
   "use server";
   if (!(await podeGerenciar())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   await criarPlano(getDb(), {
     nome: String(formData.get("nome") || ""),
     tipo: String(formData.get("tipo") || "flex") as TipoPlano,
-    precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+    precoCentavos: preco,
     descontoServicoPct: Number(formData.get("descServico")) || 0,
     descontoProdutoPct: Number(formData.get("descProduto")) || 0,
     dias: String(formData.get("dias") || ""),
@@ -39,11 +41,13 @@ async function novoPlano(formData: FormData) {
 async function salvarPlano(formData: FormData) {
   "use server";
   if (!(await podeGerenciar())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   try {
     await editarPlano(getDb(), Number(formData.get("id")), {
       nome: String(formData.get("nome") || ""),
       tipo: String(formData.get("tipo") || "flex") as TipoPlano,
-      precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+      precoCentavos: preco,
       descontoServicoPct: Number(formData.get("descServico")) || 0,
       descontoProdutoPct: Number(formData.get("descProduto")) || 0,
       dias: String(formData.get("dias") || ""),

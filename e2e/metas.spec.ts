@@ -48,3 +48,52 @@ test.describe("MET — metas + relatórios (e2e)", () => {
     await expect(linha).toContainText("Divididos da casa");
   });
 });
+
+test.describe("MET — alvo da meta: recado em vez de erro 500 (e2e)", () => {
+  test("MET-010 valor que o sistema não entende vira recado na tela, não página de erro", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+
+    // reproduzido contra producao em 14/09: estas entradas devolviam HTTP 500
+    await page.getByTestId("met-tipo").selectOption("quantidade");
+    await page.getByTestId("met-alvo").fill("40,5");
+    await page.locator("form").filter({ has: page.getByTestId("met-alvo") }).getByRole("button").first().click();
+
+    await expect(page.getByTestId("aviso-erro"), "sem aviso, o dono ve uma pagina de erro").toBeVisible();
+    await expect(page.getByTestId("aviso-erro")).toContainText(/inteiro|40/i);
+    await expect(page.locator("body"), "nada de tela de erro do framework").not.toContainText(
+      /Application error|Internal Server Error/i,
+    );
+  });
+
+  test("MET-011 a unidade aparece ao lado do campo e muda com o tipo da meta", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+
+    // pedido do Rodrigo (audio 14/09): "tem que ter uma abinha de unidade"
+    const unidade = page.getByTestId("met-unidade");
+    await expect(unidade).toContainText("por semana");
+
+    await page.getByTestId("met-tipo").selectOption("quantidade");
+    await expect(unidade, "trocando o tipo, a unidade tem de acompanhar").toContainText("atendimentos");
+
+    await page.getByTestId("met-tipo").selectOption("valor");
+    await expect(unidade).toContainText("por semana");
+  });
+
+  test("MET-010 meta de faturamento com milhar salva o valor CERTO, não cem vezes menor", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+
+    await page.getByTestId("met-prof").selectOption({ label: "Pedro" });
+    await page.getByTestId("met-tipo").selectOption("valor");
+    await page.getByTestId("met-alvo").fill("3.000,00");
+    await page.locator("form").filter({ has: page.getByTestId("met-alvo") }).getByRole("button").first().click();
+    await expect(page.getByTestId("aviso-ok")).toBeVisible();
+
+    // o conversor antigo lia "3.000,00" como R$ 3,00 e gravava calado
+    await expect(page.locator('[data-prof-meta="Pedro"]'), "R$ 3.000,00 nao pode virar R$ 3,00").toContainText(
+      /3\.000,00/,
+    );
+  });
+});

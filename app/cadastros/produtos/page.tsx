@@ -5,12 +5,12 @@ import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { criarProduto, editarProduto, inativarProduto, listarProdutos } from "@/lib/produtos";
 import Aviso from "@/components/Aviso";
+import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/cadastros/produtos";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const reaisParaCentavos = (v: string) => Math.round(parseFloat(String(v).replace(",", ".")) * 100);
 
 async function autorizado() {
   const session = await auth();
@@ -21,7 +21,9 @@ async function autorizado() {
 async function novo(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
-  await criarProduto(getDb(), { nome: String(formData.get("nome") || ""), precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")) });
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
+  await criarProduto(getDb(), { nome: String(formData.get("nome") || ""), precoCentavos: preco });
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Produto cadastrado.")}`);
 }
@@ -29,7 +31,9 @@ async function novo(formData: FormData) {
 async function salvar(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
-  await editarProduto(getDb(), Number(formData.get("id")), { nome: String(formData.get("nome") || ""), precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")) });
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
+  await editarProduto(getDb(), Number(formData.get("id")), { nome: String(formData.get("nome") || ""), precoCentavos: preco });
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Produto atualizado.")}`);
 }

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import Aviso from "@/components/Aviso";
+import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 import {
   criarServico,
   editarServico,
@@ -19,7 +20,6 @@ const ROTA = "/cadastros/servicos";
 
 const brl = (centavos: number) => (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 /** "60", "60,00", "60.50" -> centavos inteiros. */
-const reaisParaCentavos = (v: string) => Math.round(parseFloat(String(v).replace(",", ".")) * 100);
 
 async function autorizado() {
   const session = await auth();
@@ -30,10 +30,12 @@ async function autorizado() {
 async function novoServico(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   const entraPote = formData.get("entraPote") === "on";
   await criarServico(getDb(), {
     nome: String(formData.get("nome") || ""),
-    precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+    precoCentavos: preco,
     duracaoMin: Number(formData.get("duracao")),
     entraPote,
     pontosPote: entraPote ? Number(formData.get("pontos")) : 0,
@@ -45,11 +47,13 @@ async function novoServico(formData: FormData) {
 async function salvarServico(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   const id = Number(formData.get("id"));
   const entraPote = formData.get("entraPote") === "on";
   await editarServico(getDb(), id, {
     nome: String(formData.get("nome") || ""),
-    precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+    precoCentavos: preco,
     duracaoMin: Number(formData.get("duracao")),
     entraPote,
     pontosPote: entraPote ? Number(formData.get("pontos")) : 0,
@@ -69,9 +73,11 @@ async function removerServico(formData: FormData) {
 async function novoCombo(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
   await criarCombo(getDb(), {
     nome: String(formData.get("nome") || ""),
-    precoCentavos: reaisParaCentavos(String(formData.get("preco") || "0")),
+    precoCentavos: preco,
     duracaoMin: Number(formData.get("duracao")),
     inclui: String(formData.get("inclui") || ""),
   });

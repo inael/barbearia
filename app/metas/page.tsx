@@ -7,11 +7,12 @@ import { listarProfissionais } from "@/lib/profissionais";
 import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao } from "@/lib/metas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
+import AlvoDaMeta from "@/components/AlvoDaMeta";
+import { lerAlvo } from "@/lib/meta-alvo";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/metas";
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const reaisParaCentavos = (v: string) => Math.round(parseFloat(String(v).replace(",", ".")) * 100);
 
 async function podeEditar() {
   const session = await auth();
@@ -24,11 +25,27 @@ async function salvarMeta(formData: FormData) {
   const { inicio, fim } = semanaAtual(new Date());
   const pid = Number(formData.get("profissionalId"));
   const tipo = String(formData.get("tipoAlvo") || "valor");
-  if (tipo === "quantidade") {
-    await definirMetaQuantidade(getDb(), pid, inicio, fim, Math.trunc(Number(formData.get("alvo"))));
-  } else {
-    await definirMeta(getDb(), pid, inicio, fim, reaisParaCentavos(String(formData.get("alvo") || "0")));
+
+  if (!Number.isInteger(pid) || pid <= 0) {
+    redirect(`${ROTA}?erro=${encodeURIComponent("Escolha o profissional da meta.")}`);
   }
+
+  const alvo = lerAlvo(String(formData.get("alvo") || ""), tipo);
+  if (!alvo.ok) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(alvo.motivo)}`);
+  }
+
+  try {
+    if (tipo === "quantidade") {
+      await definirMetaQuantidade(getDb(), pid, inicio, fim, alvo.valor);
+    } else {
+      await definirMeta(getDb(), pid, inicio, fim, alvo.valor);
+    }
+  } catch (e) {
+    // qualquer coisa que escape vira recado, nunca pagina de erro
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "não consegui salvar a meta")}`);
+  }
+
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Meta salva.")}`);
 }
@@ -148,15 +165,7 @@ export default async function MetasPage({ searchParams }: { searchParams: Promis
                   {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </label>
-              <label className="flex flex-col gap-1 text-xs font-medium">Meta em
-                <select name="tipoAlvo" aria-label="Tipo de meta" data-testid="met-tipo" className={input}>
-                  <option value="valor">R$ (faturamento)</option>
-                  <option value="quantidade">Atendimentos (qtd)</option>
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-medium">Alvo
-                <input name="alvo" required inputMode="decimal" aria-label="Alvo da meta" data-testid="met-alvo" className={`${input} w-28`} />
-              </label>
+              <AlvoDaMeta classeInput={input} classeSelect={input} />
               <button type="submit" className={btn}>Salvar meta</button>
             </form>
           </section>
