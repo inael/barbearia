@@ -23,6 +23,7 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | MTV-005 | Remover item da playlist apaga o arquivo do bucket; objeto já inexistente conta como sucesso; bucket fora do ar não impede a remoção e avisa do arquivo órfão | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-006 | Mídia antiga (data URL) e link externo continuam na playlist, convivem com upload novo, e a limpeza nunca tenta apagá-los | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-008 | O teto de corpo do Server Action cabe o teto de mídia (50 MB), quem recusa arquivo grande é a nossa validação com o motivo em MB, e a tela mostra o limite | unit + e2e | lib/upload-limite.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+| MTV-009 | Toda chamada ao bucket tem prazo: envio pendurado é cancelado e vira recado, não tela carregando para sempre | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-007 | Bucket fora do ar ou chave sem permissão: o erro diz o status e a playlist antiga fica intacta; sem bucket configurado a tela segue operável | integration + e2e | lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
@@ -34,7 +35,14 @@ REQUIREMENT (não perder o que já existe) → MTV-006 → integration → lib/d
 REQUIREMENT (vídeo cabe no pedido, não só no código) → MTV-008 → unit + e2e → lib/upload-limite.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 REQUIREMENT (falha explicada, TV não apaga) → MTV-007 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (a tela nunca fica parada pelo bucket) → MTV-009 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
+
 ## Gaps
+- **Chave errada nem sempre vira erro: as vezes o Garage simplesmente nao responde**
+  (visto nas duas formas em 14/09, o travamento aparecendo com a maquina sob carga).
+  `fetch` no servidor nao desiste sozinho, entao as chamadas ao bucket ganharam prazo:
+  20s para ler e apagar, 60s para enviar. O cancelamento vira mensagem pedindo para
+  conferir a credencial.
 - **Bug em producao achado pelo Rodrigo (audio 12/09): nenhum video subia.** O bucket
   estava de pe e a credencial certa; o corte vinha do **Next**, cujo limite padrao de
   corpo de Server Action e **1 MB**, e o upload da TV e um Server Action. Imagem

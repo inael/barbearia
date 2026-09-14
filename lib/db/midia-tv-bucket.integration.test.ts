@@ -186,13 +186,16 @@ describe("MTV — mídia da TV em bucket de verdade (integration, Garage real)",
     expect(playlist.map((p) => p.url), "falha no upload nao pode apagar a TV").toEqual([antiga]);
   }, 60_000);
 
-  it("MTV-007 chave sem permissão: a mensagem diz o status, não some em silêncio", async () => {
+  it("MTV-007 chave errada falha com motivo, e travamento vira recado em vez de tela parada", async () => {
+    // Achado em 14/09: com a chave secreta errada o Garage as vezes recusa na hora e
+    // as vezes nao responde. Os dois casos precisam virar mensagem; sem prazo, o
+    // segundo deixava o upload do Rodrigo carregando para sempre.
     const cfgRuim = { ...garage.cfg, chaveSecreta: "0".repeat(64) };
     const bytes = bytesDe(1);
-    await expect(
-      bucketStorage(cfgRuim).salvar("x.png", bytes, "image/png"),
-    ).rejects.toThrow(/upload falhou \(40\d\)/);
-  }, 60_000);
+    await expect(bucketStorage(cfgRuim).salvar("x.png", bytes, "image/png")).rejects.toThrow(
+      /demorou demais|upload falhou \(40\d\)/,
+    );
+  }, 180_000);
 
   it("MTV-005 apagar objeto que já não existe conta como sucesso (nada mais a liberar)", async () => {
     await expect(apagarDoBucket(garage.cfg, "2020/01/nunca-existiu.png")).resolves.toBeUndefined();

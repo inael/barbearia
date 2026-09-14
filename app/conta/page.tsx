@@ -3,6 +3,8 @@ import { auth, signOut } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar, type Recurso } from "@/lib/auth/rbac";
 import { primeirosPassos } from "@/lib/onboarding";
+import { painelDoDono, painelDaRecepcao, painelDoBarbeiro } from "@/lib/inicio";
+import { PainelDonoResumo, PainelRecepcaoResumo, PainelBarbeiroResumo } from "@/components/PainelInicio";
 import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +29,23 @@ export default async function ContaPage() {
   const passos = mostraOnboarding ? await primeirosPassos(getDb(), papel) : [];
   const pendentes = passos.filter((p) => !p.feito);
 
+  // INI: a entrada e um painel do papel, nao a mesma lista de links para todos.
+  // O barbeiro so tem painel se estiver vinculado a um profissional; sem vinculo
+  // nao existe "os meus numeros", e mostrar os de outro seria pior que nao mostrar.
+  const db = getDb();
+  const profissionalId = session?.user?.profissionalId ?? null;
+  const painel =
+    papel === "dono"
+      ? { tipo: "dono" as const, dados: await painelDoDono(db) }
+      : papel === "recepcionista"
+        ? { tipo: "recepcao" as const, dados: await painelDaRecepcao(db) }
+        : papel === "barbeiro" && profissionalId
+          ? { tipo: "barbeiro" as const, dados: await painelDoBarbeiro(db, profissionalId) }
+          : null;
+
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-      <div className="mx-auto max-w-3xl px-5 py-10">
+      <div className="mx-auto max-w-5xl px-5 py-10">
         <PageHeader
           titulo={`Bem-vindo, ${session?.user?.name ?? ""}`}
           descricao="Este é o seu ponto de partida: o menu à esquerda tem tudo agrupado — Operação (agenda, caixa, vales), Cadastros, Gestão e TV."
@@ -42,6 +58,18 @@ export default async function ContaPage() {
             </>
           }
         />
+
+        {painel?.tipo === "dono" ? <PainelDonoResumo d={painel.dados} /> : null}
+        {painel?.tipo === "recepcao" ? <PainelRecepcaoResumo d={painel.dados} /> : null}
+        {painel?.tipo === "barbeiro" ? <PainelBarbeiroResumo d={painel.dados} /> : null}
+        {painel === null ? (
+          <p data-testid="inicio-sem-painel" className="rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
+            Seu usuário ainda não está ligado a um profissional, então não dá para montar os seus números.
+            Peça ao dono para fazer esse vínculo em Cadastros.
+          </p>
+        ) : null}
+
+        <div className="mt-8" />
 
         {mostraOnboarding ? (
           <section

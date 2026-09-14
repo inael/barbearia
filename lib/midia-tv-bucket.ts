@@ -150,6 +150,21 @@ async function assinar(
   return { url, headers };
 }
 
+/**
+ * Prazos das chamadas ao bucket.
+ *
+ * `fetch` no servidor nao desiste sozinho. Sem prazo, um Garage pendurado deixava a
+ * tela da TV carregando para sempre e a rota /midia segurando conexao. O PUT tem mais
+ * folga porque carrega o arquivo inteiro, mas e servidor-para-bucket na MESMA VPS: o
+ * que demora de verdade e o navegador ate aqui, que e outro caminho.
+ */
+const PRAZO_LEITURA_MS = 20_000;
+const PRAZO_ENVIO_MS = 60_000;
+
+function comPrazo(ms: number): { signal: AbortSignal } | Record<string, never> {
+  return typeof AbortSignal?.timeout === "function" ? { signal: AbortSignal.timeout(ms) } : {};
+}
+
 /** Busca um objeto do bucket (usado pela rota /midia que serve a TV). */
 export async function baixarDoBucket(
   cfg: ConfigBucket,
@@ -158,7 +173,7 @@ export async function baixarDoBucket(
   fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
   const { url, headers } = await assinar(cfg, "GET", objeto, null, null, agora);
-  return fetchImpl(url.toString(), { headers });
+  return fetchImpl(url.toString(), { headers, ...comPrazo(PRAZO_LEITURA_MS) });
 }
 
 /**
@@ -194,7 +209,7 @@ export async function apagarDoBucket(
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
   const { url, headers } = await assinar(cfg, "DELETE", objeto, null, null, agora);
-  const resp = await fetchImpl(url.toString(), { method: "DELETE", headers });
+  const resp = await fetchImpl(url.toString(), { method: "DELETE", headers, ...comPrazo(PRAZO_LEITURA_MS) });
   if (!resp.ok && resp.status !== 404) {
     const detalhe = await resp.text().catch(() => "");
     throw new Error(`nao consegui apagar do bucket (${resp.status}): ${detalhe.slice(0, 160)}`);
@@ -210,11 +225,26 @@ export async function enviarParaBucket(
   fetchImpl: typeof fetch = fetch,
 ): Promise<string> {
   const { url, headers } = await assinar(cfg, "PUT", objeto, corpo, tipo, agora);
-  const resp = await fetchImpl(url.toString(), {
-    method: "PUT",
-    headers,
-    body: corpo as unknown as BodyInit,
-  });
+  let resp: Response;
+  try {
+    resp = await fetchImpl(url.toString(), {
+      method: "PUT",
+      headers,
+      body: corpo as unknown as BodyInit,
+      ...comPrazo(PRAZO_ENVIO_MS),
+    });
+  } catch (e) {
+    // Com a chave errada o Garage as vezes recusa na hora e as vezes simplesmente
+    // nao responde (visto nas duas formas em 14/09). Sem prazo, o segundo caso
+    // deixava o dono olhando a tela carregar para sempre. Aqui o cancelamento vira
+    // recado, em vez de um erro cru de rede que nao diz o que fazer.
+    if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      throw new Error(
+        "o envio demorou demais e foi cancelado. Confira a credencial do bucket e tente de novo.",
+      );
+    }
+    throw new Error(`nao consegui falar com o bucket: ${e instanceof Error ? e.message : "erro de rede"}`);
+  }
   if (!resp.ok) {
     const detalhe = await resp.text().catch(() => "");
     throw new Error(`upload falhou (${resp.status}): ${detalhe.slice(0, 160)}`);
