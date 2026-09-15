@@ -45,8 +45,19 @@ afterAll(async () => {
   await container?.stop();
 });
 
+/**
+ * Telefone unico e SEMPRE com 11 digitos.
+ *
+ * Antes era `61 9${Date.now() % 100000000}`. Quando o resto do relogio caia abaixo de
+ * 10 milhoes, o numero saia com 9 digitos, `criarCliente` recusava com "telefone
+ * invalido" e a suite inteira deste arquivo quebrava por sorte do horario. Aconteceu
+ * em 15/09: 7 testes vermelhos de uma vez, sem nada a ver com a mudanca da rodada.
+ */
+let sequencia = 0;
+const telefoneUnico = () => `619${String(++sequencia).padStart(8, "0")}`;
+
 async function novoAgendamento(hora: number) {
-  const clienteId = await criarCliente(db, { nome: `Cli CNA ${hora}-${Date.now()}`, telefone: `61 9${Date.now() % 100000000}` });
+  const clienteId = await criarCliente(db, { nome: `Cli CNA ${hora}-${Date.now()}`, telefone: telefoneUnico() });
   const id = await criarAgendamento(db, { clienteId, servicoId: corteId, profissionalId: pedroId, inicio: amanha(hora) });
   return { id, clienteId };
 }

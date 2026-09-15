@@ -17,5 +17,5 @@ export default async function TvPlayerPage({ params }: { params: Promise<{ id: s
     );
   }
   const itens = await listarItens(db, telaId);
-  return <TvPlayer items={itens.map((i) => i.url)} velocidadeSegundos={tela.velocidadeSegundos} />;
+  return <TvPlayer items={itens.map((i) => ({ url: i.url, segundos: i.segundos, rotacao: i.rotacao }))} velocidadeSegundos={tela.velocidadeSegundos} />;
 }

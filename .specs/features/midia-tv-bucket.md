@@ -26,6 +26,9 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | MTV-009 | Toda chamada ao bucket tem prazo: envio pendurado é cancelado e vira recado, não tela carregando para sempre | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-007 | Bucket fora do ar ou chave sem permissão: o erro diz o status e a playlist antiga fica intacta; sem bucket configurado a tela segue operável | integration + e2e | lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| TV-010 | Cada mídia tem o próprio tempo na tela; sem tempo próprio, herda a velocidade da tela; tempo inválido é recusado com o motivo | unit + integration + e2e | lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+| TV-011 | A mídia pode ser girada por item (0, 90, 180, 270) e sai girada no player; item novo nasce sem giro | unit + integration + e2e | lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -37,7 +40,21 @@ REQUIREMENT (falha explicada, TV não apaga) → MTV-007 → integration + e2e �
 
 REQUIREMENT (a tela nunca fica parada pelo bucket) → MTV-009 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 
+REQUIREMENT (cada mídia com seu tempo) → TV-010 → unit + integration + e2e → lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
+REQUIREMENT (TV montada de lado) → TV-011 → unit + integration + e2e → lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
+
 ## Gaps
+- **Pedidos do Rodrigo por áudio (14/09), com o upload de vídeo já funcionando:**
+  *"lá só tem como botar um temporizador pra todos os vídeos a mesma quantidade de
+  segundos... eu queria botar numa foto cinco segundos, em outra dez, e em outra um
+  vídeo de 25"* e *"eu tô usando a TV de lado, pra ela ficar tipo um painel... os que
+  eu edito eu já subo girados, mas os do YouTube não tem como"*.
+- O giro é **por item** e nasce em 0, não por tela. Se fosse por tela, as mídias que
+  ele já sobe pré-giradas girariam de novo e sairiam de cabeça para baixo.
+- Girar com CSS troca largura e altura, por isso o envelope recebe as medidas
+  invertidas. Sem isso a mídia girada aparece cortada nas pontas.
+- O tempo virou `setTimeout` reagendado a cada troca, não mais um `setInterval` único:
+  um intervalo só não consegue dar 5s para a foto e 25s para o vídeo.
 - **Chave errada nem sempre vira erro: as vezes o Garage simplesmente nao responde**
   (visto nas duas formas em 14/09, o travamento aparecendo com a maquina sob carga).
   `fetch` no servidor nao desiste sozinho, entao as chamadas ao bucket ganharam prazo:

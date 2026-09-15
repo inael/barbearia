@@ -187,13 +187,24 @@ describe("MTV — mídia da TV em bucket de verdade (integration, Garage real)",
   }, 60_000);
 
   it("MTV-007 chave errada falha com motivo, e travamento vira recado em vez de tela parada", async () => {
-    // Achado em 14/09: com a chave secreta errada o Garage as vezes recusa na hora e
-    // as vezes nao responde. Os dois casos precisam virar mensagem; sem prazo, o
-    // segundo deixava o upload do Rodrigo carregando para sempre.
+    // Com a chave errada o Garage faz TRES coisas diferentes, e as tres ja apareceram
+    // aqui: recusa com 40x, nao responde (o prazo cancela), ou derruba a conexao.
+    // O teste nao fixa QUAL delas: fixa que o dono recebe um recado que diz o que
+    // fazer, em vez de tela travada ou erro cru de rede.
     const cfgRuim = { ...garage.cfg, chaveSecreta: "0".repeat(64) };
     const bytes = bytesDe(1);
-    await expect(bucketStorage(cfgRuim).salvar("x.png", bytes, "image/png")).rejects.toThrow(
-      /demorou demais|upload falhou \(40\d\)/,
+
+    let mensagem = "";
+    try {
+      await bucketStorage(cfgRuim).salvar("x.png", bytes, "image/png");
+      throw new Error("deveria ter falhado com a chave errada");
+    } catch (e) {
+      mensagem = e instanceof Error ? e.message : String(e);
+    }
+
+    expect(mensagem, "chave errada nao pode passar batido").not.toContain("deveria ter falhado");
+    expect(mensagem, `mensagem sem acao para o dono: "${mensagem}"`).toMatch(
+      /credencial|upload falhou \(40\d\)/i,
     );
   }, 180_000);
 

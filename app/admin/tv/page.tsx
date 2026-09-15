@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
-import { listarTelas, criarTela, editarTela, removerTela, adicionarItem, removerItem, listarItens } from "@/lib/tv";
+import { listarTelas, criarTela, editarTela, removerTela, adicionarItem, removerItem, listarItens, ajustarItem, segundosValidos, ROTACOES, SEGUNDOS_MAXIMO } from "@/lib/tv";
 import { uploadMidia, getStorageClient, validarMidia, LIMITE_BYTES } from "@/lib/tv-upload";
 import PageHeader from "@/components/PageHeader";
 import { rotuloDaMidia } from "@/lib/midia";
@@ -76,6 +76,28 @@ async function excluirItem(formData: FormData) {
       ? `${ROTA}?erro=${encodeURIComponent(r.avisoArquivo)}`
       : `${ROTA}?ok=${encodeURIComponent("Mídia removida da playlist.")}`,
   );
+}
+
+async function ajustarMidia(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const itemId = Number(formData.get("itemId"));
+  if (!Number.isInteger(itemId)) return;
+
+  const bruto = String(formData.get("segundos") || "").trim();
+  // campo vazio volta a valer o tempo da tela, de proposito. Numero invalido nao:
+  // aceitar calado faria o item sumir do ritmo sem o dono entender por que.
+  if (bruto && segundosValidos(bruto) === null) {
+    redirect(
+      `${ROTA}?erro=${encodeURIComponent(
+        `Tempo inválido. Use um número inteiro de 1 a ${SEGUNDOS_MAXIMO} segundos, ou deixe vazio para usar o tempo da tela.`,
+      )}`,
+    );
+  }
+
+  await ajustarItem(getDb(), itemId, { segundos: bruto, rotacao: formData.get("rotacao") });
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Tempo e giro da mídia salvos.")}`);
 }
 
 async function enviarMidia(formData: FormData) {
@@ -208,6 +230,35 @@ export default async function AdminTvPage({ searchParams }: { searchParams: Prom
                         >
                           Abrir mídia
                         </a>
+                        {/* pedido do Rodrigo (audio 14/09): tempo por item, e giro
+                            porque a TV dele esta montada de lado como painel */}
+                        <form action={ajustarMidia} className="flex flex-wrap items-center gap-1">
+                          <input type="hidden" name="itemId" value={it.id} />
+                          <input
+                            name="segundos"
+                            inputMode="numeric"
+                            defaultValue={it.segundos ?? ""}
+                            placeholder={String(t.velocidadeSegundos)}
+                            aria-label={`Segundos do item ${it.ordem}`}
+                            data-testid={`item-segundos-${it.id}`}
+                            className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+                          />
+                          <span className="text-xs text-neutral-500">s</span>
+                          <select
+                            name="rotacao"
+                            defaultValue={String(it.rotacao)}
+                            aria-label={`Giro do item ${it.ordem}`}
+                            data-testid={`item-rotacao-${it.id}`}
+                            className="rounded border border-neutral-300 px-1 py-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+                          >
+                            {ROTACOES.map((g) => (
+                              <option key={g} value={g}>{g === 0 ? "sem giro" : `${g}°`}</option>
+                            ))}
+                          </select>
+                          <button type="submit" className="rounded border border-neutral-300 px-2 py-0.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">
+                            salvar
+                          </button>
+                        </form>
                         <form action={excluirItem}>
                           <input type="hidden" name="itemId" value={it.id} />
                           <button type="submit" className="text-xs text-red-700 underline hover:text-red-900 dark:text-red-400">remover</button>

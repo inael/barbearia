@@ -8,7 +8,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import * as schema from "../lib/db/schema";
 import { criarUsuario } from "../lib/auth/usuarios";
-import { criarTela, adicionarItem } from "../lib/tv";
+import { criarTela, adicionarItem, ajustarItem } from "../lib/tv";
 
 const PORT = 3123;
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -88,6 +88,12 @@ export default async function globalSetup() {
   // o bug antigo (tudo virava <img> e video dava tela preta).
   const telaBucket = await criarTela(db, "Tela Bucket E2E", 1);
   await adicionarItem(db, telaBucket, "/midia/2026/09/promo-da-loja.mp4");
+
+  // TV-011: tela com item GIRADO, porque a TV do Rodrigo esta montada de lado.
+  // Velocidade alta na tela de proposito: o teste checa que o item manda no tempo.
+  const telaGirada = await criarTela(db, "Tela Girada E2E", 600);
+  const itemGirado = await adicionarItem(db, telaGirada, "http://ex/painel.png");
+  await ajustarItem(db, itemGirado, { segundos: "5", rotacao: "90" });
 
   await client.end();
 

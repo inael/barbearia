@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import postgres from "postgres";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
-import { itemAtualDaTela, criarTela, listarTelas, adicionarItem, removerItem, playlistDaTela } from "../tv";
+import { itemAtualDaTela, criarTela, listarTelas, adicionarItem, removerItem, playlistDaTela, ajustarItem, listarItens } from "../tv";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -88,5 +88,66 @@ describe("TVUI — admin de telas/playlist (integration)", () => {
     await removerItem(db, i1);
     pl = await playlistDaTela(db, telaId);
     expect(pl.map((p) => p.url)).toEqual(["img2"]);
+  });
+  it("TV-010 tempo por item fica salvo, e item sem tempo herda o da tela", async () => {
+    const telaId = await criarTela(db, "Tela tempo por item", 10);
+    const foto = await adicionarItem(db, telaId, "http://ex/foto.png");
+    const video = await adicionarItem(db, telaId, "http://ex/promo.mp4");
+    const semAjuste = await adicionarItem(db, telaId, "http://ex/outra.png");
+
+    await ajustarItem(db, foto, { segundos: "5", rotacao: "0" });
+    await ajustarItem(db, video, { segundos: "25", rotacao: "0" });
+
+    const itens = await listarItens(db, telaId);
+    const porUrl = Object.fromEntries(itens.map((i) => [i.url, i]));
+    expect(porUrl["http://ex/foto.png"].segundos, "foto de 5s").toBe(5);
+    expect(porUrl["http://ex/promo.mp4"].segundos, "video de 25s").toBe(25);
+    expect(
+      porUrl["http://ex/outra.png"].segundos,
+      "sem tempo proprio, o player usa a velocidade da tela",
+    ).toBeNull();
+
+    // a playlist do player tambem precisa carregar o tempo, senao o ajuste nao chega la
+    const playlist = await playlistDaTela(db, telaId);
+    expect(playlist.find((x) => x.url === "http://ex/foto.png")?.segundos).toBe(5);
+    expect(semAjuste).toBeTypeOf("number");
+  });
+
+  it("TV-010 tempo invalido volta a herdar a tela, em vez de gravar lixo", async () => {
+    const telaId = await criarTela(db, "Tela tempo invalido", 8);
+    const item = await adicionarItem(db, telaId, "http://ex/x.png");
+
+    await ajustarItem(db, item, { segundos: "10", rotacao: "0" });
+    expect((await listarItens(db, telaId))[0].segundos).toBe(10);
+
+    // "0" faria o item piscar e sumir; a regra manda cair no padrao da tela
+    await ajustarItem(db, item, { segundos: "0", rotacao: "0" });
+    expect((await listarItens(db, telaId))[0].segundos).toBeNull();
+  });
+
+  it("TV-011 o giro fica salvo por item e chega na playlist do player", async () => {
+    const telaId = await criarTela(db, "Tela girada", 10);
+    const doYoutube = await adicionarItem(db, telaId, "https://www.youtube.com/watch?v=BKdb1xNEGoY");
+    const jaGirado = await adicionarItem(db, telaId, "http://ex/eu-girei.mp4");
+
+    // a TV esta de lado: o do YouTube precisa girar, o que ele mesmo editou nao
+    await ajustarItem(db, doYoutube, { segundos: "", rotacao: "90" });
+    await ajustarItem(db, jaGirado, { segundos: "", rotacao: "0" });
+
+    const playlist = await playlistDaTela(db, telaId);
+    expect(playlist.find((x) => x.url.includes("youtube"))?.rotacao).toBe(90);
+    expect(playlist.find((x) => x.url.includes("eu-girei"))?.rotacao).toBe(0);
+
+    // angulo estranho nao pode deixar a TV torta
+    await ajustarItem(db, doYoutube, { segundos: "", rotacao: "45" });
+    expect((await playlistDaTela(db, telaId)).find((x) => x.url.includes("youtube"))?.rotacao).toBe(0);
+  });
+
+  it("TV-011 item novo nasce sem giro e sem tempo proprio: o que ja tocava nao muda", async () => {
+    const telaId = await criarTela(db, "Tela padrao", 7);
+    await adicionarItem(db, telaId, "http://ex/nova.png");
+    const [item] = await listarItens(db, telaId);
+    expect(item.rotacao).toBe(0);
+    expect(item.segundos).toBeNull();
   });
 });

@@ -234,16 +234,19 @@ export async function enviarParaBucket(
       ...comPrazo(PRAZO_ENVIO_MS),
     });
   } catch (e) {
-    // Com a chave errada o Garage as vezes recusa na hora e as vezes simplesmente
-    // nao responde (visto nas duas formas em 14/09). Sem prazo, o segundo caso
-    // deixava o dono olhando a tela carregar para sempre. Aqui o cancelamento vira
-    // recado, em vez de um erro cru de rede que nao diz o que fazer.
+    // Com a chave errada o Garage faz TRES coisas diferentes, todas vistas nos testes:
+    // recusa na hora com 40x, nao responde nada, ou derruba a conexao. As tres tem de
+    // virar recado que diz o que fazer, senao o dono ve a tela travar ou um erro cru
+    // de rede e nao liga uma coisa a outra.
     if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
       throw new Error(
         "o envio demorou demais e foi cancelado. Confira a credencial do bucket e tente de novo.",
       );
     }
-    throw new Error(`nao consegui falar com o bucket: ${e instanceof Error ? e.message : "erro de rede"}`);
+    throw new Error(
+      "nao consegui falar com o bucket. Confira a credencial e se o servico esta de pe. " +
+        `Detalhe tecnico: ${e instanceof Error ? e.message : "erro de rede"}`,
+    );
   }
   if (!resp.ok) {
     const detalhe = await resp.text().catch(() => "");

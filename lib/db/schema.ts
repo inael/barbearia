@@ -89,6 +89,23 @@ export const itensPlaylist = pgTable(
     ordem: integer("ordem").notNull(),
     url: text("url").notNull(),
     ativo: boolean("ativo").notNull().default(true),
+    /**
+     * MTV: segundos SO deste item. Null = usa a velocidade da tela.
+     *
+     * Pedido do Rodrigo (audio 14/09): "eu poder botar a quantidade de segundos que
+     * ele vai ficar na tela... se eu subir uma foto eu poder botar cinco segundos, e
+     * em outra botar dez, e em outra um video de 25". Antes o tempo era um so para a
+     * playlist inteira, entao foto e video ficavam o mesmo tanto.
+     */
+    segundos: integer("segundos"),
+    /**
+     * Giro da midia na exibicao, em graus (0, 90, 180, 270).
+     *
+     * A TV dele esta montada DE LADO, como painel. Os videos que ele mesmo edita ele
+     * ja sobe girados; os do YouTube ele nao tem como girar. Por isso o giro e por
+     * ITEM e nasce em 0: o que ja esta no ar continua igual.
+     */
+    rotacao: integer("rotacao").notNull().default(0),
   },
   (t) => [uniqueIndex("uniq_tela_ordem").on(t.telaId, t.ordem)],
 );

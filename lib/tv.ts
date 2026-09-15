@@ -117,13 +117,64 @@ export async function removerItem(
   return {};
 }
 
+/** Graus aceitos no giro da mídia. Qualquer outro valor vira 0. */
+export const ROTACOES = [0, 90, 180, 270] as const;
+export type Rotacao = (typeof ROTACOES)[number];
+
+export function rotacaoValida(v: unknown): Rotacao {
+  const n = Number(v);
+  return (ROTACOES as readonly number[]).includes(n) ? (n as Rotacao) : 0;
+}
+
+/** Teto de 1 hora por item: número maior é engano de digitação, não playlist. */
+export const SEGUNDOS_MAXIMO = 3600;
+
+/**
+ * Segundos que ESTE item fica no ar. Null aceita de volta o padrão da tela.
+ *
+ * Zero ou negativo viraria item que pisca e some, e a playlist entraria em laço
+ * rápido demais para alguém ler qualquer coisa.
+ */
+export function segundosValidos(v: unknown): number | null {
+  const texto = String(v ?? "").trim();
+  if (!texto) return null;
+  if (!/^\d+$/.test(texto)) return null;
+  const n = Number(texto);
+  if (n < 1 || n > SEGUNDOS_MAXIMO) return null;
+  return n;
+}
+
+/**
+ * Ajusta tempo e giro de um item já na playlist.
+ *
+ * Pedido do Rodrigo (áudio 14/09): tempo por item ("uma foto cinco segundos, outra
+ * dez, um vídeo 25") e giro, porque a TV dele está montada de lado como painel e o
+ * vídeo do YouTube ele não consegue girar antes de subir.
+ */
+export async function ajustarItem(
+  db: PostgresJsDatabase<typeof schema>,
+  itemId: number,
+  d: { segundos?: unknown; rotacao?: unknown },
+): Promise<void> {
+  await db
+    .update(schema.itensPlaylist)
+    .set({ segundos: segundosValidos(d.segundos), rotacao: rotacaoValida(d.rotacao) })
+    .where(eq(schema.itensPlaylist.id, itemId));
+}
+
 /** Itens da playlist de uma tela (com id, pro admin). Ordenados por `ordem`. */
 export async function listarItens(
   db: PostgresJsDatabase<typeof schema>,
   telaId: number,
-): Promise<{ id: number; ordem: number; url: string }[]> {
+): Promise<{ id: number; ordem: number; url: string; segundos: number | null; rotacao: number }[]> {
   return db
-    .select({ id: schema.itensPlaylist.id, ordem: schema.itensPlaylist.ordem, url: schema.itensPlaylist.url })
+    .select({
+      id: schema.itensPlaylist.id,
+      ordem: schema.itensPlaylist.ordem,
+      url: schema.itensPlaylist.url,
+      segundos: schema.itensPlaylist.segundos,
+      rotacao: schema.itensPlaylist.rotacao,
+    })
     .from(schema.itensPlaylist)
     .where(eq(schema.itensPlaylist.telaId, telaId))
     .orderBy(asc(schema.itensPlaylist.ordem));
@@ -133,9 +184,14 @@ export async function listarItens(
 export async function playlistDaTela(
   db: PostgresJsDatabase<typeof schema>,
   telaId: number,
-): Promise<{ ordem: number; url: string }[]> {
+): Promise<{ ordem: number; url: string; segundos: number | null; rotacao: number }[]> {
   return db
-    .select({ ordem: schema.itensPlaylist.ordem, url: schema.itensPlaylist.url })
+    .select({
+      ordem: schema.itensPlaylist.ordem,
+      url: schema.itensPlaylist.url,
+      segundos: schema.itensPlaylist.segundos,
+      rotacao: schema.itensPlaylist.rotacao,
+    })
     .from(schema.itensPlaylist)
     .where(eq(schema.itensPlaylist.telaId, telaId))
     .orderBy(asc(schema.itensPlaylist.ordem));
