@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
@@ -10,6 +11,19 @@ import { rotuloDaMidia } from "@/lib/midia";
 import Aviso from "@/components/Aviso";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Endereco COMPLETO da tela, com dominio.
+ *
+ * Antes a tela mostrava so "/tv/1" num texto pequeno. Isso nao se digita no
+ * navegador da TV: falta o dominio. O Rodrigo tentou e parou numa pagina em branco.
+ */
+async function enderecoBase(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const protocolo = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return host ? `${protocolo}://${host}` : "";
+}
 const ROTA = "/admin/tv";
 
 async function autorizado() {
@@ -145,6 +159,7 @@ export default async function AdminTvPage({ searchParams }: { searchParams: Prom
   }
 
   const db = getDb();
+  const base = await enderecoBase();
   const telas = await listarTelas(db);
   const itensPorTela = await Promise.all(telas.map((t) => listarItens(db, t.id)));
 
@@ -208,10 +223,55 @@ export default async function AdminTvPage({ searchParams }: { searchParams: Prom
                     <button type="submit" data-excluir-tela={t.nome} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50">Excluir tela</button>
                   </form>
                 </div>
-                <p className="mt-1 text-xs text-neutral-600">
-                  Na Smart TV, abra o navegador e acesse <code className="rounded bg-neutral-100 px-1 dark:bg-neutral-800">{`/tv/${t.id}`}</code> no
-                  endereço do sistema — a playlist roda em loop e atualiza sozinha.
-                </p>
+                {/*
+                  O endereco e o que o dono digita no controle da TV, letra por letra.
+                  Ficava escondido num texto pequeno e sem o dominio; agora e o bloco
+                  mais visivel da tela, com as duas versoes explicadas pelo que
+                  resolvem, nao por jargao.
+                */}
+                <div
+                  data-testid={`tv-enderecos-${t.id}`}
+                  className="mt-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 p-4 dark:border-emerald-700 dark:bg-emerald-950/30"
+                >
+                  <p className="text-sm font-bold">Endereço para digitar no navegador da TV</p>
+                  <p className="mt-1 text-xs text-neutral-700 dark:text-neutral-300">
+                    Não é o endereço do sistema. É este aqui, e ele abre direto na playlist.
+                  </p>
+
+                  <div className="mt-3">
+                    <span className="text-xs font-semibold">TV moderna (Smart TV recente)</span>
+                    <code
+                      data-endereco-moderno={t.nome}
+                      className="mt-1 block select-all break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
+                    >
+                      {base}/tv/{t.id}
+                    </code>
+                  </div>
+
+                  <div className="mt-3">
+                    <span className="text-xs font-semibold">TV antiga (se a de cima abrir e não trocar de imagem)</span>
+                    <code
+                      data-endereco-antigo={t.nome}
+                      className="mt-1 block select-all break-all rounded-lg bg-white px-3 py-2 text-sm font-bold text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
+                    >
+                      {base}/tv/{t.id}/antiga
+                    </code>
+                    <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                      Esta versão funciona em TV velha porque não depende de programa nenhum
+                      rodando na TV: a própria página se troca sozinha.
+                    </p>
+                  </div>
+
+                  <a
+                    href={`/tv/${t.id}/antiga`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-abrir-antiga={t.nome}
+                    className="mt-3 inline-block rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+                  >
+                    Testar a versão de TV antiga
+                  </a>
+                </div>
                 <ul className="mt-3 flex flex-col gap-1">
                   {itensPorTela[i].length === 0 ? (
                     <li className="text-sm text-neutral-600">Playlist vazia.</li>

@@ -126,3 +126,81 @@ test.describe("TV — tempo por item e giro na tela (e2e)", () => {
     await expect(page.getByTestId("aviso-erro")).toContainText(/Tempo inválido/i);
   });
 });
+
+/**
+ * TV antiga — troca sem JavaScript.
+ *
+ * O Rodrigo montou a TV da loja e mandou foto (16/09): a página abre e não roda nada.
+ * O servidor entrega o HTML certo, então o problema é o navegador da TV, que é velho
+ * e não executa o script que faz a troca. Sem script, a playlist congela no primeiro
+ * item para sempre.
+ */
+test.describe("TV — versão para TV antiga, sem JavaScript (e2e)", () => {
+  test("TV-012 a página se troca sozinha: meta refresh aponta o próximo item, com os segundos dele", async ({ page }) => {
+    await page.goto("/tv");
+    const href = await page.locator('a[data-tela="Tela Girada E2E"]').getAttribute("href");
+    const id = href!.split("/").pop();
+
+    await page.goto(`/tv/${id}/antiga`);
+    await expect(page.getByTestId("tv-antiga")).toBeVisible();
+    await expect(page.getByTestId("tv-item")).toHaveCount(1);
+
+    // o item semeado tem 5s proprios e giro de 90 graus. Esta tela tem UM item, entao
+    // o proximo e ele mesmo: a pagina segue se recarregando, e nao congela.
+    const refresh = page.locator('meta[http-equiv="refresh"]');
+    await expect(refresh).toHaveAttribute("content", `5; url=/tv/${id}/antiga?i=0`);
+    await expect(page.getByTestId("tv-giro")).toHaveAttribute("data-graus", "90");
+  });
+
+  test("TV-012 sem JavaScript nenhum a mídia aparece e o próximo item é apontado", async ({ browser }) => {
+    // é o cenário da TV do Rodrigo: navegador que não roda o script
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const p = await ctx.newPage();
+    await p.goto("/tv/1/antiga");
+
+    await expect(p.getByTestId("tv-antiga"), "com JS desligado a página tem de valer igual").toBeVisible();
+    await expect(p.getByTestId("tv-item")).toHaveCount(1);
+    await expect(p.locator('meta[http-equiv="refresh"]')).toHaveCount(1);
+    await ctx.close();
+  });
+
+  test("TV-012 o índice dá a volta no fim da playlist, em vez de parar", async ({ page }) => {
+    await page.goto("/tv/1/antiga");
+    const tela = page.getByTestId("tv-antiga");
+    const total = Number(await tela.getAttribute("data-total"));
+    expect(total, "a tela 1 precisa ter item para este teste valer").toBeGreaterThan(0);
+
+    const ultimo = total - 1;
+    await page.goto(`/tv/1/antiga?i=${ultimo}`);
+    // conferir onde a pagina ACHA que esta antes de cobrar para onde ela vai:
+    // sem isso, um indice inesperado falha tres linhas adiante sem dizer por que
+    await expect(tela, `total=${total}, pedi i=${ultimo}`).toHaveAttribute("data-indice", String(ultimo));
+    await expect(
+      page.locator('meta[http-equiv="refresh"]'),
+      `do ultimo item (i=${ultimo} de ${total}) tem de voltar para o primeiro`,
+    ).toHaveAttribute("content", /\?i=0$/);
+
+    // indice maluco na URL nao pode deixar a TV em branco
+    await page.goto("/tv/1/antiga?i=9999");
+    await expect(page.getByTestId("tv-item")).toHaveCount(1);
+    await page.goto("/tv/1/antiga?i=abc");
+    await expect(page.getByTestId("tv-item")).toHaveCount(1);
+    await expect(tela).toHaveAttribute("data-indice", "0");
+  });
+
+  test("TV-013 o dono vê o endereço COMPLETO para digitar na TV, nas duas versões", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/admin/tv");
+
+    const bloco = page.locator('[data-testid^="tv-enderecos-"]').first();
+    await expect(bloco).toBeVisible();
+    await expect(bloco).toContainText("Endereço para digitar no navegador da TV");
+    await expect(bloco, "o aviso de que não é o endereço do sistema").toContainText(/Não é o endereço do sistema/i);
+
+    // endereco com dominio, nao caminho relativo: e o que se digita no controle
+    const moderno = bloco.locator("[data-endereco-moderno]").first();
+    const antigo = bloco.locator("[data-endereco-antigo]").first();
+    await expect(moderno).toHaveText(/^https?:\/\/.+\/tv\/\d+$/);
+    await expect(antigo).toHaveText(/^https?:\/\/.+\/tv\/\d+\/antiga$/);
+  });
+});

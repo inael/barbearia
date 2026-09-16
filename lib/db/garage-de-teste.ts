@@ -95,6 +95,14 @@ export async function subirGarage(): Promise<GarageDeTeste> {
     chaveId,
     chaveSecreta,
     basePublica: "/midia",
+    // A suite de integracao sobe dezenas de containers ao mesmo tempo. Os prazos de
+    // producao (20s/60s) sao folgados para app e Garage na mesma VPS, mas apertam
+    // nesta maquina e o teste falharia por disputa de CPU, nao por defeito.
+    //
+    // O envio fica em 90s, nao mais: MTV-007 depende do cancelamento ACONTECER
+    // (chave errada faz o Garage pendurar), e precisa caber no tempo do teste.
+    prazoLeituraMs: 120_000,
+    prazoEnvioMs: 90_000,
   };
 
   return {

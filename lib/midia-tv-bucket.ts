@@ -30,6 +30,15 @@ export interface ConfigBucket {
   chaveSecreta: string;
   /** Base pública para montar a URL da mídia (o player busca por aqui). */
   basePublica: string;
+  /**
+   * Prazos, em ms. Existem para poderem ser afrouxados em teste.
+   *
+   * Em produção o app fala com o Garage na MESMA VPS, então os padrões são
+   * folgados de sobra. Numa máquina de teste rodando dezenas de containers ao
+   * mesmo tempo, eles apertam e o teste falha por disputa de CPU, não por defeito.
+   */
+  prazoLeituraMs?: number;
+  prazoEnvioMs?: number;
 }
 
 /** Lê a configuração do ambiente. Null = sem bucket, segue no data URL. */
@@ -165,6 +174,9 @@ function comPrazo(ms: number): { signal: AbortSignal } | Record<string, never> {
   return typeof AbortSignal?.timeout === "function" ? { signal: AbortSignal.timeout(ms) } : {};
 }
 
+const prazoLeitura = (cfg: ConfigBucket) => cfg.prazoLeituraMs ?? PRAZO_LEITURA_MS;
+const prazoEnvio = (cfg: ConfigBucket) => cfg.prazoEnvioMs ?? PRAZO_ENVIO_MS;
+
 /** Busca um objeto do bucket (usado pela rota /midia que serve a TV). */
 export async function baixarDoBucket(
   cfg: ConfigBucket,
@@ -173,7 +185,7 @@ export async function baixarDoBucket(
   fetchImpl: typeof fetch = fetch,
 ): Promise<Response> {
   const { url, headers } = await assinar(cfg, "GET", objeto, null, null, agora);
-  return fetchImpl(url.toString(), { headers, ...comPrazo(PRAZO_LEITURA_MS) });
+  return fetchImpl(url.toString(), { headers, ...comPrazo(prazoLeitura(cfg)) });
 }
 
 /**
@@ -209,7 +221,7 @@ export async function apagarDoBucket(
   fetchImpl: typeof fetch = fetch,
 ): Promise<void> {
   const { url, headers } = await assinar(cfg, "DELETE", objeto, null, null, agora);
-  const resp = await fetchImpl(url.toString(), { method: "DELETE", headers, ...comPrazo(PRAZO_LEITURA_MS) });
+  const resp = await fetchImpl(url.toString(), { method: "DELETE", headers, ...comPrazo(prazoLeitura(cfg)) });
   if (!resp.ok && resp.status !== 404) {
     const detalhe = await resp.text().catch(() => "");
     throw new Error(`nao consegui apagar do bucket (${resp.status}): ${detalhe.slice(0, 160)}`);
@@ -231,7 +243,7 @@ export async function enviarParaBucket(
       method: "PUT",
       headers,
       body: corpo as unknown as BodyInit,
-      ...comPrazo(PRAZO_ENVIO_MS),
+      ...comPrazo(prazoEnvio(cfg)),
     });
   } catch (e) {
     // Com a chave errada o Garage faz TRES coisas diferentes, todas vistas nos testes:

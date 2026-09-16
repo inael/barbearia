@@ -29,6 +29,9 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | TV-010 | Cada mídia tem o próprio tempo na tela; sem tempo próprio, herda a velocidade da tela; tempo inválido é recusado com o motivo | unit + integration + e2e | lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 | TV-011 | A mídia pode ser girada por item (0, 90, 180, 270) e sai girada no player; item novo nasce sem giro | unit + integration + e2e | lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| TV-012 | Existe uma versão para TV antiga que troca de mídia SEM JavaScript, dá a volta no fim da playlist e aguenta índice inválido na URL | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+| TV-013 | A tela do dono mostra o endereço COMPLETO (com domínio) das duas versões, dizendo que não é o endereço do sistema | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -43,7 +46,25 @@ REQUIREMENT (a tela nunca fica parada pelo bucket) → MTV-009 → integration �
 REQUIREMENT (cada mídia com seu tempo) → TV-010 → unit + integration + e2e → lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 REQUIREMENT (TV montada de lado) → TV-011 → unit + integration + e2e → lib/tv.test.ts, lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (funcionar em TV velha) → TV-012 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
+REQUIREMENT (o dono sabe o que digitar na TV) → TV-013 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
+
 ## Gaps
+- **A TV da loja abriu a pagina e nao rodou nada (foto do Rodrigo, 16/09).** O servidor
+  entrega o HTML certo, provado pedindo a pagina sem JavaScript: o video dele vem no
+  HTML. O problema e o navegador da TV, velho demais para executar o script que faz a
+  troca. Sem script, a playlist congela no primeiro item para sempre.
+- Por isso sao **duas URLs**: `/tv/<id>` para TV moderna (troca por script, sem
+  recarregar) e `/tv/<id>/antiga` para TV velha (cada item e uma pagina, e um
+  `meta refresh` chama a proxima). A versao antiga funciona em qualquer navegador que
+  saiba abrir uma pagina, que e o piso possivel.
+- O custo da versao antiga e recarregar a pagina a cada item. Numa TV de barbearia
+  com playlist curta isso e irrelevante, e vale muito mais do que tela congelada.
+- Estilo por `style` inline na versao antiga, nao por classe: se a folha de estilos
+  nao carregar naquele navegador, a midia ainda aparece centralizada no fundo preto.
+- **O endereco ficava escondido.** Antes a tela mostrava so "/tv/1" num texto pequeno,
+  sem dominio, e nao da para digitar isso no controle da TV. Agora e o bloco mais
+  visivel, com as duas versoes e o aviso de que nao e o endereco do sistema.
 - **Pedidos do Rodrigo por áudio (14/09), com o upload de vídeo já funcionando:**
   *"lá só tem como botar um temporizador pra todos os vídeos a mesma quantidade de
   segundos... eu queria botar numa foto cinco segundos, em outra dez, e em outra um
