@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { pgTable, serial, text, integer, boolean, pgEnum, uniqueIndex, timestamp } from "drizzle-orm/pg-core";
 
 export const papelEnum = pgEnum("papel", ["dono", "recepcionista", "barbeiro"]);
@@ -292,8 +293,33 @@ export const metas = pgTable(
     alvoCentavos: integer("alvo_centavos").notNull(),
     tipoAlvo: text("tipo_alvo").notNull().default("valor"),
     alvoQuantidade: integer("alvo_quantidade"),
+    /**
+     * Serviço desta meta. NULL = meta GERAL, que soma tudo.
+     *
+     * Pedido do Rodrigo (áudio 15/09): *"as metas vão ser várias: duas sobrancelhas,
+     * mais duas hidratações, mais três progressivas, porque ele vai ter que bater uma
+     * quantidade específica de cada serviço"*. E a geral continua existindo junto:
+     * *"sim, continua existindo, da mesma forma"*.
+     */
+    servicoId: integer("servico_id").references(() => servicos.id, { onDelete: "cascade" }),
   },
-  (t) => [uniqueIndex("uniq_meta_prof_inicio").on(t.profissionalId, t.inicio)],
+  (t) => [
+    /**
+     * DOIS índices, e o motivo é fino.
+     *
+     * No Postgres, NULL conta como diferente de NULL numa chave única. Um índice só
+     * sobre (profissional, inicio, servico) deixaria a meta GERAL (serviço nulo) ser
+     * cadastrada várias vezes na mesma semana, e o dono veria linhas repetidas sem
+     * entender por quê. `NULLS NOT DISTINCT` resolveria, mas não existe nesta versão
+     * do Drizzle; dois índices parciais fazem o mesmo e dizem a intenção em voz alta.
+     */
+    uniqueIndex("uniq_meta_prof_inicio_servico")
+      .on(t.profissionalId, t.inicio, t.servicoId)
+      .where(sql`servico_id is not null`),
+    uniqueIndex("uniq_meta_prof_inicio_geral")
+      .on(t.profissionalId, t.inicio)
+      .where(sql`servico_id is null`),
+  ],
 );
 
 /** Estoque: produto controlado (com saldo). */

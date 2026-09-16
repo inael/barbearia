@@ -97,3 +97,56 @@ test.describe("MET — alvo da meta: recado em vez de erro 500 (e2e)", () => {
     );
   });
 });
+
+/**
+ * MET — várias metas por semana, uma por serviço.
+ *
+ * Respostas do Rodrigo por áudio (15/09): *"as metas vão ser várias: duas
+ * sobrancelhas, mais duas hidratações, mais três progressivas"* e, sobre a meta geral,
+ * *"sim, continua existindo, da mesma forma"*.
+ */
+test.describe("MET — metas por serviço na tela (e2e)", () => {
+  test("MET-012 o dono cria meta de serviço e meta geral, e as duas aparecem juntas", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+
+    const form = page.locator("form").filter({ has: page.getByTestId("met-alvo") });
+    await form.getByTestId("met-prof").selectOption({ label: "Pedro" });
+    await form.getByTestId("met-servico").selectOption({ label: "Sobrancelha" });
+    await form.getByTestId("met-tipo").selectOption("quantidade");
+    await form.getByTestId("met-alvo").fill("2");
+    await form.getByRole("button", { name: "Salvar meta" }).click();
+    await expect(page.getByTestId("aviso-ok")).toBeVisible();
+
+    const form2 = page.locator("form").filter({ has: page.getByTestId("met-alvo") });
+    await form2.getByTestId("met-prof").selectOption({ label: "Pedro" });
+    await form2.getByTestId("met-servico").selectOption({ label: "Geral (todos os serviços)" });
+    await form2.getByTestId("met-tipo").selectOption("valor");
+    await form2.getByTestId("met-alvo").fill("5.000,00");
+    await form2.getByRole("button", { name: "Salvar meta" }).click();
+    await expect(page.getByTestId("aviso-ok")).toBeVisible();
+
+    const bloco = page.locator('[data-metas-de="Pedro"]');
+    await expect(bloco).toBeVisible();
+    await expect(bloco.locator('[data-meta-servico="Sobrancelha"]')).toBeVisible();
+    await expect(bloco.locator('[data-meta-servico="Geral (todos os servicos)"]')).toBeVisible();
+    // a geral em R$ tem de mostrar o valor certo, nao cem vezes menor
+    await expect(bloco.locator('[data-meta-servico="Geral (todos os servicos)"]')).toContainText(/5\.000,00/);
+  });
+
+  test("MET-012 remover uma meta não leva as outras junto", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+
+    const bloco = page.locator('[data-metas-de="Pedro"]');
+    const antes = await bloco.locator("li[data-meta-servico]").count();
+    expect(antes, "o teste anterior deixou metas para remover").toBeGreaterThan(1);
+
+    await bloco.locator('[data-remover-meta="Sobrancelha"]').click();
+    await expect(page.getByTestId("aviso-ok")).toContainText(/Meta removida/i);
+
+    const depois = page.locator('[data-metas-de="Pedro"]');
+    await expect(depois.locator('[data-meta-servico="Sobrancelha"]')).toHaveCount(0);
+    await expect(depois.locator('[data-meta-servico="Geral (todos os servicos)"]')).toBeVisible();
+  });
+});

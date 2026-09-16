@@ -4,7 +4,8 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
-import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao } from "@/lib/metas";
+import { listarServicos } from "@/lib/catalogo";
+import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao, removerMeta, metasComProgresso } from "@/lib/metas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 import AlvoDaMeta from "@/components/AlvoDaMeta";
@@ -35,11 +36,19 @@ async function salvarMeta(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(alvo.motivo)}`);
   }
 
+  // "" = meta GERAL, que soma tudo. O Rodrigo quer as duas coisas convivendo:
+  // varias metas de servico na semana e a geral junto.
+  const bruto = String(formData.get("servicoId") || "");
+  const servicoId = bruto ? Number(bruto) : null;
+  if (servicoId !== null && !Number.isInteger(servicoId)) {
+    redirect(`${ROTA}?erro=${encodeURIComponent("Escolha um serviço válido para a meta.")}`);
+  }
+
   try {
     if (tipo === "quantidade") {
-      await definirMetaQuantidade(getDb(), pid, inicio, fim, alvo.valor);
+      await definirMetaQuantidade(getDb(), pid, inicio, fim, alvo.valor, servicoId);
     } else {
-      await definirMeta(getDb(), pid, inicio, fim, alvo.valor);
+      await definirMeta(getDb(), pid, inicio, fim, alvo.valor, servicoId);
     }
   } catch (e) {
     // qualquer coisa que escape vira recado, nunca pagina de erro
@@ -48,6 +57,16 @@ async function salvarMeta(formData: FormData) {
 
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Meta salva.")}`);
+}
+
+async function excluirMeta(formData: FormData) {
+  "use server";
+  if (!(await podeEditar())) return;
+  const id = Number(formData.get("metaId"));
+  if (!Number.isInteger(id)) return;
+  await removerMeta(getDb(), id);
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Meta removida.")}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -131,6 +150,11 @@ export default async function MetasPage({ searchParams }: { searchParams: Promis
   const alvos = editar
     ? profissionais
     : profissionais.filter((p) => p.id === pid);
+  const servicos = await listarServicos(db);
+  // metas da semana de cada um, ja com o realizado: e o que o dono confere
+  const metasPorProf = await Promise.all(
+    alvos.map(async (p) => ({ prof: p, metas: await metasComProgresso(db, p.id, inicio, inicio, fim) })),
+  );
   const relatorios = await Promise.all(
     alvos.map(async (p) =>
       p.papel === "recepcionista"
@@ -165,11 +189,66 @@ export default async function MetasPage({ searchParams }: { searchParams: Promis
                   {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </label>
+              <label className="flex flex-col gap-1 text-xs font-medium">Serviço
+                <select name="servicoId" aria-label="Serviço da meta" data-testid="met-servico" className={input}>
+                  <option value="">Geral (todos os serviços)</option>
+                  {servicos.map((sv) => <option key={sv.id} value={sv.id}>{sv.nome}</option>)}
+                </select>
+              </label>
               <AlvoDaMeta classeInput={input} classeSelect={input} />
               <button type="submit" className={btn}>Salvar meta</button>
             </form>
           </section>
         ) : null}
+
+        <section className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold">Metas desta semana</h2>
+          <div className="flex flex-col gap-3">
+            {metasPorProf.every((x) => x.metas.length === 0) ? (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400" data-testid="met-sem-metas">
+                Nenhuma meta definida para esta semana.
+              </p>
+            ) : (
+              metasPorProf
+                .filter((x) => x.metas.length > 0)
+                .map((x) => (
+                  <div key={x.prof.id} data-metas-de={x.prof.nome} className="rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                    <div className="mb-2 text-sm font-semibold">{x.prof.nome}</div>
+                    <ul className="flex flex-col gap-1">
+                      {x.metas.map((m) => (
+                        <li key={m.id} data-meta-servico={m.servicoNome} className="flex flex-wrap items-center gap-2 text-sm">
+                          <span className="min-w-0 flex-1 truncate">{m.servicoNome}</span>
+                          <span className="text-neutral-600 dark:text-neutral-400">
+                            {m.tipoAlvo === "quantidade"
+                              ? `${m.realizadoQuantidade} de ${m.alvoQuantidade} atendimento(s)`
+                              : `${brl(m.realizadoCentavos)} de ${brl(m.alvoCentavos ?? 0)}`}
+                          </span>
+                          <span
+                            data-meta-batida={m.batido ? "sim" : "nao"}
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              m.batido
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                            }`}
+                          >
+                            {m.batido ? "batida" : "não batida"}
+                          </span>
+                          {editar ? (
+                            <form action={excluirMeta}>
+                              <input type="hidden" name="metaId" value={m.id} />
+                              <button type="submit" data-remover-meta={m.servicoNome} className="text-xs text-red-700 underline hover:text-red-900 dark:text-red-400">
+                                remover
+                              </button>
+                            </form>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+            )}
+          </div>
+        </section>
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">{editar ? "Equipe" : "Meu desempenho"} (semana)</h2>

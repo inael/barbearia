@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { comissaoDoPeriodo, comissaoRecepcaoDoPeriodo } from "./caixa";
 import { totalValesPorTipo } from "./vales";
@@ -23,32 +23,77 @@ export function semanaAtual(hoje: Date): { inicio: Date; fim: Date } {
 }
 
 /** Define (upsert) a meta em R$ de um profissional para a semana que começa em `inicio`. */
-export async function definirMeta(db: DB, profissionalId: number, inicio: Date, fim: Date, alvoCentavos: number): Promise<void> {
+/**
+ * Grava a meta, criando ou atualizando a do mesmo barbeiro/semana/servico.
+ *
+ * Le antes de escrever, em vez de onConflictDoUpdate: o indice unico virou PARCIAL
+ * (um para meta de servico, outro para a geral), e apontar conflito para indice
+ * parcial e fragil. Aqui e acao de dono, um clique por vez, e o indice continua
+ * sendo a garantia final contra duplicata.
+ */
+async function gravarMeta(
+  db: DB,
+  profissionalId: number,
+  inicio: Date,
+  fim: Date,
+  servicoId: number | null,
+  valores: { alvoCentavos: number; tipoAlvo: string; alvoQuantidade: number | null },
+): Promise<void> {
+  const existente = await metaDoPeriodo(db, profissionalId, inicio, servicoId);
+  if (existente) {
+    await db.update(schema.metas).set({ fim, ...valores }).where(eq(schema.metas.id, existente.id));
+    return;
+  }
+  await db.insert(schema.metas).values({ profissionalId, inicio, fim, servicoId, ...valores });
+}
+
+export async function definirMeta(
+  db: DB,
+  profissionalId: number,
+  inicio: Date,
+  fim: Date,
+  alvoCentavos: number,
+  servicoId: number | null = null,
+): Promise<void> {
   if (!Number.isInteger(alvoCentavos) || alvoCentavos <= 0) throw new Error("alvo inválido");
-  await db
-    .insert(schema.metas)
-    .values({ profissionalId, inicio, fim, alvoCentavos, tipoAlvo: "valor", alvoQuantidade: null })
-    .onConflictDoUpdate({
-      target: [schema.metas.profissionalId, schema.metas.inicio],
-      set: { fim, alvoCentavos, tipoAlvo: "valor", alvoQuantidade: null },
-    });
+  await gravarMeta(db, profissionalId, inicio, fim, servicoId, {
+    alvoCentavos,
+    tipoAlvo: "valor",
+    alvoQuantidade: null,
+  });
 }
 
 /** Define (upsert) a meta em QUANTIDADE de atendimentos (feedback UX 2026-08-26). */
-export async function definirMetaQuantidade(db: DB, profissionalId: number, inicio: Date, fim: Date, alvoQuantidade: number): Promise<void> {
+export async function definirMetaQuantidade(
+  db: DB,
+  profissionalId: number,
+  inicio: Date,
+  fim: Date,
+  alvoQuantidade: number,
+  servicoId: number | null = null,
+): Promise<void> {
   if (!Number.isInteger(alvoQuantidade) || alvoQuantidade <= 0) throw new Error("alvo inválido");
-  await db
-    .insert(schema.metas)
-    .values({ profissionalId, inicio, fim, alvoCentavos: 0, tipoAlvo: "quantidade", alvoQuantidade })
-    .onConflictDoUpdate({
-      target: [schema.metas.profissionalId, schema.metas.inicio],
-      set: { fim, alvoCentavos: 0, tipoAlvo: "quantidade", alvoQuantidade },
-    });
+  await gravarMeta(db, profissionalId, inicio, fim, servicoId, {
+    alvoCentavos: 0,
+    tipoAlvo: "quantidade",
+    alvoQuantidade,
+  });
+}
+
+/** Tira uma meta da semana. O dono erra o servico e precisa poder desfazer. */
+export async function removerMeta(db: DB, id: number): Promise<void> {
+  await db.delete(schema.metas).where(eq(schema.metas.id, id));
 }
 
 /** Nº de atendimentos (itens de serviço/combo em comandas fechadas) do profissional em [de, ate).
  * Cortesia conta como atendimento; serviço-do-barbeiro (consumo próprio) não. */
-export async function atendimentosDoPeriodo(db: DB, profissionalId: number, de: Date, ate: Date): Promise<number> {
+export async function atendimentosDoPeriodo(
+  db: DB,
+  profissionalId: number,
+  de: Date,
+  ate: Date,
+  servicoId: number | null = null,
+): Promise<number> {
   const [row] = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.comandaItens)
@@ -61,17 +106,99 @@ export async function atendimentosDoPeriodo(db: DB, profissionalId: number, de: 
         eq(schema.comandaItens.profissionalId, profissionalId),
         inArray(schema.comandaItens.tipo, ["servico", "combo"]),
         ne(schema.comandaItens.lancamento, "servico_barbeiro"),
+        // meta de servico especifico conta SO aquele servico. Combo tem refId de
+        // combo, por isso fica de fora quando o alvo e um servico avulso.
+        ...(servicoId === null
+          ? []
+          : [eq(schema.comandaItens.tipo, "servico"), eq(schema.comandaItens.refId, servicoId)]),
       ),
     );
   return Number(row?.n ?? 0);
 }
 
-export async function metaDoPeriodo(db: DB, profissionalId: number, inicio: Date): Promise<schema.Meta | null> {
+/** A meta de um servico na semana. `servicoId` null = a meta GERAL. */
+export async function metaDoPeriodo(
+  db: DB,
+  profissionalId: number,
+  inicio: Date,
+  servicoId: number | null = null,
+): Promise<schema.Meta | null> {
   const [m] = await db
     .select()
     .from(schema.metas)
-    .where(and(eq(schema.metas.profissionalId, profissionalId), eq(schema.metas.inicio, inicio)));
+    .where(
+      and(
+        eq(schema.metas.profissionalId, profissionalId),
+        eq(schema.metas.inicio, inicio),
+        // isNull, e nao eq(null): em SQL "= NULL" nunca casa, e a meta geral
+        // sumiria sem erro nenhum
+        servicoId === null ? isNull(schema.metas.servicoId) : eq(schema.metas.servicoId, servicoId),
+      ),
+    );
   return m ?? null;
+}
+
+export interface MetaComProgresso {
+  id: number;
+  servicoId: number | null;
+  /** "Geral (todos os servicos)" quando nao ha servico. */
+  servicoNome: string;
+  tipoAlvo: "valor" | "quantidade";
+  alvoCentavos: number | null;
+  alvoQuantidade: number | null;
+  realizadoCentavos: number;
+  realizadoQuantidade: number;
+  batido: boolean;
+}
+
+/**
+ * Todas as metas do barbeiro na semana, ja com o realizado de cada uma.
+ *
+ * Pedido do Rodrigo (audio 15/09): varias metas por semana, uma por servico, e a
+ * geral convivendo com elas.
+ */
+export async function metasComProgresso(
+  db: DB,
+  profissionalId: number,
+  inicio: Date,
+  de: Date,
+  ate: Date,
+): Promise<MetaComProgresso[]> {
+  const linhas = await db
+    .select({ meta: schema.metas, servicoNome: schema.servicos.nome })
+    .from(schema.metas)
+    .leftJoin(schema.servicos, eq(schema.servicos.id, schema.metas.servicoId))
+    .where(and(eq(schema.metas.profissionalId, profissionalId), eq(schema.metas.inicio, inicio)));
+
+  // faturamento e do periodo inteiro, nao por servico: so a meta GERAL usa ele
+  const c = await comissaoDoPeriodo(db, profissionalId, de, ate);
+  const faturamentoCentavos = Math.round((c.avulsos + c.combos + c.divididos + c.produtos) * 100);
+
+  const saida: MetaComProgresso[] = [];
+  for (const l of linhas) {
+    const m = l.meta;
+    const quantidade = await atendimentosDoPeriodo(db, profissionalId, de, ate, m.servicoId ?? null);
+    const tipoAlvo = m.tipoAlvo === "quantidade" ? "quantidade" : "valor";
+    const realizadoCentavos = m.servicoId === null ? faturamentoCentavos : 0;
+    saida.push({
+      id: m.id,
+      servicoId: m.servicoId ?? null,
+      servicoNome: l.servicoNome ?? "Geral (todos os servicos)",
+      tipoAlvo,
+      alvoCentavos: tipoAlvo === "valor" ? m.alvoCentavos : null,
+      alvoQuantidade: m.alvoQuantidade,
+      realizadoCentavos,
+      realizadoQuantidade: quantidade,
+      batido:
+        tipoAlvo === "quantidade"
+          ? metaBatida(quantidade, m.alvoQuantidade ?? 0)
+          : metaBatida(realizadoCentavos, m.alvoCentavos),
+    });
+  }
+  // geral primeiro, depois por nome: e a ordem em que o dono le a semana
+  return saida.sort((a, b) =>
+    a.servicoId === null ? -1 : b.servicoId === null ? 1 : a.servicoNome.localeCompare(b.servicoNome),
+  );
 }
 
 export interface RelatorioProfissional {
