@@ -34,6 +34,8 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 
 | TV-014 | O giro sai no HTML com o prefixo do WebKit, senão a TV antiga só encolhe a mídia em vez de girar | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| TV-015 | Existe uma página de diagnóstico que abre sem login e sem JavaScript, com os casos de giro etiquetados por letra, para o dono fotografar na TV | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -53,7 +55,21 @@ REQUIREMENT (o dono sabe o que digitar na TV) → TV-013 → e2e → e2e/midia-t
 
 REQUIREMENT (girar de verdade na TV antiga) → TV-014 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (descobrir o que a TV dele aceita) → TV-015 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
+
 ## Gaps
+- **O prefixo do WebKit NAO resolveu.** Relato de 21/09, depois do deploy: *"tentei de
+  novo, continua igual, nao gira, so diminui, fica um quadradinho menor no mesmo
+  lugar"*. A foto confirma: a troca de largura por altura acontece, o giro nao.
+  Aquele navegador ignora `transform` mesmo com prefixo.
+- Ja errei duas vezes deduzindo o comportamento desse navegador. Em vez de uma
+  terceira tentativa as cegas, existe `/tv/diagnostico`: seis casos etiquetados por
+  letra, sem JavaScript e com estilo EMBUTIDO (a folha do sistema usa `@layer` e
+  aquela TV descarta ela inteira). Ele fotografa e a foto diz qual tecnica funciona,
+  alem de revelar se o navegador enxerga a tela em pe ou deitada.
+- Se nenhuma tecnica de giro funcionar, a saida e girar a MIDIA, nao a pagina: para
+  imagem da para gerar a copia girada; para video do YouTube nao ha saida, porque o
+  player e de terceiro dentro de um quadro.
 - **A troca sem JavaScript funcionou na TV dele (relato de 19/09: "ta rodando agora"),
   mas o giro nao.** Palavras dele: *"boto pra girar e ela so diminui na televisao, nao
   gira, continua em pe"*. O sintoma diz o que houve: largura e altura TROCARAM (por

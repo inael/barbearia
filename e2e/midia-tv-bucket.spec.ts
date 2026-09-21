@@ -221,3 +221,26 @@ test.describe("TV — versão para TV antiga, sem JavaScript (e2e)", () => {
     await expect(antigo).toHaveText(/^https?:\/\/.+\/tv\/\d+\/antiga$/);
   });
 });
+
+test.describe("TV — página de diagnóstico do navegador da TV (e2e)", () => {
+  test("TV-015 abre sem login, sem JavaScript, e traz os casos de giro etiquetados", async ({ browser }) => {
+    // O dono abre ISTO na TV e manda uma foto. A foto diz qual técnica de giro
+    // aquele navegador aceita. Tem de funcionar sem login e sem script, senão o
+    // diagnóstico não chega na TV que é justamente o problema.
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const p = await ctx.newPage();
+    const r = await p.goto("/tv/diagnostico");
+    expect(r?.status(), "página de diagnóstico não pode pedir login").toBe(200);
+
+    for (const letra of ["A", "B", "C", "D", "E", "F"]) {
+      await expect(p.locator(".letra", { hasText: letra })).toHaveCount(1);
+    }
+    await expect(p.locator(".alvo").first()).toContainText("DEITADO");
+
+    // o estilo vai EMBUTIDO: a TV dele descarta a folha do sistema inteira
+    const html = await p.content();
+    expect(html, "estilo externo não chegaria naquela TV").toContain("-webkit-transform");
+    expect(html).toContain("orientation: portrait");
+    await ctx.close();
+  });
+});
