@@ -27,7 +27,12 @@ function Giro({ graus, children }: { graus: number; children: React.ReactNode })
       data-graus={graus}
       className="flex items-center justify-center"
       style={{
+        // prefixo junto com o padrao: TV antiga ignora o `transform` sem ele e a
+        // midia so encolhe, sem girar (relato do Rodrigo em 19/09)
         transform: `rotate(${graus}deg)`,
+        WebkitTransform: `rotate(${graus}deg)`,
+        transformOrigin: "center center",
+        WebkitTransformOrigin: "center center",
         width: deitado ? "100vh" : "100vw",
         height: deitado ? "100vw" : "100vh",
       }}
@@ -66,13 +71,13 @@ function Midia({ url }: { url: string }) {
         muted
         loop
         playsInline
-        className="max-h-screen max-w-full object-contain"
+        className="h-full w-full object-contain"
       />
     );
   }
 
   // eslint-disable-next-line @next/next/no-img-element
-  return <img data-testid="tv-item" data-tipo="imagem" src={url} alt="" className="max-h-screen max-w-full object-contain" />;
+  return <img data-testid="tv-item" data-tipo="imagem" src={url} alt="" className="h-full w-full object-contain" />;
 }
 
 export interface ItemDaTv {
@@ -115,7 +120,7 @@ export default function TvPlayer({
   }
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-black">
+    <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-black">
       <Giro graus={atual?.rotacao ?? 0}>
         <Midia url={atual.url} />
       </Giro>

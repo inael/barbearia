@@ -32,6 +32,8 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | TV-012 | Existe uma versão para TV antiga que troca de mídia SEM JavaScript, dá a volta no fim da playlist e aguenta índice inválido na URL | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 | TV-013 | A tela do dono mostra o endereço COMPLETO (com domínio) das duas versões, dizendo que não é o endereço do sistema | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| TV-014 | O giro sai no HTML com o prefixo do WebKit, senão a TV antiga só encolhe a mídia em vez de girar | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -49,7 +51,17 @@ REQUIREMENT (TV montada de lado) → TV-011 → unit + integration + e2e → lib
 REQUIREMENT (funcionar em TV velha) → TV-012 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 REQUIREMENT (o dono sabe o que digitar na TV) → TV-013 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (girar de verdade na TV antiga) → TV-014 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
+
 ## Gaps
+- **A troca sem JavaScript funcionou na TV dele (relato de 19/09: "ta rodando agora"),
+  mas o giro nao.** Palavras dele: *"boto pra girar e ela so diminui na televisao, nao
+  gira, continua em pe"*. O sintoma diz o que houve: largura e altura TROCARAM (por
+  isso encolheu), mas o `transform` foi ignorado. Navegador de TV antigo e WebKit
+  velho e so entende a propriedade com prefixo.
+- O teste do prefixo olha o **HTML CRU do servidor**, nao o DOM: o Chromium funde
+  `-webkit-transform` com `transform` ao ler pelo navegador, entao pelo navegador
+  moderno seria impossivel enxergar. O que vale e o que a TV recebe.
 - **A TV da loja abriu a pagina e nao rodou nada (foto do Rodrigo, 16/09).** O servidor
   entrega o HTML certo, provado pedindo a pagina sem JavaScript: o video dele vem no
   HTML. O problema e o navegador da TV, velho demais para executar o script que faz a

@@ -69,17 +69,33 @@ export default async function TvAntigaPage({
   const tipo = tipoDaMidia(item.url);
   const graus = [90, 180, 270].includes(item.rotacao) ? item.rotacao : 0;
   const deitado = graus === 90 || graus === 270;
-  const giro = graus
-    ? {
-        transform: `rotate(${graus}deg)`,
-        width: deitado ? "100vh" : "100vw",
-        height: deitado ? "100vw" : "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }
-    : {};
-  const midia = { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } as const;
+  // Sem giro a caixa TAMBEM precisa ter tamanho. Com `{}` aqui e a midia em 100%,
+  // ela herdaria altura zero e a tela ficaria preta: 100% de nada e nada.
+  const giro = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: graus && deitado ? "100vh" : "100vw",
+    height: graus && deitado ? "100vw" : "100vh",
+    // WebkitTransform junto com transform, e nao so o padrao.
+    //
+    // Relato do Rodrigo (19/09): "boto pra girar e ela so diminui na televisao, nao
+    // gira, continua em pe". O sintoma diz exatamente o que houve: largura e altura
+    // trocaram (por isso encolheu), mas o `transform` foi IGNORADO. Navegador de TV
+    // antigo e WebKit velho e so entende a propriedade com prefixo.
+    ...(graus
+      ? {
+          transform: `rotate(${graus}deg)`,
+          WebkitTransform: `rotate(${graus}deg)`,
+          transformOrigin: "center center",
+          WebkitTransformOrigin: "center center",
+        }
+      : {}),
+  };
+  // width/height 100%, nao max-*: com max-* uma midia menor que a tela fica no
+  // tamanho natural dela e sobra borda preta enorme em volta. Com 100% + contain a
+  // caixa ocupa a tela inteira e a midia cresce ate encostar, sem cortar nada.
+  const midia = { width: "100%", height: "100%", objectFit: "contain" } as const;
 
   return (
     <div style={centro} data-testid="tv-antiga" data-indice={indice} data-total={itens.length}>

@@ -83,6 +83,7 @@ test.describe("TV — tempo por item e giro na tela (e2e)", () => {
     const giro = page.getByTestId("tv-giro");
     await expect(giro, "sem o envelope de giro a mídia sai deitada na TV de lado").toBeVisible();
     await expect(giro).toHaveAttribute("data-graus", "90");
+
     // A midia continua dentro do envelope. Nao da para exigir "visivel": a URL
     // semeada no e2e nao existe, a imagem quebra e fica com tamanho zero.
     await expect(giro.getByTestId("tv-item")).toHaveCount(1);
@@ -150,6 +151,22 @@ test.describe("TV — versão para TV antiga, sem JavaScript (e2e)", () => {
     const refresh = page.locator('meta[http-equiv="refresh"]');
     await expect(refresh).toHaveAttribute("content", `5; url=/tv/${id}/antiga?i=0`);
     await expect(page.getByTestId("tv-giro")).toHaveAttribute("data-graus", "90");
+  });
+
+  test("TV-014 o giro vai com prefixo do WebKit no HTML, senão a TV antiga só encolhe a mídia", async ({ page, baseURL }) => {
+    await page.goto("/tv");
+    const href = await page.locator('a[data-tela="Tela Girada E2E"]').getAttribute("href");
+    const id = href!.split("/").pop();
+
+    // HTML CRU, nao o DOM: o Chromium funde -webkit-transform com transform ao ler
+    // pelo navegador, entao so o que sai do servidor prova o que a TV recebe.
+    const r = await page.request.get(`${baseURL}/tv/${id}/antiga`);
+    const html = await r.text();
+
+    // Relato do Rodrigo (19/09): "boto pra girar e ela so diminui na televisao, nao
+    // gira, continua em pe". Largura e altura trocaram, o transform foi ignorado.
+    expect(html, "sem o prefixo a TV antiga ignora o giro").toContain("-webkit-transform");
+    expect(html).toMatch(/rotate\(90deg\)/);
   });
 
   test("TV-012 sem JavaScript nenhum a mídia aparece e o próximo item é apontado", async ({ browser }) => {
