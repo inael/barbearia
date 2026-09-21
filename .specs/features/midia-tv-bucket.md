@@ -36,6 +36,8 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 
 | TV-015 | Existe uma página de diagnóstico que abre sem login e sem JavaScript, com os casos de giro etiquetados por letra, para o dono fotografar na TV | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| TV-016 | O quadro do YouTube usa 100% da caixa, não o tamanho da tela, para acompanhar a caixa quando ela gira | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -57,7 +59,21 @@ REQUIREMENT (girar de verdade na TV antiga) → TV-014 → e2e → e2e/midia-tv-
 
 REQUIREMENT (descobrir o que a TV dele aceita) → TV-015 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (o giro valer para o video do YouTube) → TV-016 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
+
 ## Gaps
+- **O diagnostico derrubou a hipotese anterior.** Resposta do Rodrigo em 21/09: B, C e
+  D apareceram DEITADOS, ou seja aquela TV ACEITA girar, com prefixo ou sem. E o caso
+  F respondeu **"DEITADA (paisagem)"**: o navegador enxerga a tela deitada, mesmo com
+  a TV montada em pe na parede. O giro nunca foi o problema.
+- **O problema era o tamanho do quadro do YouTube.** Ele estava preso a `100vw/100vh`,
+  que e o tamanho da TELA. Quando a caixa gira, ela troca largura com altura; um
+  quadro preso a tela ignora essa troca e sobra um pedaco pequeno, que foi exatamente
+  o que ele descreveu duas vezes ("nao gira, so diminui, fica um quadradinho menor").
+  Agora o quadro usa 100% da caixa, como a imagem e o video ja usavam.
+- Licao: duas hipoteses minhas seguidas estavam erradas (primeiro "falta prefixo",
+  depois "a TV nao aceita girar"). O que resolveu foi parar de deduzir e pedir uma
+  foto de uma pagina feita para ser fotografada.
 - **O prefixo do WebKit NAO resolveu.** Relato de 21/09, depois do deploy: *"tentei de
   novo, continua igual, nao gira, so diminui, fica um quadradinho menor no mesmo
   lugar"*. A foto confirma: a troca de largura por altura acontece, o giro nao.

@@ -55,7 +55,11 @@ function Midia({ url }: { url: string }) {
         title="Mídia da TV"
         allow="autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
-        className="h-screen w-screen border-0"
+        // 100% da CAIXA, nao da tela: quando o item esta girado, a caixa tem
+        // largura e altura TROCADAS, e um quadro preso a 100vw/100vh ignora essa
+        // troca. Era por isso que o giro "nao pegava" no video do YouTube: o
+        // quadro continuava do tamanho da tela e so o que sobrava aparecia.
+        className="h-full w-full border-0"
       />
     );
   }

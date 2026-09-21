@@ -113,7 +113,9 @@ export default async function TvAntigaPage({
             src={urlEmbedYoutube(idDoYoutube(item.url)!)}
             title="Mídia da TV"
             allow="autoplay; encrypted-media"
-            style={{ width: "100vw", height: "100vh", border: 0 }}
+            // 100% da CAIXA, nao da tela: com o item girado a caixa tem largura
+            // e altura trocadas, e um quadro preso a 100vw/100vh ignora a troca.
+            style={{ width: "100%", height: "100%", border: 0 }}
           />
         ) : tipo === "video" ? (
           // sem loop: quem repete a playlist e o refresh, nao o video

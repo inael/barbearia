@@ -244,3 +244,28 @@ test.describe("TV — página de diagnóstico do navegador da TV (e2e)", () => {
     await ctx.close();
   });
 });
+
+test.describe("TV — o quadro do YouTube segue a caixa girada (e2e)", () => {
+  test("TV-016 vídeo do YouTube usa 100% da caixa, não o tamanho da tela", async ({ page, baseURL }) => {
+    // Diagnóstico de 21/09 na TV do Rodrigo: B, C e D apareceram DEITADOS, ou seja
+    // aquela TV ACEITA girar. E F respondeu "DEITADA (paisagem)": o navegador vê a
+    // tela deitada mesmo com a TV montada em pé.
+    //
+    // Então o giro nunca foi o problema. O quadro do YouTube estava preso a
+    // 100vw/100vh, que é o tamanho da TELA. Quando a caixa gira, ela troca largura
+    // com altura, e um quadro preso à tela ignora essa troca: sobra um pedaço
+    // pequeno, que foi exatamente o que ele descreveu.
+    const html = await (await page.request.get(`${baseURL}/tv/1/antiga?i=1`)).text();
+    const iframe = html.match(/<iframe[^>]*data-testid="tv-item"[^>]*>/)?.[0] ?? "";
+    if (iframe) {
+      expect(iframe, "quadro preso a 100vw/100vh ignora o giro").not.toMatch(/100vw|100vh/);
+      expect(iframe).toMatch(/width:\s*100%/);
+    }
+
+    // e o player moderno tem de seguir a mesma regra
+    const mod = await (await page.request.get(`${baseURL}/tv/1`)).text();
+    expect(mod, "no player moderno o quadro tambem nao pode ser preso a tela").not.toMatch(
+      /class="[^"]*h-screen w-screen[^"]*"[^>]*data-tipo="youtube"/,
+    );
+  });
+});
