@@ -22,6 +22,7 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | MTV-004 | Tipo não suportado é recusado antes de subir (não ocupa espaço à toa) | unit | lib/midia-tv-bucket.test.ts | PASS | verde (gate) |
 | MTV-005 | Remover item da playlist apaga o arquivo do bucket; objeto já inexistente conta como sucesso; bucket fora do ar não impede a remoção e avisa do arquivo órfão | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-006 | Mídia antiga (data URL) e link externo continuam na playlist, convivem com upload novo, e a limpeza nunca tenta apagá-los | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
+| MTV-009 | O corte do PROXY também cabe o teto de mídia, e é igual ao do Server Action: um menor que o outro cria buraco entre 10 MB e 50 MB | unit | lib/upload-limite.test.ts | PASS | verde (gate) |
 | MTV-008 | O teto de corpo do Server Action cabe o teto de mídia (50 MB), quem recusa arquivo grande é a nossa validação com o motivo em MB, e a tela mostra o limite | unit + e2e | lib/upload-limite.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 | MTV-009 | Toda chamada ao bucket tem prazo: envio pendurado é cancelado e vira recado, não tela carregando para sempre | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
 | MTV-007 | Bucket fora do ar ou chave sem permissão: o erro diz o status e a playlist antiga fica intacta; sem bucket configurado a tela segue operável | integration + e2e | lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
@@ -66,7 +67,20 @@ REQUIREMENT (o giro valer para o video do YouTube) → TV-016 → e2e → e2e/mi
 
 REQUIREMENT (a TV se atualiza sem controle remoto) → TV-017,018 → integration + e2e → lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (o video chegar inteiro no servidor) → MTV-009 → unit → lib/upload-limite.test.ts → PASS
+
 ## Gaps
+- **Segundo corte de corpo, achado em 22/09 pelo LOG do servidor.** O Rodrigo relatou
+  "nao tou conseguindo subir esse video" e mandou a foto de "A server error occurred".
+  O log de producao explicou em duas linhas:
+  `Request body exceeded 10MB for /admin/tv. Only the first 10MB will be available`
+  seguido de `Error: Unexpected end of form`.
+- O corte do PROXY e mais traicoeiro que o do Server Action: ele nao recusa, **trunca**
+  em 10 MB e deixa seguir. O multipart chega cortado ao meio e a pagina estoura com
+  uma mensagem que nao fala de tamanho. Subir so o teto do Server Action (feito em
+  14/09) resolveu ate 10 MB e deixou um buraco de 10 a 50 MB.
+- Os dois tetos agora saem da MESMA constante, e ha teste exigindo que sejam iguais,
+  para ninguem subir um e esquecer o outro de novo.
 - **Pedido do Rodrigo (22/09):** *"tem como a tela se auto-atualizar? Pra nao ter que
   ficar indo com o controle remoto apertar atualizar toda vez"*.
 - A versao ANTIGA ja resolvia sozinha: cada item e uma pagina nova, entao na proxima

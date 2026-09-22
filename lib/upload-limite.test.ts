@@ -32,6 +32,25 @@ describe("MTV — limite de upload do Server Action", () => {
     expect(bytes - LIMITE_BYTES, "deixe folga para o overhead do multipart").toBeGreaterThan(1024 * 1024);
   });
 
+  it("MTV-009 o corte do PROXY tambem cabe o teto de midia, senao trunca em silencio", () => {
+    // O corte do proxy e o traicoeiro: ele nao recusa, TRUNCA em 10 MB e deixa
+    // seguir. O multipart chega cortado e a pagina estoura com "Unexpected end of
+    // form", que nao diz nada sobre tamanho. O Rodrigo viu so "A server error
+    // occurred" (22/09); o motivo so apareceu no log do servidor.
+    const proxy = nextConfig.experimental?.proxyClientMaxBodySize;
+    expect(proxy, "sem isto o proxy corta em 10 MB e o upload quebra sem explicar").toBeDefined();
+    expect(limiteEmBytes(proxy), "o corte do proxy tem de caber o arquivo inteiro").toBeGreaterThan(
+      LIMITE_BYTES,
+    );
+  });
+
+  it("MTV-009 os dois cortes sao iguais: subir um so resolve pela metade", () => {
+    // Video entre 10 MB e 50 MB passaria no Server Action e morreria no proxy.
+    const acao = limiteEmBytes(nextConfig.experimental?.serverActions?.bodySizeLimit);
+    const proxy = limiteEmBytes(nextConfig.experimental?.proxyClientMaxBodySize);
+    expect(proxy, `acao=${acao} proxy=${proxy}: um teto menor que o outro cria buraco`).toBe(acao);
+  });
+
   it("MTV-008 quem recusa arquivo grande é a NOSSA validação, com o motivo em MB", () => {
     // logo abaixo do teto continua valendo
     expect(() => validarMidia("video/mp4", LIMITE_BYTES - 1)).not.toThrow();

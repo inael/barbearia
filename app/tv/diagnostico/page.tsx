@@ -41,6 +41,17 @@ const CSS = `
   .retrato, .paisagem { display: none; font-size: 22px; color: #7CFC98; }
   @media (orientation: portrait) { .retrato { display: block; } }
   @media (orientation: landscape) { .paisagem { display: block; } }
+
+  /*
+    G e H comparam o que muda entre o diagnostico (que GIROU na TV dele) e o
+    player (que NAO girou): o diagnostico usa tamanho em PIXEL, o player usa
+    unidade de tela (vh/vw). Navegador antigo costuma ignorar vh/vw, e uma caixa
+    sem tamanho deixa a midia virar um quadradinho, que e o que ele descreve.
+  */
+  .g .caixa { width: 50vh; height: 25vw; background: #2b6ce0; position: relative; }
+  .h .caixa { width: 300px; height: 120px; background: #2b6ce0; position: relative; }
+  .caixa .dentro { width: 100%; height: 100%; background: #E06C2B; color: #000;
+                   font-size: 20px; font-weight: bold; text-align: center; }
 `;
 
 function Caso({ letra, classe, rotulo }: { letra: string; classe: string; rotulo: string }) {
@@ -61,8 +72,8 @@ export default function DiagnosticoTvPage() {
     <div>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div style={{ padding: 10, fontSize: 18 }}>
-        Tire uma foto desta tela inteira e mande. Diga em quais LETRAS a palavra
-        aparece deitada (de lado).
+        Tire foto da tela INTEIRA (role até o fim) e mande. Diga: em quais letras a
+        palavra aparece deitada, e se G e H têm cor laranja.
       </div>
 
       <div className="grade">
@@ -79,6 +90,39 @@ export default function DiagnosticoTvPage() {
           </div>
           <div className="retrato">EM PÉ (retrato)</div>
           <div className="paisagem">DEITADA (paisagem)</div>
+        </div>
+
+        <div className="caso g">
+          <div>
+            <span className="letra">G</span>{" "}
+            <span className="rotulo">caixa medida em TELA (é o que o player usa)</span>
+          </div>
+          <div className="caixa">
+            <div className="dentro">TEM COR AQUI?</div>
+          </div>
+        </div>
+
+        <div className="caso h">
+          <div>
+            <span className="letra">H</span>{" "}
+            <span className="rotulo">caixa medida em PIXEL (referência: tem de ter cor)</span>
+          </div>
+          <div className="caixa">
+            <div className="dentro">TEM COR AQUI?</div>
+          </div>
+        </div>
+
+        <div className="caso">
+          <div>
+            <span className="letra">I</span> <span className="rotulo">o aparelho roda programa?</span>
+          </div>
+          <div id="js" style={{ fontSize: 22, color: "#7CFC98" }}>NÃO RODA</div>
+          {/* se rodar, esta linha troca o texto; se nao rodar, fica "NAO RODA" */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `document.getElementById('js').textContent='RODA (tela ' + window.innerWidth + 'x' + window.innerHeight + ')';`,
+            }}
+          />
         </div>
       </div>
     </div>
