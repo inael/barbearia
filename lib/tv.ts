@@ -224,6 +224,43 @@ export async function editarTela(db: PostgresJsDatabase<typeof schema>, id: numb
   await db.update(schema.telas).set({ nome: nome.trim(), velocidadeSegundos }).where(eq(schema.telas.id, id));
 }
 
+/**
+ * Impressão digital da playlist de uma tela.
+ *
+ * Pedido do Rodrigo (22/09): *"tem como a tela se auto-atualizar? Pra não ter que
+ * ficar indo com o controle remoto apertar atualizar toda vez"*.
+ *
+ * O player moderno carrega a lista uma vez e fica com ela na memória. Em vez de
+ * recarregar a página de tempos em tempos (que cortaria vídeo no meio), ele pergunta
+ * de vez em quando por esta impressão: se mudou, aí sim recarrega.
+ *
+ * Entram nela as coisas que MUDAM o que aparece na TV: a velocidade da tela e, de
+ * cada item, o que toca, a ordem, o tempo e o giro. Trocar o nome da tela não
+ * recarrega nada, porque a TV não mostra o nome.
+ */
+export async function versaoDaPlaylist(
+  db: PostgresJsDatabase<typeof schema>,
+  telaId: number,
+): Promise<string> {
+  const [tela] = await db
+    .select({ v: schema.telas.velocidadeSegundos })
+    .from(schema.telas)
+    .where(eq(schema.telas.id, telaId));
+  if (!tela) return "sem-tela";
+
+  const itens = await listarItens(db, telaId);
+  const texto = [
+    `v=${tela.v}`,
+    ...itens.map((i) => `${i.id}:${i.ordem}:${i.segundos ?? "-"}:${i.rotacao}:${i.url}`),
+  ].join("|");
+
+  // hash curto e estavel (djb2). Nao precisa ser criptografico: e so para dizer
+  // "mudou" ou "nao mudou", e cabe numa resposta minuscula.
+  let h = 5381;
+  for (let k = 0; k < texto.length; k++) h = ((h * 33) ^ texto.charCodeAt(k)) >>> 0;
+  return `${itens.length}-${h.toString(36)}`;
+}
+
 /** CRUD-008: exclui a tela e a playlist dela (a mídia em si fica no storage). */
 export async function removerTela(db: PostgresJsDatabase<typeof schema>, id: number): Promise<void> {
   await db.delete(schema.itensPlaylist).where(eq(schema.itensPlaylist.telaId, id));

@@ -38,6 +38,9 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 
 | TV-016 | O quadro do YouTube usa 100% da caixa, não o tamanho da tela, para acompanhar a caixa quando ela gira | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| TV-017 | A impressão digital da playlist muda quando muda o que aparece na TV (item, ordem, tempo, giro, velocidade) e NÃO muda no resto | integration | lib/db/tv.integration.test.ts | PASS | verde (gate) |
+| TV-018 | A TV se atualiza sozinha: a rota de versão é pública, muda ao mexer na playlist, e o player leva a versão consigo para comparar | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -61,7 +64,24 @@ REQUIREMENT (descobrir o que a TV dele aceita) → TV-015 → e2e → e2e/midia-
 
 REQUIREMENT (o giro valer para o video do YouTube) → TV-016 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
+REQUIREMENT (a TV se atualiza sem controle remoto) → TV-017,018 → integration + e2e → lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
+
 ## Gaps
+- **Pedido do Rodrigo (22/09):** *"tem como a tela se auto-atualizar? Pra nao ter que
+  ficar indo com o controle remoto apertar atualizar toda vez"*.
+- A versao ANTIGA ja resolvia sozinha: cada item e uma pagina nova, entao na proxima
+  troca ela rele a playlist. O atraso maximo e o tempo do item atual.
+- A versao MODERNA carregava a lista uma vez e ficava com ela na memoria. Agora
+  pergunta a cada 20s por uma impressao digital e so recarrega quando ela muda.
+  Recarregar por relogio cortaria video no meio sem motivo.
+- A rota da versao mora em `/tv/...` de proposito: esse caminho ja e publico no
+  proxy, e a TV nao faz login. Em `/api/...` o pedido cairia na tela de entrada e a
+  TV nunca mais se atualizaria. Ha teste cobrindo exatamente isso.
+- Falha de rede na checagem e ignorada: internet caindo na loja nao pode virar tela
+  preta, e na proxima tentativa ele pergunta de novo.
+- **Trocar o NOME da tela nao recarrega a TV**, porque o nome nao aparece nela. Esta
+  fixado em teste para ninguem "melhorar" a impressao digital jogando a tela inteira
+  dentro dela.
 - **O diagnostico derrubou a hipotese anterior.** Resposta do Rodrigo em 21/09: B, C e
   D apareceram DEITADOS, ou seja aquela TV ACEITA girar, com prefixo ou sem. E o caso
   F respondeu **"DEITADA (paisagem)"**: o navegador enxerga a tela deitada, mesmo com

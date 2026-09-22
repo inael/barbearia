@@ -269,3 +269,53 @@ test.describe("TV — o quadro do YouTube segue a caixa girada (e2e)", () => {
     );
   });
 });
+
+test.describe("TV — a tela se atualiza sozinha quando a playlist muda (e2e)", () => {
+  test("TV-018 a rota de versão é pública e muda quando a playlist muda", async ({ page, baseURL }) => {
+    // Pedido do Rodrigo (22/09): "pra não ter que ficar indo com o controle remoto
+    // apertar atualizar toda vez". A TV não faz login, então esta rota PRECISA ser
+    // pública: se caísse na tela de entrada, a TV nunca mais se atualizaria.
+    //
+    // Tela PROPRIA, criada aqui: a primeira versao deste teste mexia no tempo do
+    // item da tela 1, e o TVPLR-002 depende dela ciclar a cada 1s. Um teste nao
+    // pode estragar o dado de que outro depende.
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/admin/tv");
+    const nome = `Tela Versao E2E ${String(Date.now()).slice(-6)}`;
+    await page.getByTestId("tv-nome").fill(nome);
+    await page.getByTestId("tv-velocidade").fill("30");
+    await page.getByRole("button", { name: "Criar tela" }).click();
+
+    const secao = page.locator(`section[data-tela="${nome}"]`);
+    await expect(secao).toBeVisible();
+    const id = (await secao.locator("[data-endereco-moderno]").innerText()).split("/").pop()!;
+
+    const r1 = await page.request.get(`${baseURL}/tv/${id}/versao`);
+    expect(r1.status(), "a TV não faz login; esta rota tem de abrir sem sessão").toBe(200);
+    const { versao: antes } = await r1.json();
+    expect(antes).toBeTruthy();
+
+    // ler de novo sem mexer em nada da o mesmo valor, senao a TV recarregaria sozinha
+    const { versao: igual } = await (await page.request.get(`${baseURL}/tv/${id}/versao`)).json();
+    expect(igual, "sem mudanca a versao tem de ser a mesma").toBe(antes);
+
+    // adicionar midia nesta tela tem de mudar a versao
+    const midia = `http://ex/versao-${Date.now()}.png`;
+    await secao.getByTestId(`tv-url-${id}`).fill(midia);
+    await secao.getByRole("button", { name: "Adicionar à playlist" }).click();
+
+    // Esperar o ITEM aparecer, nao o aviso: o aviso de "tela criada" ja estava na
+    // tela, entao esperar por ele passava na hora e a versao era lida antes do
+    // item existir. Foi assim que este teste ficou instavel na primeira versao.
+    await expect(page.locator(`li[data-url="${midia}"]`)).toBeVisible();
+
+    const { versao: depois } = await (await page.request.get(`${baseURL}/tv/${id}/versao`)).json();
+    expect(depois, "mudou a playlist, a versao tem de mudar").not.toBe(antes);
+  });
+
+  test("TV-018 o player moderno leva a versão consigo, para saber comparar", async ({ page, baseURL }) => {
+    const html = await (await page.request.get(`${baseURL}/tv/1`)).text();
+    // sem a versao viajando junto, o player nao teria com o que comparar
+    expect(html).toContain("versao");
+  });
+});

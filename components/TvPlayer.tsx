@@ -92,14 +92,55 @@ export interface ItemDaTv {
   rotacao?: number;
 }
 
+/** De quanto em quanto tempo o player pergunta se a playlist mudou. */
+const INTERVALO_CHECAGEM_MS = 20_000;
+
 export default function TvPlayer({
   items,
   velocidadeSegundos,
+  telaId,
+  versao,
 }: {
   items: ItemDaTv[];
   velocidadeSegundos: number;
+  telaId?: number;
+  /** Impressão digital da playlist no momento em que esta página foi montada. */
+  versao?: string;
 }) {
   const [idx, setIdx] = useState(0);
+
+  /**
+   * Recarrega sozinho quando a playlist muda.
+   *
+   * Pedido do Rodrigo (22/09): "pra não ter que ficar indo com o controle remoto
+   * apertar atualizar toda vez". Ele mexe na playlist pelo computador e a TV fica
+   * mostrando o conteúdo velho até alguém subir na escada.
+   *
+   * Pergunta em vez de recarregar de tempos em tempos: recarregar por relógio
+   * cortaria vídeo no meio sem motivo. Aqui a página só recarrega quando algo
+   * mudou de verdade.
+   *
+   * Falha de rede é ignorada de propósito: internet caindo na loja não pode virar
+   * tela preta, e na próxima tentativa ele pergunta de novo.
+   */
+  useEffect(() => {
+    if (!telaId || !versao) return;
+    let vivo = true;
+    const t = setInterval(async () => {
+      try {
+        const r = await fetch(`/tv/${telaId}/versao`, { cache: "no-store" });
+        if (!r.ok) return;
+        const { versao: atual } = (await r.json()) as { versao?: string };
+        if (vivo && atual && atual !== versao) window.location.reload();
+      } catch {
+        /* sem internet agora; tenta de novo no proximo intervalo */
+      }
+    }, INTERVALO_CHECAGEM_MS);
+    return () => {
+      vivo = false;
+      clearInterval(t);
+    };
+  }, [telaId, versao]);
 
   // Tempo do item ATUAL, não da playlist: o Rodrigo quer foto de 5s convivendo com
   // vídeo de 25s. Por isso é setTimeout reagendado a cada troca, e não um setInterval

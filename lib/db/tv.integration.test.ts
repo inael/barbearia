@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import postgres from "postgres";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
-import { itemAtualDaTela, criarTela, listarTelas, adicionarItem, removerItem, playlistDaTela, ajustarItem, listarItens } from "../tv";
+import { itemAtualDaTela, criarTela, listarTelas, adicionarItem, removerItem, playlistDaTela, ajustarItem, listarItens, versaoDaPlaylist, editarTela } from "../tv";
 
 let container: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -149,5 +149,45 @@ describe("TVUI — admin de telas/playlist (integration)", () => {
     const [item] = await listarItens(db, telaId);
     expect(item.rotacao).toBe(0);
     expect(item.segundos).toBeNull();
+  });
+  it("TV-017 a impressão digital muda quando a playlist muda, e só então", async () => {
+    // Pedido do Rodrigo (22/09): a TV tem de se atualizar sozinha. O player so
+    // recarrega quando esta impressao muda, entao ela precisa mudar em tudo que
+    // altera o que aparece na tela, e NAO mudar no resto.
+    const telaId = await criarTela(db, "Tela Versao", 10);
+    const inicial = await versaoDaPlaylist(db, telaId);
+
+    // ler duas vezes sem mexer em nada da o mesmo valor: senao a TV ficaria
+    // recarregando sozinha o dia inteiro
+    expect(await versaoDaPlaylist(db, telaId)).toBe(inicial);
+
+    const item = await adicionarItem(db, telaId, "http://ex/nova.png");
+    const comItem = await versaoDaPlaylist(db, telaId);
+    expect(comItem, "item novo tem de mudar a versao").not.toBe(inicial);
+
+    await ajustarItem(db, item, { segundos: "7", rotacao: "0" });
+    const comTempo = await versaoDaPlaylist(db, telaId);
+    expect(comTempo, "mudar o tempo muda o que aparece").not.toBe(comItem);
+
+    await ajustarItem(db, item, { segundos: "7", rotacao: "90" });
+    const comGiro = await versaoDaPlaylist(db, telaId);
+    expect(comGiro, "mudar o giro muda o que aparece").not.toBe(comTempo);
+
+    await editarTela(db, telaId, "Tela Versao", 25);
+    expect(await versaoDaPlaylist(db, telaId), "velocidade da tela conta").not.toBe(comGiro);
+
+    const depoisDeVelocidade = await versaoDaPlaylist(db, telaId);
+    await editarTela(db, telaId, "Outro Nome Qualquer", 25);
+    expect(
+      await versaoDaPlaylist(db, telaId),
+      "trocar o NOME nao pode recarregar a TV: o nome nao aparece nela",
+    ).toBe(depoisDeVelocidade);
+
+    await removerItem(db, item, async () => {});
+    expect(await versaoDaPlaylist(db, telaId), "remover item muda a versao").not.toBe(depoisDeVelocidade);
+  });
+
+  it("TV-017 tela inexistente devolve valor fixo, sem estourar", async () => {
+    expect(await versaoDaPlaylist(db, 999999)).toBe("sem-tela");
   });
 });

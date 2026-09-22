@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { listarTelas, listarItens } from "@/lib/tv";
+import { listarTelas, listarItens, versaoDaPlaylist } from "@/lib/tv";
 import TvPlayer from "@/components/TvPlayer";
 
 export const dynamic = "force-dynamic";
@@ -17,5 +17,14 @@ export default async function TvPlayerPage({ params }: { params: Promise<{ id: s
     );
   }
   const itens = await listarItens(db, telaId);
-  return <TvPlayer items={itens.map((i) => ({ url: i.url, segundos: i.segundos, rotacao: i.rotacao }))} velocidadeSegundos={tela.velocidadeSegundos} />;
+  // a versao viaja junto: e com ela que o player percebe que a playlist mudou
+  const versao = await versaoDaPlaylist(db, telaId);
+  return (
+    <TvPlayer
+      items={itens.map((i) => ({ url: i.url, segundos: i.segundos, rotacao: i.rotacao }))}
+      velocidadeSegundos={tela.velocidadeSegundos}
+      telaId={telaId}
+      versao={versao}
+    />
+  );
 }
