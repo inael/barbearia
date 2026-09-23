@@ -582,3 +582,44 @@ dentro do pedaço, em 48 ms; `HEAD` → 200 sem corpo; sem faixa → 200 com o a
 JavaScript** (`1280x714`), **aceita `vh`/`vw`** e o navegador enxerga a tela como
 **paisagem** mesmo com a TV pendurada de pé. Ou seja: a TV está fisicamente girada na
 parede e o navegador não acompanha, por isso o giro por item existe.
+
+## 2026-09-23 — MEN: mensalidade do assinante
+
+**O buraco:** o módulo de assinatura tinha plano, desconto, fila e bloqueio por atraso,
+mas não tinha o recebimento. Em `assinaturas` só havia `status` e `criadoEm`: sem mês,
+valor, data nem histórico. Para dizer que o cliente pagou, alguém trocava um seletor, e
+no mês seguinte ele continuava "ativa". `processarCobrancaAssinatura` (webhook Asaas)
+existe e ninguém chama, porque o Rodrigo não tem CNPJ nem conta Asaas e recebe no balcão.
+
+**O que foi feito:** tabela `mensalidades` (competência, valor recebido, forma, data,
+observação), `lib/mensalidades.ts` e o bloco de recebimento na `/assinaturas`, com
+situação por assinante ("pago até", "N meses em aberto"), histórico e estorno.
+Commit `b3011b6`. Spec `.specs/features/assinaturas-mensalidade.md`, ACs MEN-001..011.
+
+**Decisões que valem lembrar:**
+- A linha nasce no pagamento. Não há gerador mensal de cobrança, então "em aberto" é a
+  ausência de linha e não tem como dessincronizar do caixa.
+- `competencia` (mês devido) e `pagoEm` (quando entrou) são colunas diferentes: quem
+  atrasa paga setembro em outubro, e o total do período conta pela data do pagamento.
+- Assinante antigo não nasce devendo: a contagem começa no primeiro mês registrado.
+- Receber é do balcão (dono e recepção); estornar é só do dono.
+
+**Ordem do deploy:** tabela criada no banco do cliente ANTES de subir o código
+(`CREATE TABLE mensalidades` + índice único), depois o deploy pelo Coolify.
+
+**Verificado em produção** com o dado real (1 assinante ativo, plano Flex R$ 140):
+aparece "set/2026 em aberto", "nenhum recebimento registrado", e o formulário já vem com
+set/2026 e R$ 140,00. Nada foi lançado nem alterado nos dados dele.
+
+**Ficou de fora, de propósito:** o pote continua rateando sobre o preço dos planos
+ativos, não sobre o que entrou (`receitaAssinaturasReais`). Se três assinantes
+atrasarem, ele paga 40% aos barbeiros sobre dinheiro que não recebeu. `recebidoNoPeriodo`
+já existe para trocar a base, mas isso muda quanto cada barbeiro ganha: **é decisão do
+Rodrigo**, e precisa ser perguntada.
+
+**Pendente do lado dele (TV):** o vídeo voltou a tocar e ele confirmou por foto, em tela
+cheia e na orientação certa, porque pré-girou o vídeo no editor. Mas ele escreveu
+*"porém o you tube não tem como fazer"*: vídeo do YouTube ele não consegue pré-girar, e
+depende do giro por item funcionar naquela TV. Desde a última tentativa dele foram
+corrigidos dois defeitos de tamanho (envelope sem altura e iframe em `100vw/100vh`), então
+vale ele testar de novo antes de qualquer conclusão.
