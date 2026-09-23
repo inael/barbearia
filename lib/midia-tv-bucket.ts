@@ -177,14 +177,22 @@ function comPrazo(ms: number): { signal: AbortSignal } | Record<string, never> {
 const prazoLeitura = (cfg: ConfigBucket) => cfg.prazoLeituraMs ?? PRAZO_LEITURA_MS;
 const prazoEnvio = (cfg: ConfigBucket) => cfg.prazoEnvioMs ?? PRAZO_ENVIO_MS;
 
-/** Busca um objeto do bucket (usado pela rota /midia que serve a TV). */
+/**
+ * Busca um objeto do bucket (usado pela rota /midia que serve a TV).
+ *
+ * `faixa` e o cabecalho `Range` que o aparelho mandou, repassado ao bucket como veio.
+ * Nao entra na assinatura de proposito: na assinatura V4 so contam os cabecalhos
+ * listados em `SignedHeaders`, e o `range` fica de fora deles. Ver MTV-010.
+ */
 export async function baixarDoBucket(
   cfg: ConfigBucket,
   objeto: string,
   agora: Date = new Date(),
   fetchImpl: typeof fetch = fetch,
+  faixa?: string | null,
 ): Promise<Response> {
   const { url, headers } = await assinar(cfg, "GET", objeto, null, null, agora);
+  if (faixa) headers.range = faixa;
   return fetchImpl(url.toString(), { headers, ...comPrazo(prazoLeitura(cfg)) });
 }
 

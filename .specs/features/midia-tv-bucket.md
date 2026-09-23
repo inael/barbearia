@@ -42,6 +42,8 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | TV-017 | A impressão digital da playlist muda quando muda o que aparece na TV (item, ordem, tempo, giro, velocidade) e NÃO muda no resto | integration | lib/db/tv.integration.test.ts | PASS | verde (gate) |
 | TV-018 | A TV se atualiza sozinha: a rota de versão é pública, muda ao mexer na playlist, e o player leva a versão consigo para comparar | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
+| MTV-010 | A rota da mídia atende pedido por FAIXA: `Range` volta `206` com o pedaço pedido e o `content-range`, sem faixa volta o arquivo inteiro, `accept-ranges` é anunciado sempre, e `HEAD` dá o tamanho sem mandar o arquivo | integration | lib/db/midia-tv-bucket.integration.test.ts | PASS | verde (gate) |
+
 ## Test Coverage Matrix
 REQUIREMENT (arquivo sai do banco) → MTV-001 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 REQUIREMENT (vídeo passa a funcionar) → MTV-002 → integration + e2e → lib/db/midia-tv-bucket.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
@@ -68,6 +70,7 @@ REQUIREMENT (o giro valer para o video do YouTube) → TV-016 → e2e → e2e/mi
 REQUIREMENT (a TV se atualiza sem controle remoto) → TV-017,018 → integration + e2e → lib/db/tv.integration.test.ts, e2e/midia-tv-bucket.spec.ts → PASS
 
 REQUIREMENT (o video chegar inteiro no servidor) → MTV-009 → unit → lib/upload-limite.test.ts → PASS
+REQUIREMENT (o video chegar a TOCAR na TV) → MTV-010 → integration → lib/db/midia-tv-bucket.integration.test.ts → PASS
 
 ## Gaps
 - **Segundo corte de corpo, achado em 22/09 pelo LOG do servidor.** O Rodrigo relatou
@@ -186,3 +189,20 @@ REQUIREMENT (o video chegar inteiro no servidor) → MTV-009 → unit → lib/up
   fica sem mídia nova; cache no player seria a evolução.
 - Teto de armazenamento precisa ser **decidido com o Rodrigo**, não escolhido por nós:
   é o disco dele, e vídeo enche rápido.
+- **Subiu e nunca tocou (áudio do Rodrigo, 23/09).** Com o teto de upload resolvido, o
+  vídeo entrou no bucket (13,6 MB, conferido em produção) e a tela ficou carregando sem
+  fim. A causa não era tamanho nem codec: lendo as caixas do MP4 que ele mandou, a ordem
+  é `ftyp`, `mdat` de 13,6 MB e só no fim o `moov`. O `moov` é o índice, e quem toca
+  vídeo lê o índice ANTES do primeiro quadro. Para chegar nele sem baixar o arquivo
+  todo, o player pede o pedaço final com `Range` — e a nossa rota ignorava o pedido:
+  testada com `Range: bytes=0-1023`, devolvia `200` com os 13.693.653 bytes. O aparelho
+  então ou esperava o arquivo inteiro ou desistia, e o log do servidor mostrava
+  `The destination stream closed early`, que é a TV cortando a conexão.
+- Corrigido repassando o `Range` ao bucket e devolvendo o `206` como veio, mais
+  `accept-ranges: bytes` sempre (é por ele que o aparelho sabe que pode pedir pedaço) e
+  `HEAD` para quem só quer o tamanho. O `range` não entra na assinatura V4 de propósito:
+  só contam os cabeçalhos listados em `SignedHeaders`.
+- A alternativa seria mover o `moov` para o começo no upload (`faststart`), mas isso
+  pede ffmpeg na VPS do cliente, que é justamente o que não se faz numa máquina de
+  1 vCPU. Servir faixa é o que qualquer servidor de mídia faz, e vale para todo vídeo
+  que ele subir, não só para os do editor dele.

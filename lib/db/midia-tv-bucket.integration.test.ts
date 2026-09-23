@@ -9,6 +9,7 @@ import { subirGarage, type GarageDeTeste } from "./garage-de-teste";
 import { apagarDoBucket, baixarDoBucket, objetoDaUrl } from "../midia-tv-bucket";
 import { bucketStorage, uploadMidia } from "../tv-upload";
 import { criarTela, adicionarItem, listarItens, playlistDaTela, removerItem } from "../tv";
+import { GET, HEAD } from "@/app/midia/[...caminho]/route";
 
 let pg: StartedPostgreSqlContainer;
 let client: ReturnType<typeof postgres>;
@@ -227,4 +228,94 @@ describe("MTV — mídia da TV em bucket de verdade (integration, Garage real)",
     const itens = await db.select().from(schema.itensPlaylist).where(eq(schema.itensPlaylist.telaId, telaId));
     expect(itens).toHaveLength(2);
   }, 120_000);
+  /**
+   * MTV-010 — o vídeo do Rodrigo subia e nunca tocava.
+   *
+   * O MP4 que ele exporta do editor tem o índice (`moov`) no FIM do arquivo: conferido
+   * no arquivo que está em produção, a ordem das caixas é `ftyp`, `mdat` (13,6 MB) e só
+   * então `moov`. Quem toca vídeo lê esse índice ANTES de mostrar o primeiro quadro, e
+   * para isso pede o pedaço final com `Range`. A rota ignorava o pedido e devolvia os
+   * 13 MB inteiros com `200`, então o aparelho ou esperava o arquivo todo ou desistia:
+   * "subo o vídeo, ele não carrega... atualizo a página e ela não termina de carregar"
+   * (áudio 23/09).
+   *
+   * O teste usa um arquivo com marca no fim justamente para provar que pedir o FIM
+   * devolve o fim, e não o começo.
+   */
+  async function comGarageNoAmbiente<T>(fn: () => Promise<T>): Promise<T> {
+    const antes = { ...process.env };
+    process.env.MIDIA_S3_ENDPOINT = garage.cfg.endpoint;
+    process.env.MIDIA_S3_BUCKET = garage.cfg.bucket;
+    process.env.MIDIA_S3_KEY_ID = garage.cfg.chaveId;
+    process.env.MIDIA_S3_SECRET = garage.cfg.chaveSecreta;
+    process.env.MIDIA_S3_REGION = garage.cfg.regiao;
+    try {
+      return await fn();
+    } finally {
+      process.env = antes;
+    }
+  }
+
+  /** Arquivo de 3 MB com os 16 últimos bytes marcados: é o "índice no fim". */
+  function videoComIndiceNoFim() {
+    const bytes = bytesDe(3);
+    const marca = [0x6d, 0x6f, 0x6f, 0x76, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    marca.forEach((b, i) => (bytes[bytes.byteLength - marca.length + i] = b));
+    return { bytes, marca };
+  }
+
+  it("MTV-010 pedir o FIM do vídeo devolve o fim (206), não o arquivo inteiro", async () => {
+    const telaId = await criarTela(db, "Tela MTV 010", 5);
+    const { bytes, marca } = videoComIndiceNoFim();
+
+    const { url } = await uploadMidia(db, bucketStorage(garage.cfg), telaId, {
+      nome: "video-do-canva.mp4",
+      tipo: "video/mp4",
+      tamanho: bytes.byteLength,
+      bytes,
+    });
+    const caminho = objetoDaUrl(garage.cfg, url)!.split("/");
+
+    const resp = await comGarageNoAmbiente(() =>
+      GET(new Request("http://teste/midia/" + caminho.join("/"), { headers: { range: `bytes=-${marca.length}` } }), {
+        params: Promise.resolve({ caminho }),
+      }),
+    );
+
+    expect(resp.status, "sem 206 o aparelho que exige faixa desiste de tocar").toBe(206);
+    expect(resp.headers.get("accept-ranges")).toBe("bytes");
+    expect(resp.headers.get("content-range"), "o player precisa saber qual pedaço é").toContain(
+      `/${bytes.byteLength}`,
+    );
+
+    const recebido = new Uint8Array(await resp.arrayBuffer());
+    expect(recebido.byteLength, "devolver o arquivo todo é justamente o defeito").toBe(marca.length);
+    expect([...recebido], "veio o começo no lugar do fim: o índice nunca seria lido").toEqual(marca);
+  }, 180_000);
+
+  it("MTV-010 sem pedido de faixa o arquivo vem inteiro, já anunciando que aceita faixa", async () => {
+    const telaId = await criarTela(db, "Tela MTV 010b", 5);
+    const { bytes } = videoComIndiceNoFim();
+
+    const { url } = await uploadMidia(db, bucketStorage(garage.cfg), telaId, {
+      nome: "video-inteiro.mp4",
+      tipo: "video/mp4",
+      tamanho: bytes.byteLength,
+      bytes,
+    });
+    const caminho = objetoDaUrl(garage.cfg, url)!.split("/");
+    const pedido = () => new Request("http://teste/midia/" + caminho.join("/"));
+
+    const resp = await comGarageNoAmbiente(() => GET(pedido(), { params: Promise.resolve({ caminho }) }));
+    expect(resp.status).toBe(200);
+    // é por este cabeçalho que o aparelho descobre que PODE pedir pedaço
+    expect(resp.headers.get("accept-ranges")).toBe("bytes");
+    expect(new Uint8Array(await resp.arrayBuffer()).byteLength).toBe(bytes.byteLength);
+
+    // e perguntar o tamanho não pode custar o arquivo todo
+    const cabeca = await comGarageNoAmbiente(() => HEAD(pedido(), { params: Promise.resolve({ caminho }) }));
+    expect(cabeca.status).toBe(200);
+    expect(cabeca.headers.get("content-length")).toBe(String(bytes.byteLength));
+    expect(await cabeca.text(), "HEAD com corpo é o oposto do que ele serve").toBe("");
+  }, 180_000);
 });
