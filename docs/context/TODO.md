@@ -25,3 +25,26 @@
   - [ ] **R3 (2026-08-18):** módulo TV NÃO espelha — cada TV/tela com playlist de propaganda diferente e velocidade (intervalo) própria; player midia-play com múltiplas telas independentes.
 
 > Requisitos R1/R2/R3 detalhados em `docs/produto/REQUISITOS-NOVOS-2026-08-18.md` (áudios do Rodrigo, 18/08).
+
+## Respostas do Rodrigo de 15/09 que ficaram 8 dias sem virar nada
+
+Eu perguntei três coisas por WhatsApp em 15/09 às 18h20; ele respondeu em áudio às
+20h55 e a conversa foi toda para a TV. As respostas só foram recuperadas em 23/09,
+transcrevendo o áudio. **Todas as três estão aprovadas por ele.**
+
+- [ ] **Combo conta na meta de cada serviço que ele inclui.** Palavras dele: *"Nesse caso
+  aí, conta na meta. Se ele vende um combo que tem a sobrancelha, conta na meta de
+  sobrancelha dele."* Hoje combo só tem o campo de texto livre `inclui`, então isso
+  exige a relação combo → serviços de verdade. Sem ela não há como somar.
+- [ ] **Repetir as metas toda semana, com ajuste.** Palavras dele: *"É uma ideia boa,
+  gostei. Que aí eu só altero mais ou menos o que eu quero mudar ali, aumentar ou
+  diminuir."* Ou seja: a semana nova nasce com a meta da anterior e ele edita o que
+  quiser, não recadastra tudo.
+- [ ] **Aba de metas para a recepção, com meta relâmpago.** Palavras dele: *"Pra elas
+  também tem que ter uma abinha, pra eu poder botar algumas metas só pra elas. Meta
+  relâmpago, esse tipo de coisa."* A "meta relâmpago" é pedido NOVO, não estava na
+  pergunta: meta curta, fora da semana. Precisa de decisão do Inael antes de construir,
+  porque é escopo.
+
+**Lição de processo:** resposta de cliente em áudio precisa ser transcrita e escrita aqui
+no mesmo dia. Estas ficaram invisíveis porque só existiam dentro de um áudio no WhatsApp.
