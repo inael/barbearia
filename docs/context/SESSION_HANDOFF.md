@@ -555,3 +555,30 @@ Ordem: **Fase 1** SHELL → SVC → PRO → CLI → USR (navegável + cadastros 
 - WhatsApp do cliente na sessão WAHA `pessoal_inael`, chat `38345937793261@lid`.
 - Commits IT Booster: `--author="inael <inael.rodrigues@gmail.com>"` (repo sem git identity → usar `-c user.name/-c user.email` inline).
 - Deploy: Coolify na VPS (`BARBEARIA_COOLIFY_*` no vault). App servindo em http://179.198.113.115.sslip.io.
+
+---
+
+## 2026-09-23 — vídeo da TV subia e não tocava (MTV-010)
+
+**Sintoma (áudio do Rodrigo, 12:39):** subiu um vídeo já girado no editor e a tela
+ficou carregando sem fim. O upload em si estava certo: o arquivo chegou ao bucket
+(13,6 MB, item 9 da tela 1).
+
+**Causa:** o MP4 dele tem o índice (`moov`) no FIM do arquivo (ordem das caixas:
+`ftyp`, `mdat` 13,6 MB, `moov`). O player lê o índice antes do primeiro quadro e para
+isso pede o pedaço final com `Range`. A rota `/midia/[...caminho]` ignorava o `Range`:
+pedindo 1 KB, devolvia `200` com os 13.693.653 bytes. O log do app mostrava
+`The destination stream closed early` — a TV cortando a conexão.
+
+**Correção:** `Range` repassado ao bucket, `206` + `content-range` devolvidos como
+vieram, `accept-ranges: bytes` sempre, e `HEAD` para quem só quer o tamanho.
+Commit `625f1e3`. AC MTV-010 na integração com Garage real (12 testes verdes).
+
+**Provado em produção**, no arquivo dele: `bytes=0-1023` → 206/1024 B;
+`bytes=-20000` → 206, `content-range: bytes 13673653-13693652/13693653`, com o `moov`
+dentro do pedaço, em 48 ms; `HEAD` → 200 sem corpo; sem faixa → 200 com o arquivo todo.
+
+**Diagnóstico da TV dele respondido pelas fotos (22/09):** o aparelho **roda
+JavaScript** (`1280x714`), **aceita `vh`/`vw`** e o navegador enxerga a tela como
+**paisagem** mesmo com a TV pendurada de pé. Ou seja: a TV está fisicamente girada na
+parede e o navegador não acompanha, por isso o giro por item existe.
