@@ -11,6 +11,17 @@ import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/co
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
+import {
+  registrarPagamento,
+  estornarPagamento,
+  historicoDaAssinatura,
+  situacaoDosAssinantes,
+  competenciaDe,
+  competenciaSomando,
+  rotuloCompetencia,
+  FORMAS,
+  type FormaPagamento,
+} from "@/lib/mensalidades";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/assinaturas";
@@ -129,6 +140,41 @@ async function rejeitar(formData: FormData) {
   redirect(`${ROTA}?ok=${encodeURIComponent("Pedido rejeitado.")}`);
 }
 
+/**
+ * MEN — receber a mensalidade.
+ *
+ * Fica com quem opera o balcão (dono e recepção), não só com o dono: quem recebe o
+ * dinheiro do assinante costuma ser quem está no caixa.
+ */
+async function receber(formData: FormData) {
+  "use server";
+  if (!(await podeOperar())) return;
+  const valor = reaisParaCentavosPositivo(String(formData.get("valor") || ""));
+  if (valor === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
+  try {
+    await registrarPagamento(getDb(), {
+      assinaturaId: Number(formData.get("id")),
+      competencia: String(formData.get("competencia") || ""),
+      valorCentavos: valor,
+      forma: String(formData.get("forma") || "dinheiro") as FormaPagamento,
+      observacao: String(formData.get("observacao") || ""),
+    });
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao receber")}`);
+  }
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Mensalidade recebida.")}`);
+}
+
+/** Estorno é do dono: desfaz dinheiro lançado, e isso não pode ser mexido por engano. */
+async function estornar(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  await estornarPagamento(getDb(), Number(formData.get("mensalidadeId")));
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Mensalidade estornada.")}`);
+}
+
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 const input = "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
@@ -159,16 +205,33 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
     .innerJoin(schema.planos, eq(schema.planos.id, schema.assinaturas.planoId));
   const fila = await listarFila(db);
 
+  // MEN: situacao de cobranca de cada assinante ativo + historico para o card
+  const hoje = new Date();
+  const mesAtual = competenciaDe(hoje);
+  // meses oferecidos no seletor: o atual, os tres anteriores (quem atrasa paga depois)
+  // e o proximo (quem adianta). Nada de digitar mes a mao.
+  const mesesOferecidos = [1, 0, -1, -2, -3].map((d) => competenciaSomando(mesAtual, d));
+  const situacoes = await situacaoDosAssinantes(db, hoje);
+  const porAssinatura = new Map(situacoes.map((s) => [s.assinaturaId, s]));
+  const historicos = new Map(
+    await Promise.all(
+      situacoes.map(async (s) => [s.assinaturaId, await historicoDaAssinatura(db, s.assinaturaId, 6)] as const),
+    ),
+  );
+  const emAberto = situacoes.filter((s) => !s.mesAtualPago);
+
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-3xl px-5 py-10">
         <PageHeader
           titulo="Assinaturas"
-          descricao="Clientes que pagam mensalidade pra cortar sempre: planos Flex (ter–qui) e Premium (todo dia), fila de espera e status de cada assinante."
+          descricao="Clientes que pagam mensalidade pra cortar sempre: planos Flex (ter–qui) e Premium (todo dia), fila de espera, e o recebimento mês a mês de cada assinante."
           ajuda={
             <>
               <p><strong>Planos</strong> — Flex vale de terça a quinta e dá 10%/5% de desconto em serviços extras/produtos; Premium vale todo dia e dá 20%/10%.</p>
               <p><strong>Fila de espera</strong> — o cliente pede a assinatura (ou a recepção pede por ele) e o dono aprova aqui.</p>
+              <p><strong>Mensalidade</strong> — quando o cliente pagar, clique em <strong>Receber</strong> no cartão dele: escolha o mês, confira o valor e a forma. O sistema passa a saber até quando cada um está pago, e o aviso no topo lista quem ainda não pagou o mês.</p>
+              <p><strong>Estorno</strong> — lançou errado? Abra o histórico do assinante e estorne. O mês volta a ficar em aberto.</p>
               <p><strong>Atraso</strong> — assinante em atraso fica bloqueado de agendar até regularizar.</p>
               <p>O dinheiro das assinaturas não paga comissão direta: vira o <strong>Pote</strong> (menu Gestão → Pote).</p>
             </>
@@ -235,6 +298,18 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
 
         <section className="mt-8">
           <h2 className="mb-3 text-lg font-semibold">Assinantes ({assinaturas.length})</h2>
+
+          {situacoes.length > 0 ? (
+            <p
+              data-testid="men-resumo"
+              className={`mb-3 rounded-lg border px-3 py-2 text-sm ${emAberto.length ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200" : "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200"}`}
+            >
+              {emAberto.length === 0
+                ? `Todo mundo com ${rotuloCompetencia(mesAtual)} recebido.`
+                : `${emAberto.length} de ${situacoes.length} com ${rotuloCompetencia(mesAtual)} em aberto: ${emAberto.map((s) => s.clienteNome).join(", ")}.`}
+            </p>
+          ) : null}
+
           {gerenciar && clientes.length > 0 && planos.length > 0 ? (
             <form action={novaAssinatura} className="mb-3 flex flex-wrap items-end gap-2">
               <select name="clienteId" aria-label="Cliente" className={input}>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}</select>
@@ -242,30 +317,113 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
               <button type="submit" className={btnGhost}>Assinar</button>
             </form>
           ) : null}
+
           <div className="flex flex-col gap-2">
-            {assinaturas.map((a) => (
-              <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
-                <span className="font-medium">{a.clienteNome}</span>
-                <span className="text-neutral-500">{a.planoNome}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${a.status === "ativa" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" : a.status === "atraso" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" : "bg-neutral-200 text-neutral-600 dark:bg-neutral-800"}`}>{a.status}</span>
-                {gerenciar ? (
-                  <form action={mudarStatus} className="ml-auto flex items-center gap-1">
-                    <input type="hidden" name="id" value={a.id} />
-                    <select name="status" defaultValue={a.status} aria-label={`Status de ${a.clienteNome}`} className={input}><option value="ativa">ativa</option><option value="atraso">atraso</option><option value="cancelada">cancelada</option></select>
-                    <button type="submit" className={btnGhost}>Salvar</button>
-                  </form>
-                ) : null}
-                {gerenciar ? (
-                  <form action={trocarPlano} className="flex items-center gap-1">
-                    <input type="hidden" name="id" value={a.id} />
-                    <select name="planoId" defaultValue={a.planoId} aria-label={`Trocar plano de ${a.clienteNome}`} className={input}>
-                      {planos.map((pl) => <option key={pl.id} value={pl.id}>{pl.nome}</option>)}
-                    </select>
-                    <button type="submit" data-trocar-plano={a.clienteNome} className={btnGhost}>Trocar plano</button>
-                  </form>
-                ) : null}
-              </div>
-            ))}
+            {assinaturas.map((a) => {
+              const sit = porAssinatura.get(a.id);
+              const historico = historicos.get(a.id) ?? [];
+              return (
+                <div key={a.id} data-assinante={a.clienteNome} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="font-medium">{a.clienteNome}</span>
+                    <span className="text-neutral-500">{a.planoNome}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${a.status === "ativa" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" : a.status === "atraso" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" : "bg-neutral-200 text-neutral-600 dark:bg-neutral-800"}`}>{a.status}</span>
+
+                    {sit ? (
+                      <span
+                        data-mes-atual={sit.mesAtualPago ? "pago" : "aberto"}
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${sit.mesAtualPago ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"}`}
+                      >
+                        {sit.mesAtualPago
+                          ? `${rotuloCompetencia(mesAtual)} recebido`
+                          : sit.mesesEmAberto > 1
+                            ? `${sit.mesesEmAberto} meses em aberto`
+                            : `${rotuloCompetencia(mesAtual)} em aberto`}
+                      </span>
+                    ) : null}
+                    {sit ? (
+                      <span data-pago-ate className="text-xs text-neutral-500">
+                        {sit.pagoAte ? `pago até ${rotuloCompetencia(sit.pagoAte)}` : "nenhum recebimento registrado"}
+                      </span>
+                    ) : null}
+
+                    {gerenciar ? (
+                      <form action={mudarStatus} className="ml-auto flex items-center gap-1">
+                        <input type="hidden" name="id" value={a.id} />
+                        <select name="status" defaultValue={a.status} aria-label={`Status de ${a.clienteNome}`} className={input}><option value="ativa">ativa</option><option value="atraso">atraso</option><option value="cancelada">cancelada</option></select>
+                        <button type="submit" className={btnGhost}>Salvar</button>
+                      </form>
+                    ) : null}
+                    {gerenciar ? (
+                      <form action={trocarPlano} className="flex items-center gap-1">
+                        <input type="hidden" name="id" value={a.id} />
+                        <select name="planoId" defaultValue={a.planoId} aria-label={`Trocar plano de ${a.clienteNome}`} className={input}>
+                          {planos.map((pl) => <option key={pl.id} value={pl.id}>{pl.nome}</option>)}
+                        </select>
+                        <button type="submit" data-trocar-plano={a.clienteNome} className={btnGhost}>Trocar plano</button>
+                      </form>
+                    ) : null}
+                  </div>
+
+                  {sit ? (
+                    <div className="mt-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+                      <form action={receber} className="flex flex-wrap items-end gap-2">
+                        <input type="hidden" name="id" value={a.id} />
+                        <label className="flex flex-col gap-1 text-xs font-medium">
+                          Mês
+                          <select name="competencia" defaultValue={mesAtual} aria-label={`Mês da mensalidade de ${a.clienteNome}`} className={input}>
+                            {mesesOferecidos.map((m) => <option key={m} value={m}>{rotuloCompetencia(m)}</option>)}
+                          </select>
+                        </label>
+                        <label className="flex flex-col gap-1 text-xs font-medium">
+                          Valor
+                          {/* já vem com o preço do plano: no balcão ele só confirma */}
+                          <input name="valor" defaultValue={(sit.precoCentavos / 100).toFixed(2)} inputMode="decimal" aria-label={`Valor da mensalidade de ${a.clienteNome}`} className={`${input} w-24`} />
+                        </label>
+                        <label className="flex flex-col gap-1 text-xs font-medium">
+                          Forma
+                          <select name="forma" defaultValue="dinheiro" aria-label={`Forma de pagamento de ${a.clienteNome}`} className={input}>
+                            {FORMAS.map((f) => <option key={f} value={f}>{f === "cartao" ? "cartão" : f}</option>)}
+                          </select>
+                        </label>
+                        <label className="flex flex-col gap-1 text-xs font-medium">
+                          Observação
+                          <input name="observacao" aria-label={`Observação da mensalidade de ${a.clienteNome}`} className={`${input} w-40`} />
+                        </label>
+                        <button type="submit" data-receber={a.clienteNome} className={btn}>Receber</button>
+                      </form>
+
+                      {historico.length > 0 ? (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs text-neutral-600 dark:text-neutral-400">
+                            Histórico ({historico.length})
+                          </summary>
+                          <div className="mt-2 flex flex-col gap-1">
+                            {historico.map((m) => (
+                              <div key={m.id} data-mensalidade={`${a.clienteNome}:${m.competencia}`} className="flex flex-wrap items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300">
+                                <span className="font-medium">{rotuloCompetencia(m.competencia)}</span>
+                                <span>{brl(m.valorCentavos)}</span>
+                                <span className="text-neutral-500">{m.forma === "cartao" ? "cartão" : m.forma}</span>
+                                <span className="text-neutral-500">recebido em {m.pagoEm.toLocaleDateString("pt-BR")}</span>
+                                {m.observacao ? <span className="text-neutral-500">· {m.observacao}</span> : null}
+                                {gerenciar ? (
+                                  <form action={estornar} className="ml-auto">
+                                    <input type="hidden" name="mensalidadeId" value={m.id} />
+                                    <button type="submit" data-estornar={`${a.clienteNome}:${m.competencia}`} className={btnGhost}>Estornar</button>
+                                  </form>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      ) : (
+                        <p className="mt-2 text-xs text-neutral-500">Nenhum recebimento registrado ainda.</p>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
             {assinaturas.length === 0 ? <p className="text-sm text-neutral-600">Nenhum assinante.</p> : null}
           </div>
         </section>

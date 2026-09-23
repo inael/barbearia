@@ -168,6 +168,36 @@ export const assinaturas = pgTable("assinaturas", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * MEN: mensalidade recebida de um assinante.
+ *
+ * A linha nasce NO PAGAMENTO, não numa geração mensal de cobrança. Não existe robô
+ * criando mês em aberto: "em aberto" é a ausência de linha para aquela competência, o
+ * que não tem como dessincronizar do que de fato entrou no caixa.
+ *
+ * `competencia` é o mês a que o pagamento se refere (`YYYY-MM`), que nem sempre é o mês
+ * em que o dinheiro entrou: quem atrasa paga setembro em outubro.
+ */
+export const mensalidades = pgTable(
+  "mensalidades",
+  {
+    id: serial("id").primaryKey(),
+    assinaturaId: integer("assinatura_id")
+      .notNull()
+      .references(() => assinaturas.id, { onDelete: "cascade" }),
+    competencia: text("competencia").notNull(),
+    /** O que ENTROU, não o preço do plano: ele dá desconto e combina valor. */
+    valorCentavos: integer("valor_centavos").notNull(),
+    pagoEm: timestamp("pago_em", { withTimezone: true }).notNull().defaultNow(),
+    /** dinheiro|pix|cartao|outro */
+    forma: text("forma").notNull().default("dinheiro"),
+    observacao: text("observacao"),
+    criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // receber o mesmo mês duas vezes é engano de balcão: vira recado, não linha duplicada
+  (t) => [uniqueIndex("uniq_mensalidade_assinatura_competencia").on(t.assinaturaId, t.competencia)],
+);
+
 /** Fila de espera de assinatura: cliente pede, dono aprova. status: aguardando|aprovado|rejeitado. */
 export const filaAssinatura = pgTable("fila_assinatura", {
   id: serial("id").primaryKey(),
@@ -397,6 +427,7 @@ export type ProdutoEstoque = typeof produtosEstoque.$inferSelect;
 export type MovimentoEstoque = typeof movimentosEstoque.$inferSelect;
 export type Plano = typeof planos.$inferSelect;
 export type Assinatura = typeof assinaturas.$inferSelect;
+export type Mensalidade = typeof mensalidades.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
