@@ -36,6 +36,7 @@ precisa de **teto de armazenamento combinado com o Rodrigo** antes de liberar v�
 | TV-014 | O giro sai no HTML com o prefixo do WebKit, senão a TV antiga só encolhe a mídia em vez de girar | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
 | TV-015 | Existe uma página de diagnóstico que abre sem login e sem JavaScript, com os casos de giro etiquetados por letra, para o dono fotografar na TV | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
+| TV-019 | Existe uma página de diagnóstico que gira os TRÊS tipos lado a lado (iframe do YouTube, vídeo do bucket e caixa comum), abre sem login e sem JavaScript, e cabe numa foto só | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
 | TV-016 | O quadro do YouTube usa 100% da caixa, não o tamanho da tela, para acompanhar a caixa quando ela gira | e2e | e2e/midia-tv-bucket.spec.ts | PASS | verde (gate) |
 
@@ -63,7 +64,7 @@ REQUIREMENT (o dono sabe o que digitar na TV) → TV-013 → e2e → e2e/midia-t
 
 REQUIREMENT (girar de verdade na TV antiga) → TV-014 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
-REQUIREMENT (descobrir o que a TV dele aceita) → TV-015 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
+REQUIREMENT (descobrir o que a TV dele aceita) → TV-015,019 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
 REQUIREMENT (o giro valer para o video do YouTube) → TV-016 → e2e → e2e/midia-tv-bucket.spec.ts → PASS
 
@@ -206,3 +207,16 @@ REQUIREMENT (o video chegar a TOCAR na TV) → MTV-010 → integration → lib/d
   pede ffmpeg na VPS do cliente, que é justamente o que não se faz numa máquina de
   1 vCPU. Servir faixa é o que qualquer servidor de mídia faz, e vale para todo vídeo
   que ele subir, não só para os do editor dele.
+
+- **O giro NUNCA foi o problema, e a anotação anterior estava errada.** As fotos da TV
+  dele (21/09 e 23/09) mostram B, C e D deitados, com o A (controle sem giro) em pé:
+  aquele navegador aceita `transform: rotate()`, com e sem o prefixo do WebKit. Também
+  aceita `vh`/`vw` (G e H coloridos), executa JavaScript (I: "RODA, 1280x714") e enxerga
+  a tela como paisagem mesmo com a TV pendurada em pé (F). O que quebrava era o tamanho
+  do quadro (TV-016), não o giro.
+- Sobra um caso não coberto pela primeira página: ela gira uma CAIXA DE TEXTO, e o que o
+  Rodrigo precisa girar é `iframe` do YouTube. Navegador de TV costuma compor `iframe` e
+  `video` em camada separada, e existe aparelho que gira a caixa sem girar o conteúdo.
+  Por isso `/tv/diagnostico/giro` gira os três tipos lado a lado, com o mesmo código do
+  player, numa tela só (TV-019). Da outra vez a foto veio só do rodapé da página e as
+  letras de cima ficaram sem resposta por um dia inteiro.

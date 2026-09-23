@@ -4,11 +4,19 @@ export const dynamic = "force-dynamic";
  * Página de diagnóstico da TV. Serve para UMA coisa: o dono abre na TV dele, tira
  * uma foto, e a foto diz qual técnica de giro aquele navegador aceita.
  *
- * Por que existe: o giro não funciona na TV do Rodrigo. Ele descreveu duas vezes o
- * mesmo sintoma ("não gira, só diminui, fica um quadradinho menor"), e a foto de
- * 21/09 confirma: a troca de largura por altura acontece, mas o giro é ignorado,
- * inclusive com o prefixo do WebKit. Aquele navegador eu não tenho como reproduzir
- * aqui, e já errei duas vezes tentando deduzir. Uma foto resolve.
+ * Por que existe: o giro não funcionava na TV do Rodrigo, e ele descreveu duas vezes o
+ * mesmo sintoma ("não gira, só diminui, fica um quadradinho menor"). Aquele navegador
+ * eu não tenho como reproduzir aqui, e já errei duas vezes tentando deduzir.
+ *
+ * RESPONDIDO pelas fotos dele (21/09 e 23/09): B, C e D aparecem DEITADOS e o A, que é
+ * o controle sem giro, aparece em pé. Ou seja, aquele navegador ACEITA
+ * `transform: rotate()`, com e sem o prefixo do WebKit. G e H vieram coloridos (aceita
+ * `vh`/`vw`), F disse "DEITADA (paisagem)" (o navegador vê a tela deitada mesmo com a
+ * TV pendurada em pé) e I disse "RODA (1280x714)" (o aparelho executa JavaScript).
+ * O que quebrava era o tamanho do quadro, não o giro. Ver TV-016.
+ *
+ * O caso do YouTube, que é `iframe`, ganhou página própria em `giro/`: esta aqui gira
+ * uma caixa de texto, e navegador de TV pode tratar `iframe` e `video` de outro jeito.
  *
  * Tudo aqui é HTML e CSS embutido, sem JavaScript e sem folha de estilo externa:
  * a TV dele descarta a folha do sistema inteira (ela usa `@layer`, que o navegador

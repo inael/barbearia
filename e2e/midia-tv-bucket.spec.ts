@@ -245,6 +245,36 @@ test.describe("TV — página de diagnóstico do navegador da TV (e2e)", () => {
   });
 });
 
+test.describe("TV — diagnóstico do giro POR TIPO DE ELEMENTO (e2e)", () => {
+  test("TV-019 a página do giro abre sem login e gira iframe, vídeo e caixa com o mesmo código", async ({
+    browser,
+  }) => {
+    // A primeira página de diagnóstico girava uma CAIXA DE TEXTO, e respondeu que a
+    // TV dele aceita `transform` (B, C e D deitados; A, o controle, em pé). Só que o
+    // caso que interessa é o vídeo do YouTube, e navegador de TV costuma compor
+    // `iframe` e `video` em camada separada: há aparelho que gira a caixa e não o
+    // conteúdo dela. Esta página põe os três tipos lado a lado para uma foto só
+    // responder qual deles gira.
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const p = await ctx.newPage();
+    const r = await p.goto("/tv/diagnostico/giro");
+    expect(r?.status(), "o diagnóstico não pode pedir login: ele é aberto NA TV").toBe(200);
+
+    // o controle existe sempre; iframe e video dependem do que estiver na playlist
+    await expect(p.locator('[data-testid="giro-caixa"]')).toHaveCount(1);
+
+    const html = await p.content();
+    // as duas formas de girar, e as medidas TROCADAS, iguais às do player
+    expect(html).toContain("-webkit-transform");
+    expect(html, "sem trocar largura por altura a mídia girada sai cortada").toContain(
+      "rotate(90deg)",
+    );
+    // estilo embutido: a folha do sistema usa @layer e some naquele navegador
+    expect(html, "estilo externo não chegaria naquela TV").not.toContain('class="caso');
+    await ctx.close();
+  });
+});
+
 test.describe("TV — o quadro do YouTube segue a caixa girada (e2e)", () => {
   test("TV-016 vídeo do YouTube usa 100% da caixa, não o tamanho da tela", async ({ page, baseURL }) => {
     // Diagnóstico de 21/09 na TV do Rodrigo: B, C e D apareceram DEITADOS, ou seja
