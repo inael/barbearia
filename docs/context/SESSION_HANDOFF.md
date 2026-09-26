@@ -623,3 +623,40 @@ cheia e na orientação certa, porque pré-girou o vídeo no editor. Mas ele esc
 depende do giro por item funcionar naquela TV. Desde a última tentativa dele foram
 corrigidos dois defeitos de tamanho (envelope sem altura e iframe em `100vw/100vh`), então
 vale ele testar de novo antes de qualquer conclusão.
+
+## 2026-09-26 — MRE: metas repetem + botao TV moderna + msgs ao Rodrigo
+
+**O que foi feito:**
+
+1. **Botao "Testar versao moderna" na tela de TV.** O Rodrigo apontou que so existia
+   o botao da versao antiga. Agora os dois ficam lado a lado.
+
+2. **Metas repetem toda semana (MRE).** `copiarMetasDaSemanaAnterior` copia as metas da
+   semana anterior para a nova, se a nova estiver vazia. Botao "Repetir metas da semana
+   passada" na tela de metas, so para o dono. Regras: nao sobrescreve o que ja existe,
+   semana anterior vazia avisa. MRE-001..005. Unit 209, integration 13, e2e 152 verdes.
+
+3. **Mensagens ao Rodrigo:** respondemos as 3 mensagens dele de 23/09:
+   - TV LG: resolvida (ele girou os videos no editor). Avisamos que o YouTube foi
+     corrigido caso ele queira testar de novo.
+   - TV Samsung: nao abre o sistema (TLS 1.0/1.1 insuficiente). Sugerimos Fire TV Stick.
+     Pedimos o modelo da Samsung.
+   - Cobranca automatica: explicamos o fluxo, mandamos o link do Asaas (aceita CPF).
+     Quando ele criar a conta, conectar no sistema.
+
+**Fotos do 22/09 revisadas (nenhuma ficou sem resposta):**
+- 11:55 oleo de barba deitado na TV LG (sem giro, antes da correcao TV-016)
+- 11:58 video de propaganda deitado com barra do player (Faith Barbearia na aba)
+- 11:59 close do YouTube embed com "Mais videos" (confirmou o defeito do iframe)
+- 12:29 diagnostico rodapé (F/G/H/I) - ja analisado
+- Audios 11:59: ele descreveu que os botoes ficam no cantinho mas o video nao gira,
+  e que tentava subir video editado mas nao subia (era o limite de 10 MB)
+
+**Ainda em aberto:**
+- Combo contando na meta (exige relacao combo->servicos)
+- Aba de metas para recepcao (sem a parte da meta relampago)
+- Erro ao fechar comanda de assinante (nunca reproduzido)
+- Graficos nos paineis
+- Cobranca automatica (depende da conta Asaas dele)
+- SEC-04 (porta 5432) e NEXT_PUBLIC_DEMO_LOGINS
+- Resposta dele sobre modelo da Samsung e conta Asaas
