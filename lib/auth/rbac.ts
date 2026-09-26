@@ -16,7 +16,7 @@ export const PAPEIS: Papel[] = ["dono", "recepcionista", "barbeiro"];
 
 const PERMISSOES: Record<Papel, Recurso[]> = {
   dono: ["agenda", "agenda_propria", "comissao", "caixa", "estoque", "cadastro", "tv", "config"],
-  recepcionista: ["agenda", "caixa", "estoque", "cadastro"],
+  recepcionista: ["agenda", "caixa", "estoque", "cadastro", "comissao"],
   barbeiro: ["agenda_propria", "comissao"],
 };
 

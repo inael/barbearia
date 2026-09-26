@@ -176,3 +176,26 @@ test.describe("MRE - metas repetem toda semana (e2e)", () => {
     await expect(page.getByTestId("met-repetir")).toHaveCount(0);
   });
 });
+
+/**
+ * MRR - aba de metas para a recepcao (e2e).
+ *
+ * Rodrigo (audio 15/09): "Pra elas tambem tem que ter uma abinha, pra eu poder botar
+ * algumas metas so pra elas."
+ */
+test.describe("MRR - recepcao ve as proprias metas (e2e)", () => {
+  test("MRR-001 a recepcionista abre a tela de Metas e ve o proprio relatorio", async ({ page }) => {
+    await login(page, "recepcao@faith.com", "recep123");
+    await page.goto("/metas");
+    // nao deve redirecionar pro login nem mostrar "Sem acesso"
+    await expect(page.getByRole("heading", { name: "Metas & relatórios" })).toBeVisible();
+    // ve a propria linha de recepcao
+    const linha = page.locator('[data-prof-meta="Recepcao"]');
+    await expect(linha).toBeVisible();
+    await expect(linha).toContainText("recepção");
+    await expect(linha).toContainText("Hidratações");
+    // nao ve o formulario de definir meta (so o dono define)
+    await expect(page.getByTestId("met-alvo")).toHaveCount(0);
+    await expect(page.getByTestId("met-repetir")).toHaveCount(0);
+  });
+});

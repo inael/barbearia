@@ -7,14 +7,15 @@ describe("AUTH RBAC — permissoes por papel", () => {
     for (const r of recursos) expect(podeAcessar("dono", r)).toBe(true);
   });
 
-  it("AUTH-007 recepcionista: agenda/caixa/estoque/cadastro sim; config/tv/comissao nao", () => {
+  it("AUTH-007 recepcionista: agenda/caixa/estoque/cadastro/comissao sim; config/tv nao", () => {
     expect(podeAcessar("recepcionista", "agenda")).toBe(true);
     expect(podeAcessar("recepcionista", "caixa")).toBe(true);
     expect(podeAcessar("recepcionista", "estoque")).toBe(true);
     expect(podeAcessar("recepcionista", "cadastro")).toBe(true);
+    // comissao: a recepcionista ve as proprias metas e o proprio relatorio
+    expect(podeAcessar("recepcionista", "comissao")).toBe(true);
     expect(podeAcessar("recepcionista", "config")).toBe(false);
     expect(podeAcessar("recepcionista", "tv")).toBe(false);
-    expect(podeAcessar("recepcionista", "comissao")).toBe(false);
   });
 
   it("AUTH-008 barbeiro: agenda_propria + comissao sim; agenda geral/caixa/config/cadastro nao", () => {
