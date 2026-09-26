@@ -13,6 +13,8 @@ import {
   criarCombo,
   inativarCombo,
   listarCombos,
+  servicosDoCombo,
+  definirServicosDoCombo,
 } from "@/lib/catalogo";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +87,16 @@ async function novoCombo(formData: FormData) {
   redirect(`${ROTA}?ok=${encodeURIComponent("Combo cadastrado.")}`);
 }
 
+async function vincularServicos(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const comboId = Number(formData.get("comboId"));
+  const ids = formData.getAll("servicoIds").map(Number).filter(Number.isInteger);
+  await definirServicosDoCombo(getDb(), comboId, ids);
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Servicos do combo atualizados.")}`);
+}
+
 async function removerCombo(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
@@ -117,6 +129,9 @@ export default async function CadastroServicosPage({ searchParams }: { searchPar
 
   const db = getDb();
   const [servicos, combos] = await Promise.all([listarServicos(db), listarCombos(db)]);
+  const servicosPorCombo = new Map(
+    await Promise.all(combos.map(async (c) => [c.id, await servicosDoCombo(db, c.id)] as const)),
+  );
 
   return (
     <main className={wrap}>
@@ -216,6 +231,30 @@ export default async function CadastroServicosPage({ searchParams }: { searchPar
                   <span className="font-bold">{brl(c.precoCentavos)}</span>
                 </div>
                 <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">{c.inclui}</p>
+                <form action={vincularServicos} className="mt-2">
+                  <input type="hidden" name="comboId" value={c.id} />
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-neutral-600 dark:text-neutral-400">
+                      Servicos inclusos ({servicosPorCombo.get(c.id)?.length ?? 0})
+                    </summary>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {servicos.map((sv) => (
+                        <label key={sv.id} className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            name="servicoIds"
+                            value={sv.id}
+                            defaultChecked={servicosPorCombo.get(c.id)?.includes(sv.id)}
+                          />
+                          <span>{sv.nome}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <button type="submit" className="mt-2 rounded border border-neutral-300 px-2 py-0.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900">
+                      Salvar servicos
+                    </button>
+                  </details>
+                </form>
                 <form action={removerCombo} className="mt-2">
                   <input type="hidden" name="id" value={c.id} />
                   <button type="submit" className="text-xs text-red-700 underline hover:text-red-900 dark:text-red-400">Inativar</button>

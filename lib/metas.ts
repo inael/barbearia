@@ -85,8 +85,14 @@ export async function removerMeta(db: DB, id: number): Promise<void> {
   await db.delete(schema.metas).where(eq(schema.metas.id, id));
 }
 
-/** Nº de atendimentos (itens de serviço/combo em comandas fechadas) do profissional em [de, ate).
- * Cortesia conta como atendimento; serviço-do-barbeiro (consumo próprio) não. */
+/**
+ * Nº de atendimentos (itens de serviço/combo em comandas fechadas) do profissional em [de, ate).
+ * Cortesia conta como atendimento; serviço-do-barbeiro (consumo próprio) não.
+ *
+ * CSM: quando a meta é de um serviço específico, conta TAMBÉM os combos que incluem
+ * aquele serviço. Pedido do Rodrigo (audio 15/09): "se ele vende um combo que tem a
+ * sobrancelha, conta na meta de sobrancelha dele."
+ */
 export async function atendimentosDoPeriodo(
   db: DB,
   profissionalId: number,
@@ -94,7 +100,27 @@ export async function atendimentosDoPeriodo(
   ate: Date,
   servicoId: number | null = null,
 ): Promise<number> {
-  const [row] = await db
+  // meta geral: conta tudo (servico + combo), sem filtro de servico
+  if (servicoId === null) {
+    const [row] = await db
+      .select({ n: sql<number>`count(*)` })
+      .from(schema.comandaItens)
+      .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
+      .where(
+        and(
+          eq(schema.comandas.status, "fechada"),
+          gte(schema.comandas.fechadaEm, de),
+          lt(schema.comandas.fechadaEm, ate),
+          eq(schema.comandaItens.profissionalId, profissionalId),
+          inArray(schema.comandaItens.tipo, ["servico", "combo"]),
+          ne(schema.comandaItens.lancamento, "servico_barbeiro"),
+        ),
+      );
+    return Number(row?.n ?? 0);
+  }
+
+  // meta de servico especifico: conta avulsos DAQUELE servico + combos que o incluem
+  const [avulsos] = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
@@ -104,16 +130,40 @@ export async function atendimentosDoPeriodo(
         gte(schema.comandas.fechadaEm, de),
         lt(schema.comandas.fechadaEm, ate),
         eq(schema.comandaItens.profissionalId, profissionalId),
-        inArray(schema.comandaItens.tipo, ["servico", "combo"]),
+        eq(schema.comandaItens.tipo, "servico"),
+        eq(schema.comandaItens.refId, servicoId),
         ne(schema.comandaItens.lancamento, "servico_barbeiro"),
-        // meta de servico especifico conta SO aquele servico. Combo tem refId de
-        // combo, por isso fica de fora quando o alvo e um servico avulso.
-        ...(servicoId === null
-          ? []
-          : [eq(schema.comandaItens.tipo, "servico"), eq(schema.comandaItens.refId, servicoId)]),
       ),
     );
-  return Number(row?.n ?? 0);
+
+  // combos que incluem esse servico: busca os combo IDs que tem a relacao
+  const combosComServico = await db
+    .select({ comboId: schema.comboServicos.comboId })
+    .from(schema.comboServicos)
+    .where(eq(schema.comboServicos.servicoId, servicoId));
+  const comboIds = combosComServico.map((c) => c.comboId);
+
+  let nCombos = 0;
+  if (comboIds.length > 0) {
+    const [row] = await db
+      .select({ n: sql<number>`count(*)` })
+      .from(schema.comandaItens)
+      .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
+      .where(
+        and(
+          eq(schema.comandas.status, "fechada"),
+          gte(schema.comandas.fechadaEm, de),
+          lt(schema.comandas.fechadaEm, ate),
+          eq(schema.comandaItens.profissionalId, profissionalId),
+          eq(schema.comandaItens.tipo, "combo"),
+          inArray(schema.comandaItens.refId, comboIds),
+          ne(schema.comandaItens.lancamento, "servico_barbeiro"),
+        ),
+      );
+    nCombos = Number(row?.n ?? 0);
+  }
+
+  return Number(avulsos?.n ?? 0) + nCombos;
 }
 
 /** A meta de um servico na semana. `servicoId` null = a meta GERAL. */

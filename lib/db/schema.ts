@@ -35,6 +35,32 @@ export const combos = pgTable("combos", {
   ativo: boolean("ativo").notNull().default(true),
 });
 
+/**
+ * CSM: quais servicos um combo inclui.
+ *
+ * Ate aqui o combo so tinha `inclui` (texto livre), que nao da para somar na meta.
+ * Pedido do Rodrigo (audio 15/09): "se ele vende um combo que tem a sobrancelha, conta
+ * na meta de sobrancelha dele." Sem a relacao, nao ha como saber que o combo Ouro inclui
+ * sobrancelha, hidratacao e limpeza de pele.
+ *
+ * O texto `inclui` continua existindo: ele descreve o combo na tela (ex. "Corte+barba,
+ * sobrancelha, limpeza de pele, hidratacao"). Esta tabela e a verdade estruturada que o
+ * codigo le para contar meta, calcular duracao e qualquer outra coisa por servico.
+ */
+export const comboServicos = pgTable(
+  "combo_servicos",
+  {
+    id: serial("id").primaryKey(),
+    comboId: integer("combo_id")
+      .notNull()
+      .references(() => combos.id, { onDelete: "cascade" }),
+    servicoId: integer("servico_id")
+      .notNull()
+      .references(() => servicos.id, { onDelete: "cascade" }),
+  },
+  (t) => [uniqueIndex("uniq_combo_servico").on(t.comboId, t.servicoId)],
+);
+
 /** Profissionais (barbeiros, recepcionistas, dono). */
 export const profissionais = pgTable("profissionais", {
   id: serial("id").primaryKey(),
@@ -429,6 +455,7 @@ export type Plano = typeof planos.$inferSelect;
 export type Assinatura = typeof assinaturas.$inferSelect;
 export type Mensalidade = typeof mensalidades.$inferSelect;
 export type Combo = typeof combos.$inferSelect;
+export type ComboServico = typeof comboServicos.$inferSelect;
 export type Profissional = typeof profissionais.$inferSelect;
 export type DuracaoBarbeiro = typeof duracoesBarbeiro.$inferSelect;
 export type BloqueioAgenda = typeof bloqueiosAgenda.$inferSelect;

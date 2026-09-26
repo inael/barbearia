@@ -6,7 +6,8 @@ import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
 import { seedCatalog } from "./seed";
-import { criarComanda, adicionarServico, fecharComanda } from "../caixa";
+import { criarComanda, adicionarServico, adicionarCombo, fecharComanda } from "../caixa";
+import { definirServicosDoCombo } from "../catalogo";
 import { registrarVale } from "../vales";
 import {
   definirMeta,
@@ -288,4 +289,73 @@ describe("MET — metas + relatório (integration)", () => {
     const copiadas = await copiarMetasDaSemanaAnterior(db, semanaVazia);
     expect(copiadas).toBe(0);
   }, 120_000);
+
+  it("CSM-001 combo que inclui sobrancelha conta na meta de sobrancelha", async () => {
+    // setup: barbeiro + combo Ouro + relacao combo->sobrancelha
+    const [sobrancelha] = await db.select().from(schema.servicos).where(eq(schema.servicos.slug, "sobrancelha"));
+    const [ouro] = await db.select().from(schema.combos).where(eq(schema.combos.slug, "ouro"));
+    const [barbeiro] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "CSM Barbeiro", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+
+    // registrar que o combo Ouro inclui sobrancelha
+    await definirServicosDoCombo(db, ouro.id, [sobrancelha.id]);
+
+    // vender um combo Ouro para um cliente
+    const cid = await criarComanda(db, null);
+    await adicionarCombo(db, cid, ouro.id, barbeiro.id);
+    await fecharComanda(db, cid, "dinheiro", new Date());
+
+    // a meta de sobrancelha deve contar esse combo
+    const n = await atendimentosDoPeriodo(db, barbeiro.id, de, ate, sobrancelha.id);
+    expect(n, "combo Ouro inclui sobrancelha, entao conta na meta dela").toBe(1);
+
+    // a meta geral tambem conta (combo e atendimento)
+    const geral = await atendimentosDoPeriodo(db, barbeiro.id, de, ate);
+    expect(geral, "combo conta como atendimento na meta geral").toBeGreaterThanOrEqual(1);
+  });
+
+  it("CSM-002 combo SEM relacao nao conta na meta de servico", async () => {
+    const [sobrancelha] = await db.select().from(schema.servicos).where(eq(schema.servicos.slug, "sobrancelha"));
+    const [rilex] = await db.select().from(schema.combos).where(eq(schema.combos.slug, "rilex"));
+    const [b2] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "CSM Sem Relacao", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+
+    // Rilex NAO inclui sobrancelha (nao tem relacao), so hidratacao e limpeza
+    // limpar qualquer relacao que possa existir
+    await definirServicosDoCombo(db, rilex.id, []);
+
+    const cid = await criarComanda(db, null);
+    await adicionarCombo(db, cid, rilex.id, b2.id);
+    await fecharComanda(db, cid, "dinheiro", new Date());
+
+    const n = await atendimentosDoPeriodo(db, b2.id, de, ate, sobrancelha.id);
+    expect(n, "Rilex nao inclui sobrancelha").toBe(0);
+  });
+
+  it("CSM-003 servico avulso e combo do mesmo servico somam na meta", async () => {
+    const [sobrancelha] = await db.select().from(schema.servicos).where(eq(schema.servicos.slug, "sobrancelha"));
+    const [ouro] = await db.select().from(schema.combos).where(eq(schema.combos.slug, "ouro"));
+    const [b3] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "CSM Misto", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+
+    await definirServicosDoCombo(db, ouro.id, [sobrancelha.id]);
+
+    // 1 sobrancelha avulsa + 1 combo Ouro que inclui sobrancelha = 2
+    const c1 = await criarComanda(db, null);
+    await adicionarServico(db, c1, sobrancelha.id, b3.id);
+    await fecharComanda(db, c1, "dinheiro", new Date());
+
+    const c2 = await criarComanda(db, null);
+    await adicionarCombo(db, c2, ouro.id, b3.id);
+    await fecharComanda(db, c2, "dinheiro", new Date());
+
+    const n = await atendimentosDoPeriodo(db, b3.id, de, ate, sobrancelha.id);
+    expect(n, "1 avulsa + 1 combo = 2 na meta de sobrancelha").toBe(2);
+  });
 });

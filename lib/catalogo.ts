@@ -114,3 +114,19 @@ export async function listarCombos(db: DB, incluirInativos = false): Promise<sch
   const rows = await db.select().from(schema.combos).orderBy(asc(schema.combos.nome));
   return incluirInativos ? rows : rows.filter((c) => c.ativo);
 }
+
+// CSM: servicos que compoe um combo (para meta, duracao, etc.)
+export async function servicosDoCombo(db: DB, comboId: number): Promise<number[]> {
+  const rows = await db
+    .select({ servicoId: schema.comboServicos.servicoId })
+    .from(schema.comboServicos)
+    .where(eq(schema.comboServicos.comboId, comboId));
+  return rows.map((r) => r.servicoId);
+}
+
+export async function definirServicosDoCombo(db: DB, comboId: number, servicoIds: number[]): Promise<void> {
+  await db.delete(schema.comboServicos).where(eq(schema.comboServicos.comboId, comboId));
+  if (servicoIds.length === 0) return;
+  const unicos = [...new Set(servicoIds)];
+  await db.insert(schema.comboServicos).values(unicos.map((servicoId) => ({ comboId, servicoId })));
+}
