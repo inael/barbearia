@@ -16,6 +16,7 @@ import {
   atendimentosDoPeriodo,
   metasComProgresso,
   removerMeta,
+  copiarMetasDaSemanaAnterior,
 } from "../metas";
 
 let container: StartedPostgreSqlContainer;
@@ -229,4 +230,62 @@ describe("MET — metas + relatório (integration)", () => {
     expect((await metaDoPeriodo(db, novo.id, de))?.alvoCentavos, "sem servico = a geral").toBe(111000);
     expect((await metaDoPeriodo(db, novo.id, de, sobrancelha.id))?.alvoQuantidade).toBe(7);
   });
+
+  it("MRE-002 copiar da semana anterior cria metas identicas na semana nova", async () => {
+    // semana fixa para nao colidir com os testes acima que usam `de` (hoje)
+    const semana1 = new Date(2030, 0, 7, 0, 0); // segunda 07/01/2030
+    const semana2 = new Date(2030, 0, 14, 0, 0); // segunda 14/01/2030
+    const fim1 = new Date(semana1.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const [barbeiro] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "MRE Barbeiro", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+    const [sobrancelha] = await db.select().from(schema.servicos).where(eq(schema.servicos.slug, "sobrancelha"));
+
+    // semana 1: meta geral R$5.000 + meta de sobrancelha 8 atendimentos
+    await definirMeta(db, barbeiro.id, semana1, fim1, 500000);
+    await definirMetaQuantidade(db, barbeiro.id, semana1, fim1, 8, sobrancelha.id);
+
+    const copiadas = await copiarMetasDaSemanaAnterior(db, semana2);
+    expect(copiadas, "duas metas: a geral e a de sobrancelha").toBe(2);
+
+    const geral = await metaDoPeriodo(db, barbeiro.id, semana2);
+    expect(geral).not.toBeNull();
+    expect(geral!.alvoCentavos).toBe(500000);
+    expect(geral!.tipoAlvo).toBe("valor");
+
+    const servico = await metaDoPeriodo(db, barbeiro.id, semana2, sobrancelha.id);
+    expect(servico).not.toBeNull();
+    expect(servico!.alvoQuantidade).toBe(8);
+    expect(servico!.tipoAlvo).toBe("quantidade");
+  }, 120_000);
+
+  it("MRE-003 nao sobrescreve se a semana destino ja tem meta", async () => {
+    const semana3 = new Date(2030, 1, 4, 0, 0); // segunda 04/02/2030
+    const fim3 = new Date(semana3.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const semana4 = new Date(2030, 1, 11, 0, 0); // segunda 11/02/2030
+    const fim4 = new Date(semana4.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const [b2] = await db
+      .insert(schema.profissionais)
+      .values({ nome: "MRE Sem Sobrescrever", papel: "barbeiro", ativo: true })
+      .returning({ id: schema.profissionais.id });
+
+    await definirMeta(db, b2.id, semana3, fim3, 200000);
+    // semana destino ja tem meta
+    await definirMeta(db, b2.id, semana4, fim4, 300000);
+
+    const copiadas = await copiarMetasDaSemanaAnterior(db, semana4);
+    expect(copiadas, "nao deve copiar porque ja tem meta na semana").toBe(0);
+
+    const m = await metaDoPeriodo(db, b2.id, semana4);
+    expect(m!.alvoCentavos, "manteve a meta que o dono ja tinha feito").toBe(300000);
+  }, 120_000);
+
+  it("MRE-004 semana anterior vazia devolve zero e nao cria nada", async () => {
+    const semanaVazia = new Date(2031, 5, 2, 0, 0); // uma segunda qualquer sem meta
+    const copiadas = await copiarMetasDaSemanaAnterior(db, semanaVazia);
+    expect(copiadas).toBe(0);
+  }, 120_000);
 });

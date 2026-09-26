@@ -262,15 +262,26 @@ export default async function AdminTvPage({ searchParams }: { searchParams: Prom
                     </p>
                   </div>
 
-                  <a
-                    href={`/tv/${t.id}/antiga`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-abrir-antiga={t.nome}
-                    className="mt-3 inline-block rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
-                  >
-                    Testar a versão de TV antiga
-                  </a>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href={`/tv/${t.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-abrir-moderna={t.nome}
+                      className="inline-block rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+                    >
+                      Testar versão moderna
+                    </a>
+                    <a
+                      href={`/tv/${t.id}/antiga`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-abrir-antiga={t.nome}
+                      className="inline-block rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+                    >
+                      Testar versão antiga
+                    </a>
+                  </div>
                 </div>
                 <ul className="mt-3 flex flex-col gap-1">
                   {itensPorTela[i].length === 0 ? (

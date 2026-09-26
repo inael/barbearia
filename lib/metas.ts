@@ -201,6 +201,50 @@ export async function metasComProgresso(
   );
 }
 
+/**
+ * MRE — metas repetem toda semana.
+ *
+ * Pedido do Rodrigo (audio 15/09): "e uma ideia boa, gostei. Que ai eu so altero mais
+ * ou menos o que eu quero mudar ali, aumentar ou diminuir." Ou seja: a semana nova nasce
+ * com os mesmos alvos da anterior, e ele edita o que quiser em vez de recadastrar tudo.
+ *
+ * Devolve quantas metas foram copiadas. Zero se a semana anterior nao tinha meta, ou se
+ * a semana destino ja tem meta cadastrada (nao sobrescreve trabalho que o dono ja fez).
+ */
+export async function copiarMetasDaSemanaAnterior(
+  db: DB,
+  inicioDaSemana: Date,
+): Promise<number> {
+  const anterior = new Date(inicioDaSemana.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // se a semana destino ja tem qualquer meta, o dono ja mexeu e a copia atrapalharia
+  const [jaExiste] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(schema.metas)
+    .where(eq(schema.metas.inicio, inicioDaSemana));
+  if (Number(jaExiste?.n ?? 0) > 0) return 0;
+
+  const originais = await db
+    .select()
+    .from(schema.metas)
+    .where(eq(schema.metas.inicio, anterior));
+  if (originais.length === 0) return 0;
+
+  const fim = new Date(inicioDaSemana.getTime() + 7 * 24 * 60 * 60 * 1000);
+  for (const m of originais) {
+    await db.insert(schema.metas).values({
+      profissionalId: m.profissionalId,
+      inicio: inicioDaSemana,
+      fim,
+      alvoCentavos: m.alvoCentavos,
+      tipoAlvo: m.tipoAlvo,
+      alvoQuantidade: m.alvoQuantidade,
+      servicoId: m.servicoId,
+    });
+  }
+  return originais.length;
+}
+
 export interface RelatorioProfissional {
   faturamentoCentavos: number;
   servicosCentavos: number;

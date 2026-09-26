@@ -150,3 +150,29 @@ test.describe("MET — metas por serviço na tela (e2e)", () => {
     await expect(depois.locator('[data-meta-servico="Geral (todos os servicos)"]')).toBeVisible();
   });
 });
+
+/**
+ * MRE - metas repetem toda semana (e2e).
+ *
+ * Rodrigo: "e uma ideia boa, gostei. Que ai eu so altero mais ou menos o que eu quero
+ * mudar ali, aumentar ou diminuir."
+ */
+test.describe("MRE - metas repetem toda semana (e2e)", () => {
+  test("MRE-005 o botao copia as metas da semana passada se a semana estiver vazia", async ({ page }) => {
+    await login(page, "dono@faith.com", "dono123");
+    await page.goto("/metas");
+
+    // precisa ter pelo menos uma meta nesta semana (os testes acima criam)
+    // o botao existe
+    await expect(page.getByTestId("met-repetir")).toBeVisible();
+    // como ja existe meta nesta semana, clicar avisa que nao precisa copiar
+    await page.getByTestId("met-repetir").click();
+    await expect(page.getByTestId("aviso-erro")).toContainText(/ja tem metas|Nada para repetir/i);
+  });
+
+  test("MRE-005 barbeiro nao ve o botao de repetir", async ({ page }) => {
+    await login(page, "barbeiro@faith.com", "barb123");
+    await page.goto("/metas");
+    await expect(page.getByTestId("met-repetir")).toHaveCount(0);
+  });
+});

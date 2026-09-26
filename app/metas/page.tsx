@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
 import { listarProfissionais } from "@/lib/profissionais";
 import { listarServicos } from "@/lib/catalogo";
-import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao, removerMeta, metasComProgresso } from "@/lib/metas";
+import { definirMeta, definirMetaQuantidade, relatorioProfissional, relatorioRecepcao, semanaAtual, type RelatorioProfissional, type RelatorioRecepcao, removerMeta, metasComProgresso, copiarMetasDaSemanaAnterior } from "@/lib/metas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 import AlvoDaMeta from "@/components/AlvoDaMeta";
@@ -67,6 +67,25 @@ async function excluirMeta(formData: FormData) {
   await removerMeta(getDb(), id);
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Meta removida.")}`);
+}
+
+/**
+ * MRE: repete as metas da semana passada para esta, se esta semana ainda estiver vazia.
+ *
+ * Pedido do Rodrigo: "e uma ideia boa, gostei. Que ai eu so altero mais ou menos o que
+ * eu quero mudar ali, aumentar ou diminuir." A semana nova nasce com os mesmos alvos da
+ * anterior, e ele edita o que quiser, em vez de recadastrar tudo.
+ */
+async function repetirMetas(_formData: FormData) {
+  "use server";
+  if (!(await podeEditar())) return;
+  const { inicio } = semanaAtual(new Date());
+  const n = await copiarMetasDaSemanaAnterior(getDb(), inicio);
+  revalidatePath(ROTA);
+  if (n === 0) {
+    redirect(`${ROTA}?erro=${encodeURIComponent("Nada para repetir. A semana anterior nao tinha metas, ou esta semana ja tem metas cadastradas.")}`);
+  }
+  redirect(`${ROTA}?ok=${encodeURIComponent(`${n} meta(s) copiada(s) da semana passada. Edite o que quiser.`)}`);
 }
 
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
@@ -197,6 +216,17 @@ export default async function MetasPage({ searchParams }: { searchParams: Promis
               </label>
               <AlvoDaMeta classeInput={input} classeSelect={input} />
               <button type="submit" className={btn}>Salvar meta</button>
+            </form>
+
+            <form action={repetirMetas} className="mt-3">
+              <button
+                type="submit"
+                data-testid="met-repetir"
+                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+              >
+                Repetir metas da semana passada
+              </button>
+              <span className="ml-2 text-xs text-neutral-500">Copia as metas da semana anterior para esta, se a semana estiver vazia.</span>
             </form>
           </section>
         ) : null}

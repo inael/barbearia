@@ -16,3 +16,23 @@ describe("MET — meta (puro)", () => {
     expect(inicio.getDate()).toBe(7); // 2026-09-07 é a segunda dessa semana
   });
 });
+
+describe("MRE - metas repetem toda semana", () => {
+  it("MRE-001 semanaAtual devolve segunda 00:00 ate a segunda seguinte", () => {
+    // quarta 25/09/2026
+    const { inicio, fim } = semanaAtual(new Date(2026, 8, 25, 14, 30));
+    expect(inicio.getDay()).toBe(1); // segunda
+    expect(inicio.getDate()).toBe(21);
+    expect(fim.getDate()).toBe(28);
+  });
+
+  it("MRE-001 a semana da segunda cai na propria segunda", () => {
+    const { inicio } = semanaAtual(new Date(2026, 8, 21, 0, 0));
+    expect(inicio.getDate()).toBe(21);
+  });
+
+  it("MRE-001 domingo cai na semana que comeca na segunda anterior", () => {
+    const { inicio } = semanaAtual(new Date(2026, 8, 27, 23, 59));
+    expect(inicio.getDate()).toBe(21);
+  });
+});
