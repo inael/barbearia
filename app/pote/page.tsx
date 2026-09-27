@@ -17,7 +17,9 @@ export default async function PotePage({ searchParams }: { searchParams: Promise
   const papel = session?.user?.papel;
   const pid = session?.user?.profissionalId ?? null;
 
-  if (!papel || !(podeAcessar(papel, "config") || podeAcessar(papel, "comissao"))) {
+  // O pote e o rateio de assinatura entre os barbeiros. A recepcao tem "comissao"
+  // (para ver metas), mas nao participa do pote.
+  if (!papel || papel === "recepcionista" || !(podeAcessar(papel, "config") || podeAcessar(papel, "comissao"))) {
     return (
       <main className={wrap}>
         <div className="mx-auto max-w-2xl px-5 py-10">

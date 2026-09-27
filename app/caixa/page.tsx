@@ -23,6 +23,7 @@ import {
   FORMAS_PAGAMENTO,
   ROTULO_PAGAMENTO,
 } from "@/lib/caixa";
+import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 import { emitirNota } from "@/lib/nf";
 import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
 import PageHeader from "@/components/PageHeader";
@@ -86,8 +87,16 @@ async function fechar(formData: FormData) {
   if (!(await autorizado())) return;
   const comandaId = Number(formData.get("comandaId"));
   const forma = String(formData.get("formaPagamento") || "");
+  const descontoRaw = String(formData.get("desconto") || "").trim();
+  let descontoCentavos = 0;
+  if (descontoRaw) {
+    const parsed = reaisParaCentavosPositivo(descontoRaw);
+    if (parsed === null) redirect(`${ROTA}?comanda=${comandaId}&erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
+    descontoCentavos = parsed;
+  }
+  const motivoDesconto = String(formData.get("motivoDesconto") || "").trim() || null;
   try {
-    await fecharComanda(getDb(), comandaId, forma, new Date());
+    await fecharComanda(getDb(), comandaId, forma, new Date(), descontoCentavos, motivoDesconto);
   } catch (e) {
     redirect(`${ROTA}?comanda=${comandaId}&erro=${encodeURIComponent(e instanceof Error ? e.message : "erro")}`);
   }
@@ -291,6 +300,12 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                     <option key={f} value={f}>{ROTULO_PAGAMENTO[f]}</option>
                   ))}
                 </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium">Desconto
+                <input name="desconto" inputMode="decimal" placeholder="0,00" aria-label="Desconto" data-testid="cx-desconto" className={`${input} w-24`} />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium">Motivo do desconto
+                <input name="motivoDesconto" placeholder="parceria, promocao..." aria-label="Motivo do desconto" data-testid="cx-motivo-desconto" className={`${input} w-40`} />
               </label>
               <input type="hidden" name="comandaId" value={comandaAberta.id} />
               <button type="submit" className={btn}>Fechar conta</button>

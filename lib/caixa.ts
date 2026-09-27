@@ -43,9 +43,10 @@ function exigirLancamento(lancamento: string, permitidos: Lancamento[]): Lancame
   return lancamento as Lancamento;
 }
 
-/** Total a PAGAR de uma comanda (centavos): soma só itens `normal`. Nunca negativa. */
-export function totalComanda(itens: { valorCentavos: number; lancamento?: string }[]): number {
-  return itens.reduce((s, i) => s + ((i.lancamento ?? "normal") === "normal" ? Math.max(0, i.valorCentavos) : 0), 0);
+/** Total a PAGAR de uma comanda (centavos): soma so itens `normal`, menos o desconto manual. Nunca negativa. */
+export function totalComanda(itens: { valorCentavos: number; lancamento?: string }[], descontoManualCentavos: number = 0): number {
+  const bruto = itens.reduce((s, i) => s + ((i.lancamento ?? "normal") === "normal" ? Math.max(0, i.valorCentavos) : 0), 0);
+  return Math.max(0, bruto - descontoManualCentavos);
 }
 
 async function exigirAberta(db: DB, comandaId: number): Promise<void> {
@@ -165,7 +166,20 @@ export const ROTULO_PAGAMENTO: Record<FormaPagamento, string> = {
   cartao: "Cartao (antes da separacao)",
 };
 
-export async function fecharComanda(db: DB, comandaId: number, formaPagamento: string, quando: Date): Promise<void> {
+/**
+ * DCM: desconto manual na comanda.
+ *
+ * O dono aplica um desconto por parceria, promocao ou acordo, e o sistema registra
+ * quanto foi e por que. O desconto e na COMANDA (subtrai do total), nao no item.
+ */
+export async function fecharComanda(
+  db: DB,
+  comandaId: number,
+  formaPagamento: string,
+  quando: Date,
+  descontoManualCentavos: number = 0,
+  motivoDesconto: string | null = null,
+): Promise<void> {
   await exigirAberta(db, comandaId);
   const itens = await db
     .select({
@@ -180,7 +194,7 @@ export async function fecharComanda(db: DB, comandaId: number, formaPagamento: s
     .where(eq(schema.comandaItens.comandaId, comandaId));
   if (itens.length === 0) throw new Error("comanda vazia");
   if (!(FORMAS_PAGAMENTO as readonly string[]).includes(formaPagamento)) throw new Error("forma de pagamento inválida");
-  await db.update(schema.comandas).set({ status: "fechada", formaPagamento, fechadaEm: quando }).where(eq(schema.comandas.id, comandaId));
+  await db.update(schema.comandas).set({ status: "fechada", formaPagamento, fechadaEm: quando, descontoManualCentavos, motivoDesconto: motivoDesconto?.trim() || null }).where(eq(schema.comandas.id, comandaId));
   // exigirAberta garante fechamento único, então os vales não duplicam.
   for (const it of itens) {
     if (it.lancamento !== "servico_barbeiro" || (it.tipo !== "servico" && it.tipo !== "combo")) continue;

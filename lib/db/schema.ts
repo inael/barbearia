@@ -147,6 +147,18 @@ export const comandas = pgTable("comandas", {
   formaPagamento: text("forma_pagamento"),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
   fechadaEm: timestamp("fechada_em", { withTimezone: true }),
+  /**
+   * DCM: desconto manual na comanda (centavos), dado pelo dono na hora de fechar.
+   *
+   * Pedido do Rodrigo (audio 26/09): "a comanda deu tanto, ai eu vou dar isso aqui de
+   * desconto. Mas dai tem que ter a palavra desconto para eu saber que foi alguem que eu
+   * dei desconto e o valor que eu dei de desconto."
+   *
+   * Diferente do desconto de assinante (que e por item e automatico): este e por comanda,
+   * manual, e tem motivo. Serve para parceria, promocao, ou qualquer acordo do dono.
+   */
+  descontoManualCentavos: integer("desconto_manual_centavos").notNull().default(0),
+  motivoDesconto: text("motivo_desconto"),
 });
 
 /** Item de uma comanda. tipo: servico|combo|produto. slug do serviço p/ detectar dividido.
