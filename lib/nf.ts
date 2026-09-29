@@ -42,9 +42,12 @@ export async function emitirNota(db: DB, comandaId: number): Promise<number> {
     .where(and(eq(schema.comandaItens.comandaId, comandaId), eq(schema.comandaItens.lancamento, "normal")));
   if (itens.length === 0) throw new Error("comanda sem itens faturáveis (só cortesia/serviço do barbeiro)");
   const nota = montarNota(itens, cli.nome, cli.cpf);
+  // DCM: a nota fatura o que o cliente PAGOU. Com desconto de R$ 10 numa barba de R$ 50,
+  // sair nota de R$ 50 e declarar receita que nao existiu.
+  const valorCentavos = Math.max(0, nota.valorTotalCentavos - (c.descontoManualCentavos ?? 0));
   const [row] = await db
     .insert(schema.notasFiscais)
-    .values({ comandaId, cpf: nota.cpf, valorCentavos: nota.valorTotalCentavos })
+    .values({ comandaId, cpf: nota.cpf, valorCentavos })
     .returning({ id: schema.notasFiscais.id });
 
   // NFA: com a credencial fiscal configurada, emite de verdade no Asaas. Sem ela, a
@@ -56,7 +59,7 @@ export async function emitirNota(db: DB, comandaId: number): Promise<number> {
     const r = await emitirNoAsaas(cfg, {
       clienteNome: cli.nome,
       cpf: nota.cpf,
-      valorCentavos: nota.valorTotalCentavos,
+      valorCentavos,
       itens: itens.map((i) => i.descricao),
     });
     await db

@@ -65,7 +65,7 @@ export async function registrarVale(db: DB, d: DadosVale): Promise<number> {
  * calculado no caixa (não usa o desconto de 30%). Nasce no fechamento da comanda. */
 export async function registrarValeServicoBarbeiro(
   db: DB,
-  d: { profissionalId: number; descricao: string; precoCentavos: number; valorCentavos: number; quando: Date },
+  d: { profissionalId: number; descricao: string; precoCentavos: number; valorCentavos: number; quando: Date; comandaId?: number | null },
 ): Promise<number> {
   if (!d.descricao || !d.descricao.trim()) throw new Error("descrição obrigatória");
   if (!Number.isInteger(d.precoCentavos) || d.precoCentavos <= 0) throw new Error("preço inválido");
@@ -79,6 +79,7 @@ export async function registrarValeServicoBarbeiro(
       precoCentavos: d.precoCentavos,
       valorCentavos: d.valorCentavos,
       criadoEm: d.quando, // o vale pertence ao momento do fechamento da comanda
+      comandaId: d.comandaId ?? null,
     })
     .returning({ id: schema.vales.id });
   return row.id;

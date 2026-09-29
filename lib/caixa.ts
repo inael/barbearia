@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { and, asc, eq, gte, inArray, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lt, or } from "drizzle-orm";
 import * as schema from "./db/schema";
 import {
   faixaComissaoServico,
@@ -194,8 +194,18 @@ export async function fecharComanda(
     .where(eq(schema.comandaItens.comandaId, comandaId));
   if (itens.length === 0) throw new Error("comanda vazia");
   if (!(FORMAS_PAGAMENTO as readonly string[]).includes(formaPagamento)) throw new Error("forma de pagamento inválida");
+  if (!Number.isInteger(descontoManualCentavos) || descontoManualCentavos < 0) throw new Error("desconto inválido");
+  // Desconto maior que a conta viraria dinheiro saindo do caixa. Recusar com o numero,
+  // que e o que a recepcao precisa para corrigir.
+  const cobravel = totalComanda(itens);
+  if (descontoManualCentavos > cobravel) {
+    throw new Error(
+      `desconto de R$ ${(descontoManualCentavos / 100).toFixed(2).replace(".", ",")} é maior que a conta (R$ ${(cobravel / 100).toFixed(2).replace(".", ",")})`,
+    );
+  }
   await db.update(schema.comandas).set({ status: "fechada", formaPagamento, fechadaEm: quando, descontoManualCentavos, motivoDesconto: motivoDesconto?.trim() || null }).where(eq(schema.comandas.id, comandaId));
-  // exigirAberta garante fechamento único, então os vales não duplicam.
+  // exigirAberta garante fechamento único, então os vales não duplicam. E o vale guarda
+  // a comanda: se ela for reaberta, o estorno sabe exatamente qual vale desfazer.
   for (const it of itens) {
     if (it.lancamento !== "servico_barbeiro" || (it.tipo !== "servico" && it.tipo !== "combo")) continue;
     await registrarValeServicoBarbeiro(db, {
@@ -204,6 +214,7 @@ export async function fecharComanda(
       precoCentavos: it.valorCentavos,
       valorCentavos: valeServicoBarbeiroCentavos(it.valorCentavos, it.tipo, it.slug),
       quando,
+      comandaId,
     });
   }
 
@@ -274,11 +285,41 @@ export async function fechamentoDoCaixa(db: DB, de: Date, ate: Date): Promise<Fe
     comandasVistas[forma].add(r.comandaId);
   }
 
+  // ECF/DCM: o desconto manual e da COMANDA, nao do item, entao sai da forma em que a
+  // comanda foi paga. Sem isto o caixa do dia contava R$ 50 numa barba cobrada R$ 40
+  // (relato do Rodrigo, audio 28/09) e a gaveta nunca batia.
+  for (const d of await descontosDoPeriodo(db, de, ate)) {
+    const forma = ((FORMAS_PAGAMENTO as readonly string[]).includes(d.forma ?? "")
+      ? d.forma
+      : "cartao") as FormaPagamento;
+    porForma[forma] -= d.descontoCentavos;
+    totalCentavos -= d.descontoCentavos;
+  }
+
   const quantidadePorForma = Object.fromEntries(
     FORMAS_PAGAMENTO.map((f) => [f, comandasVistas[f].size]),
   ) as Record<FormaPagamento, number>;
 
   return { porForma, totalCentavos, quantidadePorForma };
+}
+
+/** Descontos manuais das comandas fechadas no periodo [de, ate), com a forma de cada uma. */
+async function descontosDoPeriodo(
+  db: DB,
+  de: Date,
+  ate: Date,
+): Promise<{ forma: string | null; descontoCentavos: number }[]> {
+  const rows = await db
+    .select({ forma: schema.comandas.formaPagamento, descontoCentavos: schema.comandas.descontoManualCentavos })
+    .from(schema.comandas)
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+      ),
+    );
+  return rows.filter((r) => r.descontoCentavos > 0);
 }
 
 export interface ComandaResumo {
@@ -353,7 +394,9 @@ export async function totalVendas(db: DB, de: Date, ate: Date): Promise<number> 
         inArray(schema.comandaItens.lancamento, ["normal", "servico_barbeiro"]),
       ),
     );
-  return rows.reduce((soma, r) => soma + valorFaturado(r), 0);
+  const bruto = rows.reduce((soma, r) => soma + valorFaturado(r), 0);
+  const descontos = (await descontosDoPeriodo(db, de, ate)).reduce((s, d) => s + d.descontoCentavos, 0);
+  return bruto - descontos;
 }
 
 export interface ComissaoPeriodo {
@@ -543,4 +586,140 @@ export async function cortesiasDoPeriodo(db: DB, de: Date, ate: Date): Promise<C
     comissaoCentavos += Math.round(r.valor * fracaoComissaoItem(tipo, r.slug));
   }
   return { valorCentavos, comissaoCentavos };
+}
+
+export interface ComandaFechada {
+  id: number;
+  clienteNome: string | null;
+  formaPagamento: string | null;
+  fechadaEm: Date;
+  itens: ItemView[];
+  /** Soma do que foi cobrado, ANTES do desconto. */
+  brutoCentavos: number;
+  descontoCentavos: number;
+  motivoDesconto: string | null;
+  /** O que o cliente pagou: bruto menos desconto. E o que entra no caixa. */
+  totalCentavos: number;
+  vezesReaberta: number;
+  reabertaPor: string | null;
+  reabertaEm: Date | null;
+}
+
+/**
+ * ECF: contas fechadas no periodo, da mais recente para a mais antiga.
+ *
+ * Relato do Rodrigo (audio 28/09): "na hora que fecha a comanda, ela simplesmente some.
+ * Nao tem onde ver as fechadas... nao da pra ver se foi lancado certo ou errado." O
+ * caixa so mostrava o total do dia, e um total nao diz qual conta esta errada.
+ */
+export async function listarComandasFechadas(db: DB, de: Date, ate: Date): Promise<ComandaFechada[]> {
+  const comandas = await db
+    .select({
+      id: schema.comandas.id,
+      clienteNome: schema.clientes.nome,
+      formaPagamento: schema.comandas.formaPagamento,
+      fechadaEm: schema.comandas.fechadaEm,
+      descontoCentavos: schema.comandas.descontoManualCentavos,
+      motivoDesconto: schema.comandas.motivoDesconto,
+      vezesReaberta: schema.comandas.vezesReaberta,
+      reabertaPor: schema.comandas.reabertaPor,
+      reabertaEm: schema.comandas.reabertaEm,
+    })
+    .from(schema.comandas)
+    .leftJoin(schema.clientes, eq(schema.clientes.id, schema.comandas.clienteId))
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+      ),
+    )
+    .orderBy(desc(schema.comandas.fechadaEm));
+
+  const saida: ComandaFechada[] = [];
+  for (const c of comandas) {
+    const itens = await listarItens(db, c.id);
+    const brutoCentavos = totalComanda(itens);
+    saida.push({
+      ...c,
+      fechadaEm: c.fechadaEm!,
+      itens,
+      brutoCentavos,
+      totalCentavos: totalComanda(itens, c.descontoCentavos),
+    });
+  }
+  return saida;
+}
+
+/**
+ * ECF: reabre uma conta fechada para corrigir, desfazendo o que o fechamento fez.
+ *
+ * Pedido do Rodrigo (audio 29/09): "so eu posso estornar ela, voltar ela pra ela poder
+ * fechar de novo. A recepcao nao pode fazer isso." Quem pode e decidido na tela; aqui
+ * fica a regra do que desfazer, e o que NAO se desfaz sozinho:
+ *
+ * - vale de servico do barbeiro: apagado, senao fechar de novo desconta o barbeiro duas
+ *   vezes no acerto;
+ * - cobranca PIX pendente ou falha: apagada. CONFIRMADA recusa: o dinheiro ja entrou e o
+ *   estorno tem de ser feito no Asaas, nao aqui;
+ * - nota fiscal so registrada aqui: apagada, para sair de novo com o valor corrigido.
+ *   Emitida na prefeitura recusa: nota emitida se cancela no emissor;
+ * - agendamento: continua "atendido", porque o cliente foi atendido de fato.
+ */
+export async function reabrirComanda(db: DB, comandaId: number, quem: string, quando: Date = new Date()): Promise<void> {
+  const [c] = await db.select().from(schema.comandas).where(eq(schema.comandas.id, comandaId));
+  if (!c) throw new Error("comanda inexistente");
+  if (c.status !== "fechada") throw new Error("comanda não está fechada");
+
+  const pagos = await db
+    .select({ id: schema.pagamentos.id })
+    .from(schema.pagamentos)
+    .where(and(eq(schema.pagamentos.comandaId, comandaId), eq(schema.pagamentos.status, "confirmado")));
+  if (pagos.length > 0) {
+    throw new Error("o PIX desta conta já foi pago. Faça o estorno no Asaas antes de reabrir.");
+  }
+  const [nota] = await db.select().from(schema.notasFiscais).where(eq(schema.notasFiscais.comandaId, comandaId));
+  if (nota?.asaasInvoiceId) {
+    throw new Error("esta conta já tem nota fiscal emitida. Cancele a nota antes de reabrir.");
+  }
+
+  // vales ligados a esta comanda; e, para conta fechada antes do vinculo existir, o vale
+  // de servico do barbeiro gravado no MESMO instante do fechamento (criadoEm = fechadaEm)
+  const profs = (
+    await db
+      .select({ p: schema.comandaItens.profissionalId })
+      .from(schema.comandaItens)
+      .where(and(eq(schema.comandaItens.comandaId, comandaId), eq(schema.comandaItens.lancamento, "servico_barbeiro")))
+  ).map((r) => r.p);
+  const legado =
+    c.fechadaEm && profs.length > 0
+      ? [
+          and(
+            isNull(schema.vales.comandaId),
+            eq(schema.vales.tipo, "servico_barbeiro"),
+            eq(schema.vales.criadoEm, c.fechadaEm),
+            inArray(schema.vales.profissionalId, profs),
+          )!,
+        ]
+      : [];
+  await db.delete(schema.vales).where(or(eq(schema.vales.comandaId, comandaId), ...legado));
+
+  await db
+    .delete(schema.pagamentos)
+    .where(and(eq(schema.pagamentos.comandaId, comandaId), inArray(schema.pagamentos.status, ["pendente", "falha"])));
+  if (nota) await db.delete(schema.notasFiscais).where(eq(schema.notasFiscais.id, nota.id));
+
+  await db
+    .update(schema.comandas)
+    .set({
+      status: "aberta",
+      formaPagamento: null,
+      fechadaEm: null,
+      descontoManualCentavos: 0,
+      motivoDesconto: null,
+      reabertaEm: quando,
+      reabertaPor: quem,
+      vezesReaberta: c.vezesReaberta + 1,
+    })
+    .where(eq(schema.comandas.id, comandaId));
 }

@@ -22,6 +22,9 @@ import {
   FORMAS_ATUAIS,
   FORMAS_PAGAMENTO,
   ROTULO_PAGAMENTO,
+  listarComandasFechadas,
+  reabrirComanda,
+  type FormaPagamento,
 } from "@/lib/caixa";
 import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 import { emitirNota } from "@/lib/nf";
@@ -103,7 +106,7 @@ async function fechar(formData: FormData) {
   // PAG: cobrança Asaas best-effort no PIX (sem credencial, registra "pendente"; nunca trava).
   if (forma === "pix") {
     try {
-      const total = totalComanda(await listarItens(getDb(), comandaId));
+      const total = totalComanda(await listarItens(getDb(), comandaId), descontoCentavos);
       await cobrarComanda(getDb(), getAsaasClient(), comandaId, total, `Comanda #${comandaId}`, new Date().toISOString().slice(0, 10));
     } catch {
       /* best-effort */
@@ -120,6 +123,37 @@ async function fechar(formData: FormData) {
   redirect(`${ROTA}?ok=${encodeURIComponent(nf ? "Conta fechada. Nota fiscal emitida." : "Conta fechada.")}`);
 }
 
+/**
+ * ECF: reabrir conta fechada. So o DONO.
+ *
+ * Pedido do Rodrigo (audio 29/09): "so eu posso estornar ela... a recepcao nao pode
+ * fazer isso." A recepcao ve o historico (ela precisa conferir o que fechou), mas o
+ * botao de reabrir nem aparece para ela, e esta acao recusa mesmo se chamada direto.
+ */
+async function reabrir(formData: FormData) {
+  "use server";
+  const session = await auth();
+  const papel = session?.user?.papel;
+  const comandaId = Number(formData.get("comandaId"));
+  if (!papel || !podeAcessar(papel, "config")) {
+    redirect(`${ROTA}?erro=${encodeURIComponent("Só o dono pode reabrir uma conta fechada.")}`);
+  }
+  try {
+    await reabrirComanda(getDb(), comandaId, session?.user?.name || "dono");
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "não consegui reabrir")}`);
+  }
+  revalidatePath(ROTA);
+  redirect(
+    `${ROTA}?comanda=${comandaId}&ok=${encodeURIComponent("Conta reaberta. Corrija o que precisar e feche de novo.")}`,
+  );
+}
+
+/** "2026-09-29" (partes locais) a partir de uma data; nunca por toISOString, que e UTC. */
+function diaIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 const input =
   "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
@@ -127,7 +161,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CaixaPage({ searchParams }: { searchParams: Promise<{ comanda?: string; fechada?: string; ok?: string; erro?: string; nf?: string }> }) {
+export default async function CaixaPage({ searchParams }: { searchParams: Promise<{ comanda?: string; fechada?: string; ok?: string; erro?: string; nf?: string; dia?: string }> }) {
   const session = await auth();
   const papel = session?.user?.papel;
   const sp = await searchParams;
@@ -156,6 +190,14 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
   const ate = new Date(de.getTime() + 24 * 60 * 60 * 1000);
   const totalDia = await totalVendas(db, de, ate);
   const fechamento = await fechamentoDoCaixa(db, de, ate);
+
+  // ECF: historico das contas fechadas, por dia (hoje por padrao)
+  const diaPedido = /^\d{4}-\d{2}-\d{2}$/.test(sp.dia ?? "") ? sp.dia! : diaIso(de);
+  const [ano, mes, dd] = diaPedido.split("-").map(Number);
+  const deHist = new Date(ano, mes - 1, dd);
+  const ateHist = new Date(ano, mes - 1, dd + 1);
+  const fechadas = await listarComandasFechadas(db, deHist, ateHist);
+  const ehDono = podeAcessar(papel, "config");
 
   const comandaId = sp.comanda ? Number(sp.comanda) : null;
   const comandaAberta = comandaId ? abertas.find((c) => c.id === comandaId) : null;
@@ -336,6 +378,86 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                     <span className="ml-auto font-bold">{brl(c.totalCentavos)}</span>
                   </a>
                 ))}
+              </div>
+            </section>
+
+            {/*
+              ECF: a conta nao some mais ao fechar. Relato do Rodrigo (audio 28/09): "na
+              hora que fecha a comanda, ela simplesmente some... nao da pra ver se foi
+              lancado certo ou errado." O total do dia nao diz QUAL conta esta errada.
+            */}
+            <section className="mt-8" data-testid="cx-fechadas">
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                <h2 className="text-lg font-semibold">Contas fechadas ({fechadas.length})</h2>
+                <form method="get" className="flex items-end gap-2">
+                  <label className="flex flex-col gap-1 text-xs font-medium">
+                    Dia
+                    <input type="date" name="dia" defaultValue={diaPedido} aria-label="Dia das contas fechadas" data-testid="cx-fechadas-dia" className={input} />
+                  </label>
+                  <button type="submit" className={btnGhost}>Ver</button>
+                </form>
+              </div>
+              <div className="flex flex-col gap-2">
+                {fechadas.length === 0 ? (
+                  <p className="text-sm text-neutral-600">Nenhuma conta fechada neste dia.</p>
+                ) : (
+                  fechadas.map((c) => (
+                    <div key={c.id} data-fechada={c.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="font-medium">Comanda #{c.id}</span>
+                        <span className="text-neutral-600">{c.clienteNome ?? "balcão"}</span>
+                        <span className="text-neutral-500">
+                          {c.fechadaEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                        <span className="text-neutral-500">
+                          {ROTULO_PAGAMENTO[(c.formaPagamento ?? "cartao") as FormaPagamento] ?? c.formaPagamento}
+                        </span>
+                        {c.vezesReaberta > 0 ? (
+                          <span data-testid="cx-reaberta" className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                            reaberta {c.vezesReaberta}x{c.reabertaPor ? `, por ${c.reabertaPor}` : ""}
+                            {c.reabertaEm ? ` em ${c.reabertaEm.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : ""}
+                          </span>
+                        ) : null}
+                        <span className="ml-auto font-bold" data-testid="cx-fechada-total">{brl(c.totalCentavos)}</span>
+                      </div>
+                      <ul className="mt-2 flex flex-col gap-0.5 text-xs text-neutral-700 dark:text-neutral-300">
+                        {c.itens.map((i) => (
+                          <li key={i.id} className="flex gap-2">
+                            <span className="min-w-0 flex-1 truncate">
+                              {i.descricao}
+                              {i.lancamento === "cortesia" ? " (cortesia)" : i.lancamento === "servico_barbeiro" ? " (serviço do barbeiro)" : ""}
+                            </span>
+                            <span>{brl(i.valorCentavos)}</span>
+                          </li>
+                        ))}
+                        {c.descontoCentavos > 0 ? (
+                          <li data-testid="cx-fechada-desconto" className="flex gap-2 font-medium text-emerald-800 dark:text-emerald-300">
+                            <span className="min-w-0 flex-1 truncate">
+                              Desconto{c.motivoDesconto ? `: ${c.motivoDesconto}` : ""}
+                            </span>
+                            <span>-{brl(c.descontoCentavos)}</span>
+                          </li>
+                        ) : null}
+                      </ul>
+                      {ehDono ? (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                            Reabrir para corrigir
+                          </summary>
+                          <form action={reabrir} className="mt-2 flex flex-wrap items-center gap-2">
+                            <input type="hidden" name="comandaId" value={c.id} />
+                            <span className="text-xs text-neutral-600 dark:text-neutral-400">
+                              A conta volta a ficar aberta, sai do caixa do dia até ser fechada de novo, e o sistema guarda que você reabriu.
+                            </span>
+                            <button type="submit" data-reabrir={c.id} className="rounded-lg border border-amber-600 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/40">
+                              Confirmar reabertura
+                            </button>
+                          </form>
+                        </details>
+                      ) : null}
+                    </div>
+                  ))
+                )}
               </div>
             </section>
           </>

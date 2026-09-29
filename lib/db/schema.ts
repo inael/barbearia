@@ -159,6 +159,15 @@ export const comandas = pgTable("comandas", {
    */
   descontoManualCentavos: integer("desconto_manual_centavos").notNull().default(0),
   motivoDesconto: text("motivo_desconto"),
+  /**
+   * ECF: rastro de estorno. Pedido do Rodrigo (audio 29/09): "so eu posso estornar ela,
+   * voltar ela pra ela poder fechar de novo", e "ela tem que estar no meu historico".
+   * A comanda reaberta volta a ser `aberta`, mas guarda quem reabriu, quando e quantas
+   * vezes: sem isso o historico mostraria uma conta limpa que ja foi mexida.
+   */
+  reabertaEm: timestamp("reaberta_em", { withTimezone: true }),
+  reabertaPor: text("reaberta_por"),
+  vezesReaberta: integer("vezes_reaberta").notNull().default(0),
 });
 
 /** Item de uma comanda. tipo: servico|combo|produto. slug do serviço p/ detectar dividido.
@@ -345,6 +354,13 @@ export const vales = pgTable("vales", {
   precoCentavos: integer("preco_centavos").notNull(),
   valorCentavos: integer("valor_centavos").notNull(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * ECF: comanda que gerou o vale (so o de servico do barbeiro nasce de comanda).
+   * Sem este vinculo, reabrir e fechar de novo a mesma comanda gerava o vale duas vezes
+   * e o barbeiro era descontado em dobro no acerto. Null = vale lancado a mao, ou vale
+   * de antes deste vinculo existir.
+   */
+  comandaId: integer("comanda_id").references(() => comandas.id, { onDelete: "set null" }),
 });
 
 /** Metas (semanais) por profissional. tipoAlvo: valor (R$, realizado = faturamento)
