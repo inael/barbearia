@@ -660,3 +660,26 @@ vale ele testar de novo antes de qualquer conclusão.
 - Cobranca automatica (depende da conta Asaas dele)
 - SEC-04 (porta 5432) e NEXT_PUBLIC_DEMO_LOGINS
 - Resposta dele sobre modelo da Samsung e conta Asaas
+
+## 2026-09-29 — DCM/ECF: desconto que chega no dinheiro, historico e estorno
+
+**Defeito nosso (entregue 26/09):** o desconto manual era gravado na comanda e nenhum
+total o lia. Caixa do dia, painel, grafico, nota fiscal e PIX saiam com o valor cheio.
+Rodrigo achou pelo caixa (audio 28/09). Nota e PIX nao tinham sido relatados. Faltou o
+teste que fecha uma conta com desconto e confere o dinheiro.
+
+**Feito (commit 867ad64, spec `.specs/features/caixa-desconto-estorno.md`):**
+- desconto sai da forma de pagamento da conta; nota e PIX com o valor pago; desconto
+  maior que a conta e recusado;
+- historico de contas fechadas por dia no /caixa (itens, forma, "Desconto: motivo", total);
+- so o dono reabre ("Reabrir para corrigir"); desfaz vale de servico do barbeiro, PIX
+  pendente e nota local; recusa PIX pago e nota emitida; guarda quem/quando/quantas vezes.
+- colunas novas aplicadas no banco ANTES do deploy: comandas.reaberta_em/reaberta_por/
+  vezes_reaberta, vales.comanda_id.
+
+**Producao:** 2 contas com desconto em 28/09 (#14 e #15, testes dele). Sem correcao de
+dado: o total e calculado na hora; depois do deploy a #15 aparece R$ 40,00 e a #14
+R$ 194,40. Conferido na tela. Nada reaberto.
+
+**Pergunta aberta para o Rodrigo:** comissao e faturamento por barbeiro continuam sobre o
+preco do item. Se ele der desconto, sai da parte da casa ou do barbeiro?
