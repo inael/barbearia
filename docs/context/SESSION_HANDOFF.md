@@ -683,3 +683,13 @@ R$ 194,40. Conferido na tela. Nada reaberto.
 
 **Pergunta aberta para o Rodrigo:** comissao e faturamento por barbeiro continuam sobre o
 preco do item. Se ele der desconto, sai da parte da casa ou do barbeiro?
+
+## 2026-09-29 (noite) — DCC: comissão sobre o que entrou no caixa
+
+Resposta do Rodrigo (áudio 19:02) à pergunta do desconto: *"o barbeiro ganha só do que
+entra no caixa, não é do valor cheio."* Commit `b456a70`. Comissão do barbeiro, da
+recepção e faturamento por profissional usam o valor líquido. Conta com mais de um
+profissional: desconto dividido na proporção de cada item (decisão nossa, falta avisar).
+
+**Produção conferida** (semana de 28/09): Pedro fat R$ 40,00, comissão R$ 16,00 (antes
+seriam R$ 20,00); Rodrigo R$ 194,40. Sem schema novo.
