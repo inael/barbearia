@@ -421,6 +421,58 @@ export interface ComissaoPeriodo {
  * venda, que continuam sendo dinheiro que entrou); `servico_barbeiro` não gera
  * comissão (a parte do barbeiro é o desconto dele — o vale cobre a da barbearia).
  */
+/**
+ * DCC: quanto de cada real COBRADO de uma conta chegou de fato no caixa.
+ *
+ * Resposta do Rodrigo (audio 29/09): "se o corte e 60, deu 10 reais de desconto, o
+ * barbeiro vai ganhar a comissao dele em cima de 50 reais... ganha so do que entra no
+ * caixa, nao e do valor cheio."
+ *
+ * O desconto e da CONTA, e uma conta pode ter servico de dois barbeiros e produto.
+ * Aqui ele e dividido na proporcao do valor de cada item cobrado: conta de R$ 110 com
+ * R$ 11 de desconto vira fator 0,9, e cada item conta 90% do preco. Com um item so, e
+ * exatamente o exemplo dele. Cortesia e servico do barbeiro nao entram: nao sao cobrados.
+ *
+ * Devolve so as contas COM desconto; conta sem desconto tem fator 1.
+ */
+export async function fatorDescontoPorComanda(db: DB, de: Date, ate: Date): Promise<Map<number, number>> {
+  const comDesconto = await db
+    .select({ id: schema.comandas.id, desconto: schema.comandas.descontoManualCentavos })
+    .from(schema.comandas)
+    .where(
+      and(
+        eq(schema.comandas.status, "fechada"),
+        gte(schema.comandas.fechadaEm, de),
+        lt(schema.comandas.fechadaEm, ate),
+      ),
+    );
+  const alvo = comDesconto.filter((c) => c.desconto > 0);
+  const fatores = new Map<number, number>();
+  if (alvo.length === 0) return fatores;
+
+  const itens = await db
+    .select({ comandaId: schema.comandaItens.comandaId, valor: schema.comandaItens.valorCentavos })
+    .from(schema.comandaItens)
+    .where(
+      and(
+        inArray(schema.comandaItens.comandaId, alvo.map((c) => c.id)),
+        eq(schema.comandaItens.lancamento, "normal"),
+      ),
+    );
+  const bruto = new Map<number, number>();
+  for (const i of itens) bruto.set(i.comandaId, (bruto.get(i.comandaId) ?? 0) + Math.max(0, i.valor));
+  for (const c of alvo) {
+    const b = bruto.get(c.id) ?? 0;
+    fatores.set(c.id, b > 0 ? Math.max(0, b - c.desconto) / b : 1);
+  }
+  return fatores;
+}
+
+/** Valor que o item COBRADO efetivamente trouxe para o caixa, em centavos. */
+export function valorLiquidoDoItem(valorCentavos: number, fator: number | undefined): number {
+  return Math.round(valorCentavos * (fator ?? 1));
+}
+
 export async function comissaoDoPeriodo(
   db: DB,
   profissionalId: number,
@@ -434,6 +486,7 @@ export async function comissaoDoPeriodo(
       slug: schema.comandaItens.slug,
       valor: schema.comandaItens.valorCentavos,
       lancamento: schema.comandaItens.lancamento,
+      comandaId: schema.comandaItens.comandaId,
     })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
@@ -445,13 +498,16 @@ export async function comissaoDoPeriodo(
         eq(schema.comandaItens.profissionalId, profissionalId),
       ),
     );
+  const fatores = await fatorDescontoPorComanda(db, de, ate);
 
   let avulsos = 0, combos = 0, divididos = 0, produtos = 0;
   let cortAvulsos = 0, cortCombos = 0, cortDivididos = 0, cortProdutos = 0;
   for (const r of rows) {
     if (r.lancamento === "servico_barbeiro") continue;
-    const reais = r.valor / 100;
     const cortesia = r.lancamento === "cortesia";
+    // DCC: comissao sobre o que entrou no caixa. Cortesia nao foi cobrada, entao nao
+    // tem desconto a abater e segue pela regra propria dela (CRT-009).
+    const reais = (cortesia ? r.valor : valorLiquidoDoItem(r.valor, fatores.get(r.comandaId))) / 100;
     if (r.tipo === "produto") {
       if (cortesia) cortProdutos += reais;
       else produtos += reais;
@@ -526,17 +582,22 @@ export async function comissaoRecepcaoDoPeriodo(
       valor: schema.comandaItens.valorCentavos,
       lancamento: schema.comandaItens.lancamento,
       profissionalId: schema.comandaItens.profissionalId,
+      comandaId: schema.comandaItens.comandaId,
     })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
     .where(and(eq(schema.comandas.status, "fechada"), gte(schema.comandas.fechadaEm, de), lt(schema.comandas.fechadaEm, ate)));
+  const fatores = await fatorDescontoPorComanda(db, de, ate);
 
   let produtos = 0;
   let qtdHidratacoes = 0;
   let divididosCasa = 0;
   for (const r of rows) {
     if (r.lancamento === "servico_barbeiro") continue;
-    const reais = r.valor / 100;
+    // DCC: a mesma regra do barbeiro, sobre o que entrou no caixa. Hidratacao e por
+    // unidade, entao o desconto nao muda a contagem.
+    const reais =
+      (r.lancamento === "cortesia" ? r.valor : valorLiquidoDoItem(r.valor, fatores.get(r.comandaId))) / 100;
     if (r.tipo === "servico" && r.slug && isServicoDividido(r.slug)) divididosCasa += reais;
     if (r.profissionalId !== profissionalId) continue;
     if (r.tipo === "produto") produtos += reais;

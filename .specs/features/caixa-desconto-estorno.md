@@ -35,11 +35,16 @@ o teste que fecha uma conta com desconto e confere o dinheiro.
 | ECF-006 | Nota só registrada aqui sai no estorno; nota emitida na prefeitura impede reabrir | integration | lib/db/estorno-comanda.integration.test.ts | PASS | verde (gate) |
 | ECF-007 | Só reabre conta que está fechada | integration | lib/db/estorno-comanda.integration.test.ts | PASS | verde (gate) |
 | ECF-008 | Só o dono vê o botão de reabrir; a recepção vê o histórico sem o botão, e a ação recusa quem não é dono | e2e | e2e/estorno-comanda.spec.ts | PASS | verde (gate) |
+| DCC-001 | Com desconto na conta, a comissão do barbeiro é calculada sobre o que entrou no caixa (barba de R$ 50 com R$ 10 de desconto: base R$ 40) | integration | lib/db/estorno-comanda.integration.test.ts | PASS | verde (gate) |
+| DCC-002 | Conta com dois barbeiros: o desconto é dividido na proporção do valor de cada item, e o faturamento por barbeiro soma o mesmo que o caixa do dia | integration | lib/db/estorno-comanda.integration.test.ts | PASS | verde (gate) |
+| DCC-003 | Cortesia na mesma conta não é descontada; o desconto sai só do que foi cobrado | integration | lib/db/estorno-comanda.integration.test.ts | PASS | verde (gate) |
+| DCC-004 | Conta sem desconto não muda a comissão | integration | lib/db/estorno-comanda.integration.test.ts | PASS | verde (gate) |
 
 ## Test Coverage Matrix
 REQUIREMENT (o desconto sai do dinheiro, não só da tela) → DCM-001..005 → integration + e2e → lib/db/estorno-comanda.integration.test.ts, e2e/estorno-comanda.spec.ts → PASS
 REQUIREMENT (a conta não some ao fechar) → ECF-001 → integration + e2e → lib/db/estorno-comanda.integration.test.ts, e2e/estorno-comanda.spec.ts → PASS
 REQUIREMENT (só o dono corrige conta fechada, com rastro) → ECF-002..008 → integration + e2e → lib/db/estorno-comanda.integration.test.ts, e2e/estorno-comanda.spec.ts → PASS
+REQUIREMENT (comissão sobre o que entrou no caixa) → DCC-001..004 → integration → lib/db/estorno-comanda.integration.test.ts → PASS
 
 ## Decisões
 - **O desconto é da COMANDA, não do item.** Por isso sai da forma de pagamento da conta no
@@ -55,9 +60,11 @@ REQUIREMENT (só o dono corrige conta fechada, com rastro) → ECF-002..008 → 
   permite achá-lo com exatidão.
 
 ## Gaps
-- **Faturamento por barbeiro e comissão não descontam o desconto da comanda.** O desconto
-  é da conta, e a conta pode ter serviço de dois barbeiros: decidir de quem sai é regra de
-  pagamento da equipe, **decisão do Rodrigo**. Hoje a comissão continua sobre o preço do
-  item, como sempre foi.
+- **Comissão com desconto: resolvido (29/09).** Pergunta feita ao Rodrigo; resposta em
+  áudio: *"o barbeiro ganha só do que entra no caixa, não é do valor cheio."* Comissão do
+  barbeiro, da recepção e faturamento por profissional passaram a usar o valor líquido.
+  Conta com mais de um profissional: o desconto é dividido na proporção do valor de cada
+  item. Essa divisão é decisão nossa (a resposta dele cobre o caso de um item só) e
+  precisa ser dita a ele.
 - Não há edição de conta fechada sem reabrir. Reabrir, corrigir e fechar de novo cobre o
   pedido e deixa rastro; editar no lugar apagaria o rastro.

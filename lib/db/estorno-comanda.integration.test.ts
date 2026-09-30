@@ -16,7 +16,9 @@ import {
   listarComandasFechadas,
   listarComandasAbertas,
   reabrirComanda,
+  comissaoDoPeriodo,
 } from "../caixa";
+import { faturamentoPorProfissional } from "../dashboard";
 import { emitirNota } from "../nf";
 import { cobrarComanda } from "../pagamento/asaas";
 import { criarProfissional } from "../profissionais";
@@ -273,5 +275,67 @@ describe("ECF — historico e estorno de conta fechada", () => {
   it("ECF-007 so reabre conta fechada", async () => {
     const cid = await criarComanda(db, null);
     await expect(reabrirComanda(db, cid, "Rodrigo")).rejects.toThrow(/não está fechada/);
+  }, 120_000);
+});
+
+/**
+ * DCC — comissao sobre o que entrou no caixa.
+ *
+ * Resposta do Rodrigo (audio 29/09): "se o corte e 60, deu 10 reais de desconto, o
+ * barbeiro vai ganhar a comissao dele em cima de 50 reais... ganha so do que entra no
+ * caixa, nao e do valor cheio."
+ */
+describe("DCC — o desconto da conta tambem baixa a base da comissao", () => {
+  it("DCC-001 barba de R$ 50 com R$ 10 de desconto: a comissao do barbeiro e sobre R$ 40", async () => {
+    const { de, ate, as } = dia(20);
+    const pid = await criarProfissional(db, { nome: "Barbeiro DCC 1", papel: "barbeiro" });
+    const cid = await criarComanda(db, null);
+    await adicionarServico(db, cid, barbaId, pid);
+    await fecharComanda(db, cid, "dinheiro", as(10), 1000, "parceria");
+
+    const c = await comissaoDoPeriodo(db, pid, de, ate);
+    expect(c.avulsos, "base da comissao e o que entrou, nao o preco cheio").toBe(40);
+  }, 120_000);
+
+  it("DCC-002 conta com dois barbeiros: o desconto e dividido na proporcao de cada item", async () => {
+    const { de, ate, as } = dia(21);
+    const a = await criarProfissional(db, { nome: "Barbeiro DCC A", papel: "barbeiro" });
+    const b = await criarProfissional(db, { nome: "Barbeiro DCC B", papel: "barbeiro" });
+    const corte80 = await criarServico(db, { nome: "Corte DCC 80", precoCentavos: 8000, duracaoMin: 40 });
+    const cid = await criarComanda(db, null);
+    await adicionarServico(db, cid, corte80, a); // R$ 80
+    await adicionarServico(db, cid, barbaId, b); // R$ 50... total R$ 130
+    await fecharComanda(db, cid, "dinheiro", as(10), 1300, "promocao"); // 10% da conta
+
+    expect((await comissaoDoPeriodo(db, a, de, ate)).avulsos, "80 menos 10%").toBe(72);
+    expect((await comissaoDoPeriodo(db, b, de, ate)).avulsos, "50 menos 10%").toBe(45);
+
+    // e o painel por barbeiro fecha com o caixa do dia
+    const fat = await faturamentoPorProfissional(db, de, ate);
+    const soma = fat.reduce((s, f) => s + f.totalCentavos, 0);
+    expect(soma, "a soma por barbeiro bate com o que entrou").toBe((await fechamentoDoCaixa(db, de, ate)).totalCentavos);
+    expect(fat.find((f) => f.profissionalId === a)?.totalCentavos).toBe(7200);
+  }, 120_000);
+
+  it("DCC-003 cortesia na mesma conta nao e descontada, e o desconto sai so do que foi cobrado", async () => {
+    const { de, ate, as } = dia(22);
+    const pid = await criarProfissional(db, { nome: "Barbeiro DCC Cortesia", papel: "barbeiro" });
+    const cid = await criarComanda(db, null);
+    await adicionarServico(db, cid, barbaId, pid); // cobrada R$ 50
+    await adicionarServico(db, cid, barbaId, pid, "cortesia"); // casa paga
+    await fecharComanda(db, cid, "dinheiro", as(10), 1000, "parceria");
+
+    const c = await comissaoDoPeriodo(db, pid, de, ate);
+    expect(c.avulsos, "o desconto inteiro sai do item cobrado").toBe(40);
+    expect(c.cortesias, "cortesia segue a regra propria, sem desconto").toBe(50);
+  }, 120_000);
+
+  it("DCC-004 conta sem desconto nao muda nada", async () => {
+    const { de, ate, as } = dia(23);
+    const pid = await criarProfissional(db, { nome: "Barbeiro DCC Sem", papel: "barbeiro" });
+    const cid = await criarComanda(db, null);
+    await adicionarServico(db, cid, barbaId, pid);
+    await fecharComanda(db, cid, "dinheiro", as(10));
+    expect((await comissaoDoPeriodo(db, pid, de, ate)).avulsos).toBe(50);
   }, 120_000);
 });

@@ -48,3 +48,15 @@ transcrevendo o áudio. **Todas as três estão aprovadas por ele.**
 
 **Lição de processo:** resposta de cliente em áudio precisa ser transcrita e escrita aqui
 no mesmo dia. Estas ficaram invisíveis porque só existiam dentro de um áudio no WhatsApp.
+
+## Resposta do Rodrigo de 29/09 (áudio 19:02): desconto na comissão
+
+Pergunta nossa: o desconto da conta sai da parte da barbearia ou da comissão do barbeiro?
+Palavras dele: *"O barbeiro vai ganhar a comissão do valor descontado. Se o corte é 60,
+deu 10 reais de desconto, o barbeiro vai ganhar a comissão dele em cima de 50 reais... o
+barbeiro ganha só do que entra no caixa, não é do valor cheio."*
+
+- [x] Comissão (barbeiro e recepção) e faturamento por profissional sobre o valor que
+  entrou no caixa (DCC). Conta com mais de um profissional: desconto dividido na
+  proporção do valor de cada item (decisão nossa, a resposta dele cobre só o caso de um
+  item; avisar).

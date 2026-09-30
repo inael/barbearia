@@ -1,7 +1,7 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import * as schema from "./db/schema";
-import { totalVendas } from "./caixa";
+import { totalVendas, fatorDescontoPorComanda, valorLiquidoDoItem } from "./caixa";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -25,12 +25,19 @@ export interface FaturamentoProfissional {
 }
 
 /** Faturamento por profissional no período (desc). */
+/**
+ * Faturamento de cada profissional no periodo, pelo que ENTROU no caixa.
+ *
+ * DCC: com desconto na conta, a parte de cada um cai na proporcao do seu item. Soma em
+ * JS em vez de `sum()` no banco porque o fator e por conta, e a conta mistura barbeiros.
+ */
 export async function faturamentoPorProfissional(db: DB, de: Date, ate: Date): Promise<FaturamentoProfissional[]> {
   const rows = await db
     .select({
       profissionalId: schema.comandaItens.profissionalId,
       nome: schema.profissionais.nome,
-      total: sql<number>`sum(${schema.comandaItens.valorCentavos})`,
+      valor: schema.comandaItens.valorCentavos,
+      comandaId: schema.comandaItens.comandaId,
     })
     .from(schema.comandaItens)
     .innerJoin(schema.comandas, eq(schema.comandas.id, schema.comandaItens.comandaId))
@@ -42,10 +49,15 @@ export async function faturamentoPorProfissional(db: DB, de: Date, ate: Date): P
         lt(schema.comandas.fechadaEm, ate),
         eq(schema.comandaItens.lancamento, "normal"),
       ),
-    )
-    .groupBy(schema.comandaItens.profissionalId, schema.profissionais.nome)
-    .orderBy(desc(sql`sum(${schema.comandaItens.valorCentavos})`));
-  return rows.map((r) => ({ profissionalId: r.profissionalId, nome: r.nome, totalCentavos: Number(r.total) }));
+    );
+  const fatores = await fatorDescontoPorComanda(db, de, ate);
+  const porProf = new Map<number, FaturamentoProfissional>();
+  for (const r of rows) {
+    const atual = porProf.get(r.profissionalId) ?? { profissionalId: r.profissionalId, nome: r.nome, totalCentavos: 0 };
+    atual.totalCentavos += valorLiquidoDoItem(r.valor, fatores.get(r.comandaId));
+    porProf.set(r.profissionalId, atual);
+  }
+  return [...porProf.values()].sort((a, b) => b.totalCentavos - a.totalCentavos);
 }
 
 export interface RankingItem {
