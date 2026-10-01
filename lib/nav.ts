@@ -11,7 +11,8 @@ export type IconeNav =
   | "LayoutDashboard" | "BookOpen" | "Calculator" | "CalendarDays" | "CalendarClock"
   | "ShoppingCart" | "Receipt" | "FolderCog" | "Scissors" | "Package" | "Users"
   | "UserCog" | "IdCard" | "Clock" | "Target" | "Boxes" | "CreditCard" | "PiggyBank"
-  | "Bell" | "MonitorPlay" | "CircleUser" | "Megaphone" | "Settings" | "MessageCircle";
+  | "Bell" | "MonitorPlay" | "CircleUser" | "Megaphone" | "Settings" | "MessageCircle"
+  | "Wrench";
 
 export interface ItemNav {
   href: string;
@@ -99,6 +100,7 @@ export function gruposParaPapel(papel: Papel | null): GrupoNav[] {
       filhos: [
         { href: "/configuracoes/whatsapp", label: "WhatsApp", icone: "MessageCircle" },
         { href: "/configuracoes/fiscal", label: "Nota fiscal", icone: "Receipt" },
+        { href: "/configuracoes/ferramentas", label: "Ferramentas", icone: "Wrench" },
       ],
     });
   }

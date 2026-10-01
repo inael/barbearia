@@ -11,7 +11,7 @@ import {
   LayoutDashboard, BookOpen, Calculator, CalendarDays, CalendarClock, ShoppingCart,
   Receipt, FolderCog, Scissors, Package, Users, UserCog, IdCard, Clock, Target,
   Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser, Megaphone, Settings,
-  MessageCircle, type LucideIcon,
+  MessageCircle, Wrench, type LucideIcon,
 } from "lucide-react";
 
 // Icones da biblioteca lucide-react (nunca emoji — pedido do Inael 2026-09-10).
@@ -19,7 +19,7 @@ const ICONES: Record<IconeNav, LucideIcon> = {
   LayoutDashboard, BookOpen, Calculator, CalendarDays, CalendarClock, ShoppingCart,
   Receipt, FolderCog, Scissors, Package, Users, UserCog, IdCard, Clock, Target,
   Boxes, CreditCard, PiggyBank, Bell, MonitorPlay, CircleUser, Megaphone, Settings,
-  MessageCircle,
+  MessageCircle, Wrench,
 };
 import { perfisDemo } from "@/lib/demo-logins";
 import TrocarUsuario from "./TrocarUsuario";
