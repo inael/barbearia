@@ -92,14 +92,13 @@ export interface AsaasSubscription {
   nextDueDate: string;
 }
 
-/**
- * Cria assinatura recorrente no Asaas (PIX mensal).
- * Salva o subscriptionId na tabela assinaturas.
- */
+export type AsaasBillingType = "PIX" | "CREDIT_CARD" | "UNDEFINED";
+
 export async function criarAssinaturaAsaas(
   db: DB,
   assinaturaId: number,
   proximoVencimento: string,
+  billingType: AsaasBillingType = "PIX",
 ): Promise<AsaasSubscription> {
   const cfg = asaasConfig();
   if (!cfg) throw new Error("Asaas nao configurado (ASAAS_URL / ASAAS_API_KEY)");
@@ -126,7 +125,7 @@ export async function criarAssinaturaAsaas(
     headers: headers(cfg.apiKey),
     body: JSON.stringify({
       customer: customerId,
-      billingType: "PIX",
+      billingType,
       value: plano.precoCentavos / 100,
       cycle: "MONTHLY",
       description: `Assinatura ${plano.nome} - Barbearia Faith`,

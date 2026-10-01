@@ -8,7 +8,7 @@ import { podeAcessar } from "@/lib/auth/rbac";
 import { listarClientes } from "@/lib/clientes";
 import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, type TipoPlano , editarPlano, definirPlanoAtivo, removerPlano, trocarPlanoAssinatura } from "@/lib/assinaturas";
 import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/cobranca";
-import { asaasConfigurado, criarAssinaturaAsaas, cancelarAssinaturaAsaas } from "@/lib/pagamento/asaas-assinaturas";
+import { asaasConfigurado, criarAssinaturaAsaas, cancelarAssinaturaAsaas, type AsaasBillingType } from "@/lib/pagamento/asaas-assinaturas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
@@ -181,14 +181,16 @@ async function ativarAsaas(formData: FormData) {
   if (!(await podeGerenciar())) return;
   const id = Number(formData.get("id"));
   const venc = String(formData.get("vencimento") || "");
+  const tipo = (formData.get("billingType") || "PIX") as AsaasBillingType;
   if (!venc) redirect(`${ROTA}?erro=${encodeURIComponent("Informe a data do primeiro vencimento.")}`);
   try {
-    await criarAssinaturaAsaas(getDb(), id, venc);
+    await criarAssinaturaAsaas(getDb(), id, venc, tipo);
   } catch (e) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao ativar Asaas")}`);
   }
+  const label = tipo === "CREDIT_CARD" ? "cartao recorrente" : tipo === "UNDEFINED" ? "link de pagamento" : "PIX mensal";
   revalidatePath(ROTA);
-  redirect(`${ROTA}?ok=${encodeURIComponent("Cobranca Asaas ativada. O cliente vai receber PIX mensal.")}`);
+  redirect(`${ROTA}?ok=${encodeURIComponent(`Cobranca Asaas ativada. O cliente vai receber ${label}.`)}`);
 }
 
 async function desativarAsaas(formData: FormData) {
@@ -415,11 +417,19 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
                           </form>
                         </>
                       ) : a.clienteCpf ? (
-                        <form action={ativarAsaas} className="flex items-center gap-2">
+                        <form action={ativarAsaas} className="flex flex-wrap items-center gap-2">
                           <input type="hidden" name="id" value={a.id} />
                           <label className="flex items-center gap-1 text-xs font-medium">
                             1o vencimento
                             <input name="vencimento" type="date" required aria-label={`Vencimento Asaas de ${a.clienteNome}`} className={`${input} w-36`} />
+                          </label>
+                          <label className="flex items-center gap-1 text-xs font-medium">
+                            Forma
+                            <select name="billingType" aria-label={`Forma de cobranca de ${a.clienteNome}`} className={input}>
+                              <option value="PIX">PIX</option>
+                              <option value="CREDIT_CARD">Cartao recorrente</option>
+                              <option value="UNDEFINED">Cliente escolhe</option>
+                            </select>
                           </label>
                           <button type="submit" data-ativar-asaas={a.clienteNome} className="rounded-lg bg-blue-700 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-800">Ativar cobranca Asaas</button>
                         </form>

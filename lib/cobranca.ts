@@ -74,6 +74,7 @@ export interface DadosPagamentoAsaas {
   evento: string;
   valorCentavos: number;
   vencimento: string;
+  billingType?: string;
 }
 
 /**
@@ -97,11 +98,12 @@ export async function processarPagamentoAssinatura(db: DB, dados: DadosPagamento
   if (dados.evento === "PAYMENT_CONFIRMED" || dados.evento === "PAYMENT_RECEIVED") {
     const competencia = dados.vencimento.slice(0, 7);
     try {
+      const forma = dados.billingType === "CREDIT_CARD" ? "cartao" as const : "pix" as const;
       await registrarPagamento(db, {
         assinaturaId: ass.id,
         competencia,
         valorCentavos: dados.valorCentavos,
-        forma: "pix",
+        forma,
         observacao: "Asaas automatico",
       });
     } catch {

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * 2. Pagamento de assinatura recorrente (payment.subscription) -> auto-registra mensalidade
  */
 export async function POST(req: Request) {
-  let body: { event?: string; payment?: { id?: string; subscription?: string; value?: number; dueDate?: string } };
+  let body: { event?: string; payment?: { id?: string; subscription?: string; value?: number; dueDate?: string; billingType?: string } };
   try {
     body = await req.json();
   } catch {
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       evento,
       valorCentavos: Math.round((payment.value ?? 0) * 100),
       vencimento: payment.dueDate,
+      billingType: payment.billingType,
     });
   } else if ((evento === "PAYMENT_CONFIRMED" || evento === "PAYMENT_RECEIVED") && payment?.id) {
     await processarPagamentoConfirmado(getDb(), payment.id);
