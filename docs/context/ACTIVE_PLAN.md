@@ -1,76 +1,78 @@
-# ACTIVE_PLAN — MEN: mensalidade do assinante (o sistema não sabe quem pagou)
+# ACTIVE_PLAN — COB: cobranca automatica Asaas para assinaturas
 
-> No ar em **https://barbearia.itbooster.com.br** (commit `87714e4`).
-> Plano anterior (feedback do Rodrigo de 11/09, features AHL/NFA/MTV) está cumprido ou
-> registrado no `SESSION_HANDOFF.md`. Este plano trata do item mais antigo em aberto.
+> Plano anterior (MEN: mensalidade manual) esta cumprido e no ar.
+> Este plano integra o Asaas para cobranca recorrente das assinaturas.
 
-## Diagnóstico
+## Diagnostico
 
-O módulo de assinatura tem plano, desconto, fila de aprovação e bloqueio por atraso.
-**Falta a única coisa que o Rodrigo faz toda semana: receber a mensalidade.**
+O modulo de mensalidade (MEN) funciona, mas e 100% manual: a recepcao recebe
+no balcao e marca no sistema. O Rodrigo criou conta no Asaas
+(rodrigo.ss1996@hotmail.com) para automatizar: o Asaas gera PIX mensal, o
+cliente paga, e o sistema registra sozinho.
 
-Hoje, na tabela `assinaturas`, existe apenas `status` (`ativa|atraso|cancelada`) e
-`criadoEm`. Não há mês, data de pagamento, valor recebido, forma nem histórico. Ou seja:
-
-- Para marcar que o João pagou setembro, ele muda um seletor para "ativa". Se o João
-  parar de pagar em outubro, o seletor continua "ativa" até alguém lembrar de trocar.
-- Se o João disser *"paguei mês passado"*, não há como conferir.
-- `processarCobrancaAssinatura` (webhook do Asaas) existe e **ninguém chama**. A spec COB
-  foi escrita supondo cobrança recorrente no cartão, mas o Rodrigo **não tem CNPJ nem
-  conta Asaas**, e recebe no balcão, em dinheiro ou PIX. O caminho automático não existe
-  na realidade dele, e o manual não existe no sistema.
-
-**Achado colateral, que não estava no pedido:** `receitaAssinaturasReais` (lib/pote-gestao.ts)
-soma o **preço dos planos ativos**, não o que entrou. O pote paga 40% disso aos barbeiros.
-Se três assinantes atrasarem, ele paga comissão sobre dinheiro que não recebeu. Não vou
-mexer nisso neste plano: mudar a base do pote muda quanto cada barbeiro ganha, e isso é
-decisão do Rodrigo. Fica registrado e vira pergunta a ele.
+O codigo antigo tinha `processarCobrancaAssinatura` (webhook) que so mudava o
+status (ativa/atraso) sem registrar mensalidade, e ninguem chamava.
 
 ## Plano
 
-Livro-caixa de mensalidade, no mesmo espírito do resto do sistema: o dono registra o que
-recebeu, e o status deixa de ser uma marca manual para ser **consequência do que foi pago**.
+1. **Schema** — `clientes.asaas_customer_id` e `assinaturas.asaas_subscription_id`
+   (text nullable) para vincular aos IDs do Asaas.
+2. **lib/pagamento/asaas-assinaturas.ts** — novo modulo:
+   - `garantirCustomerAsaas(db, clienteId)` — busca por CPF ou cria no Asaas
+   - `criarAssinaturaAsaas(db, assinaturaId, vencimento)` — cria subscription PIX mensal
+   - `cancelarAssinaturaAsaas(db, assinaturaId)` — cancela no Asaas e limpa o vinculo
+   - `asaasConfigurado()` — true se ASAAS_URL + ASAAS_API_KEY estao no ambiente
+3. **lib/cobranca.ts** — novo `processarPagamentoAssinatura(db, dados)`:
+   - PAYMENT_CONFIRMED/RECEIVED: encontra assinatura por subscriptionId, registra
+     mensalidade automaticamente (competencia do vencimento), marca ativa
+   - PAYMENT_OVERDUE: marca atraso
+   - Idempotente (unique index de mensalidade protege)
+4. **Webhook** — `app/api/webhook/asaas/route.ts` expandido:
+   - Se `payment.subscription` presente: rota para assinatura
+   - Senao: rota para comanda (como antes)
+5. **UI** — `app/assinaturas/page.tsx`:
+   - Se Asaas configurado e dono: mostra controles por assinante
+   - Com CPF: botao "Ativar cobranca Asaas" + date picker do 1o vencimento
+   - Sem CPF: aviso "CPF necessario"
+   - Com subscriptionId: badge "Cobranca Asaas ativa" + "Cancelar cobranca"
+6. **Env** — corrigido `.env.example`: ASAAS_API_BASE -> ASAAS_URL (era inconsistente)
 
-Escolha de desenho: a linha nasce **no pagamento**, não na geração de cobrança. Não há
-gerador mensal, nem agendador, nem cobrança em aberto criada por robô. "Em aberto" é a
-ausência de linha para aquele mês, o que é derivável e não pode dessincronizar.
+## Status
 
-1. **Schema** — tabela `mensalidades`: `assinaturaId`, `competencia` (`YYYY-MM`, o mês a
-   que o pagamento se refere), `valorCentavos`, `pagoEm`, `forma`, `observacao`,
-   `criadoEm`. Índice único em (`assinaturaId`, `competencia`): pagar o mesmo mês duas
-   vezes vira recado, não linha duplicada.
-2. **lib/mensalidades.ts** — `competenciaDe(data)`, `registrarPagamento`,
-   `estornarPagamento`, `historicoDaAssinatura`, `situacaoDosAssinantes(hoje)` e
-   `recebidoNoPeriodo(de, ate)`.
-3. **Tela /assinaturas** — cada assinante mostra "pago até set/2026" ou "setembro em
-   aberto", com botão de receber (valor já preenchido com o preço do plano, forma, mês)
-   e o histórico dos últimos meses, com estorno.
-4. **Status derivado** — `atraso` deixa de depender de alguém lembrar: assinante ativo
-   sem pagamento do mês corrente aparece em aberto. O seletor manual continua existindo
-   para casos fora da curva (cortesia, acordo), mas some como fonte de verdade do "pagou".
+- [x] Schema (colunas novas)
+- [x] lib/pagamento/asaas-assinaturas.ts
+- [x] lib/cobranca.ts (processarPagamentoAssinatura)
+- [x] Webhook expandido
+- [x] UI com controles Asaas
+- [x] .env.example corrigido
+- [x] Testes unitarios (2 novos, 211 total verdes)
+- [x] Testes integracao (6 novos, Docker necessario para rodar)
+- [ ] Rodrigo gerar API key no painel Asaas
+- [ ] Configurar ASAAS_URL + ASAAS_API_KEY no ambiente de producao (Coolify)
+- [ ] Configurar webhook no painel Asaas apontando para barbearia.itbooster.com.br/api/webhook/asaas
+- [ ] Aplicar schema no banco do cliente (drizzle-kit push)
+- [ ] Deploy
 
-## Arquivos afetados
+## O que falta do Rodrigo
 
-- `lib/db/schema.ts` (tabela nova)
-- `lib/mensalidades.ts` + `lib/mensalidades.test.ts` (novos)
-- `lib/db/mensalidades.integration.test.ts` (novo)
-- `app/assinaturas/page.tsx` (receber, histórico, situação)
-- `e2e/assinaturas.spec.ts` (fluxo do dono)
-- `.specs/features/assinaturas-mensalidade.md` (spec nova, ACs MEN-001..)
+1. Entrar em https://www.asaas.com com rodrigo.ss1996@hotmail.com
+2. Ir em Integracao > API > Gerar nova chave
+3. Enviar a chave para o Inael (WhatsApp)
+
+Apos isso: a chave vai para o Coolify como `ASAAS_API_KEY`, o schema e
+aplicado, e o deploy ativa tudo.
 
 ## Riscos
 
-- **Migração no banco do cliente antes do deploy do código.** Tabela nova, sem alterar
-  coluna existente, então o código antigo continua rodando se a ordem inverter. Mesmo
-  assim, aplicar no banco primeiro.
-- **Não mexer no pote.** A base do rateio continua a de hoje. Só perguntar ao Rodrigo.
-- **Competência é data de calendário**, então montar com as partes locais da data, nunca
-  com `toISOString()`. O container de produção está em `America/Sao_Paulo` (conferido).
-- Não alterar o caminho do Asaas: ele volta a fazer sentido quando o Rodrigo tiver conta,
-  e o webhook pode passar a gravar mensalidade em vez de só mexer no status.
+- **API key vazia bloqueia tudo.** O codigo retorna erro claro se ASAAS_URL ou
+  ASAAS_API_KEY faltam. Nenhum botao aparece na UI sem as env vars.
+- **Cliente sem CPF nao pode ter cobranca.** O Asaas exige CPF para criar customer.
+  A UI mostra "CPF necessario" nesses casos.
+- **Webhook duplicado.** A unique index de mensalidade (assinaturaId + competencia)
+  impede duplicata. O catch silencioso no processarPagamentoAssinatura trata isso.
 
-## Validação
+## Validacao
 
-`npm run quality:quick`, depois integração e e2e da feature, e o gate. Antes de subir,
-aplicar o schema no banco do cliente e conferir a tela em produção com dado real,
-restaurando o que for de teste.
+- tsc --noEmit: limpo
+- vitest run: 42 arquivos, 211 testes, todos verdes
+- Testes de integracao (6 novos): escritos, Docker necessario para rodar

@@ -1,5 +1,28 @@
 # SESSION_HANDOFF
 
+## 2026-09-30 — COB: cobranca automatica Asaas para assinaturas
+
+**O que entrou (codigo pronto, falta API key do Rodrigo):**
+
+1. **Schema:** `clientes.asaas_customer_id` e `assinaturas.asaas_subscription_id` (text nullable)
+2. **lib/pagamento/asaas-assinaturas.ts:** garantirCustomerAsaas (busca/cria por CPF), criarAssinaturaAsaas (PIX mensal), cancelarAssinaturaAsaas, asaasConfigurado
+3. **lib/cobranca.ts:** processarPagamentoAssinatura - webhook PAYMENT_CONFIRMED registra mensalidade automaticamente (competencia do vencimento, forma "pix", obs "Asaas automatico"), idempotente; PAYMENT_OVERDUE marca atraso
+4. **Webhook expandido:** payment.subscription presente vai para assinatura; senao vai para comanda (como antes)
+5. **UI /assinaturas:** se Asaas configurado e dono: botao "Ativar cobranca Asaas" (exige CPF + data do 1o vencimento), badge "Cobranca Asaas ativa" + "Cancelar cobranca"
+6. **Testes:** 2 unit + 6 integration (Docker necessario), 211 unit total verdes
+7. **Fix:** .env.example corrigido (ASAAS_API_BASE -> ASAAS_URL)
+
+**O que falta para ligar:**
+- Rodrigo gerar API key em https://www.asaas.com (Integracao > API > Gerar nova chave)
+- Configurar ASAAS_URL (https://api.asaas.com/v3) + ASAAS_API_KEY no Coolify
+- Configurar webhook no painel Asaas: URL barbearia.itbooster.com.br/api/webhook/asaas, token BARBEARIA_ASAAS_WEBHOOK_TOKEN do vault
+- drizzle-kit push no banco do cliente (2 colunas novas nullable, seguro)
+- Deploy
+
+**Estado:** tsc limpo, 42 test files, 211 unit verdes. Docker desconectado impediu rodar integration tests nesta sessao.
+
+---
+
 ## 2026-09-10 (noite) — WhatsApp configurável pela tela + fuso do servidor corrigido
 
 Spec `.specs/features/integracao-whatsapp.md` (12 ACs) · STATE **47 features / 322 ACs /

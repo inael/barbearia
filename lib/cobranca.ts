@@ -2,6 +2,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { and, asc, eq } from "drizzle-orm";
 import * as schema from "./db/schema";
 import { criarAssinatura, definirStatusAssinatura } from "./assinaturas";
+import { competenciaDe, registrarPagamento } from "./mensalidades";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -65,6 +66,56 @@ export async function processarCobrancaAssinatura(db: DB, assinaturaId: number, 
     await definirStatusAssinatura(db, assinaturaId, "atraso");
     return true;
   }
+  return false;
+}
+
+export interface DadosPagamentoAsaas {
+  subscriptionId: string;
+  evento: string;
+  valorCentavos: number;
+  vencimento: string;
+}
+
+/**
+ * Webhook do Asaas para pagamento de assinatura recorrente.
+ *
+ * PAYMENT_CONFIRMED/RECEIVED: registra a mensalidade automaticamente e marca ativa.
+ * PAYMENT_OVERDUE: marca atraso.
+ *
+ * Idempotente: se a mensalidade do mes ja existe, nao duplica (unique index).
+ */
+export async function processarPagamentoAssinatura(db: DB, dados: DadosPagamentoAsaas): Promise<boolean> {
+  const [ass] = await db
+    .select({
+      id: schema.assinaturas.id,
+      planoId: schema.assinaturas.planoId,
+    })
+    .from(schema.assinaturas)
+    .where(eq(schema.assinaturas.asaasSubscriptionId, dados.subscriptionId));
+  if (!ass) return false;
+
+  if (dados.evento === "PAYMENT_CONFIRMED" || dados.evento === "PAYMENT_RECEIVED") {
+    const competencia = dados.vencimento.slice(0, 7);
+    try {
+      await registrarPagamento(db, {
+        assinaturaId: ass.id,
+        competencia,
+        valorCentavos: dados.valorCentavos,
+        forma: "pix",
+        observacao: "Asaas automatico",
+      });
+    } catch {
+      // competencia ja registrada (idempotente)
+    }
+    await definirStatusAssinatura(db, ass.id, "ativa");
+    return true;
+  }
+
+  if (dados.evento === "PAYMENT_OVERDUE") {
+    await definirStatusAssinatura(db, ass.id, "atraso");
+    return true;
+  }
+
   return false;
 }
 

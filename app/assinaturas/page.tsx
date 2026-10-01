@@ -8,6 +8,7 @@ import { podeAcessar } from "@/lib/auth/rbac";
 import { listarClientes } from "@/lib/clientes";
 import { criarPlano, listarPlanos, criarAssinatura, definirStatusAssinatura, type TipoPlano , editarPlano, definirPlanoAtivo, removerPlano, trocarPlanoAssinatura } from "@/lib/assinaturas";
 import { pedirAssinatura, listarFila, aprovarFila, rejeitarFila } from "@/lib/cobranca";
+import { asaasConfigurado, criarAssinaturaAsaas, cancelarAssinaturaAsaas } from "@/lib/pagamento/asaas-assinaturas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
@@ -175,6 +176,33 @@ async function estornar(formData: FormData) {
   redirect(`${ROTA}?ok=${encodeURIComponent("Mensalidade estornada.")}`);
 }
 
+async function ativarAsaas(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  const id = Number(formData.get("id"));
+  const venc = String(formData.get("vencimento") || "");
+  if (!venc) redirect(`${ROTA}?erro=${encodeURIComponent("Informe a data do primeiro vencimento.")}`);
+  try {
+    await criarAssinaturaAsaas(getDb(), id, venc);
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao ativar Asaas")}`);
+  }
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Cobranca Asaas ativada. O cliente vai receber PIX mensal.")}`);
+}
+
+async function desativarAsaas(formData: FormData) {
+  "use server";
+  if (!(await podeGerenciar())) return;
+  try {
+    await cancelarAssinaturaAsaas(getDb(), Number(formData.get("id")));
+  } catch (e) {
+    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao cancelar Asaas")}`);
+  }
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Cobranca Asaas cancelada.")}`);
+}
+
 const wrap = "min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100";
 const input = "rounded-lg border border-neutral-300 bg-white px-2 py-1 text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100";
 const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800";
@@ -197,9 +225,18 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
 
   const db = getDb();
   const gerenciar = podeAcessar(papel, "config");
+  const temAsaas = asaasConfigurado();
   const [planos, clientes] = await Promise.all([listarPlanos(db), listarClientes(db)]);
   const assinaturas = await db
-    .select({ id: schema.assinaturas.id, status: schema.assinaturas.status, planoId: schema.assinaturas.planoId, clienteNome: schema.clientes.nome, planoNome: schema.planos.nome })
+    .select({
+      id: schema.assinaturas.id,
+      status: schema.assinaturas.status,
+      planoId: schema.assinaturas.planoId,
+      clienteNome: schema.clientes.nome,
+      clienteCpf: schema.clientes.cpf,
+      planoNome: schema.planos.nome,
+      asaasSubscriptionId: schema.assinaturas.asaasSubscriptionId,
+    })
     .from(schema.assinaturas)
     .innerJoin(schema.clientes, eq(schema.clientes.id, schema.assinaturas.clienteId))
     .innerJoin(schema.planos, eq(schema.planos.id, schema.assinaturas.planoId));
@@ -364,6 +401,33 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
                       </form>
                     ) : null}
                   </div>
+
+                  {temAsaas && gerenciar && a.status !== "cancelada" ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {a.asaasSubscriptionId ? (
+                        <>
+                          <span data-testid={`asaas-ativo-${a.id}`} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                            Cobranca Asaas ativa
+                          </span>
+                          <form action={desativarAsaas}>
+                            <input type="hidden" name="id" value={a.id} />
+                            <button type="submit" className="rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50">Cancelar cobranca</button>
+                          </form>
+                        </>
+                      ) : a.clienteCpf ? (
+                        <form action={ativarAsaas} className="flex items-center gap-2">
+                          <input type="hidden" name="id" value={a.id} />
+                          <label className="flex items-center gap-1 text-xs font-medium">
+                            1o vencimento
+                            <input name="vencimento" type="date" required aria-label={`Vencimento Asaas de ${a.clienteNome}`} className={`${input} w-36`} />
+                          </label>
+                          <button type="submit" data-ativar-asaas={a.clienteNome} className="rounded-lg bg-blue-700 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-800">Ativar cobranca Asaas</button>
+                        </form>
+                      ) : (
+                        <span className="text-xs text-neutral-500">CPF necessario para ativar cobranca Asaas</span>
+                      )}
+                    </div>
+                  ) : null}
 
                   {sit ? (
                     <div className="mt-3 border-t border-neutral-200 pt-3 dark:border-neutral-800">

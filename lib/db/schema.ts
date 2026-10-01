@@ -212,6 +212,7 @@ export const assinaturas = pgTable("assinaturas", {
     .notNull()
     .references(() => planos.id, { onDelete: "restrict" }),
   status: text("status").notNull().default("ativa"),
+  asaasSubscriptionId: text("asaas_subscription_id"),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -319,6 +320,7 @@ export const clientes = pgTable("clientes", {
   nome: text("nome").notNull(),
   telefone: text("telefone").notNull().unique(),
   cpf: text("cpf").unique(),
+  asaasCustomerId: text("asaas_customer_id"),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
