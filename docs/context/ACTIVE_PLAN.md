@@ -47,20 +47,20 @@ status (ativa/atraso) sem registrar mensalidade, e ninguem chamava.
 - [x] .env.example corrigido
 - [x] Testes unitarios (2 novos, 211 total verdes)
 - [x] Testes integracao (6 novos, Docker necessario para rodar)
-- [ ] Rodrigo gerar API key no painel Asaas
-- [ ] Configurar ASAAS_URL + ASAAS_API_KEY no ambiente de producao (Coolify)
-- [ ] Configurar webhook no painel Asaas apontando para barbearia.itbooster.com.br/api/webhook/asaas
-- [ ] Aplicar schema no banco do cliente (drizzle-kit push)
-- [ ] Deploy
+- [x] Rodrigo gerar API key no painel Asaas
+- [x] Configurar ASAAS_URL + ASAAS_API_KEY no ambiente de producao (Coolify)
+- [x] Configurar webhook no painel Asaas apontando para barbearia.itbooster.com.br/api/webhook/asaas
+- [x] Aplicar schema no banco do cliente (sessao anterior, colunas novas ja no banco)
+- [x] Deploy (Coolify restart zfw3kyngeabzmewobj8za05n com env prod)
+- [x] Pagina de ferramentas externas (commit 842cc8c)
 
-## O que falta do Rodrigo
+## Webhook Asaas (configurado via API)
 
-1. Entrar em https://www.asaas.com com rodrigo.ss1996@hotmail.com
-2. Ir em Integracao > API > Gerar nova chave
-3. Enviar a chave para o Inael (WhatsApp)
-
-Apos isso: a chave vai para o Coolify como `ASAAS_API_KEY`, o schema e
-aplicado, e o deploy ativa tudo.
+- ID: a4c71e56-872d-456c-acb5-a0768c02c8e7
+- URL: https://barbearia.itbooster.com.br/api/webhook/asaas
+- Eventos: PAYMENT_CONFIRMED, RECEIVED, OVERDUE, CREATED, UPDATED, REFUNDED, DELETED
+- authToken configurado (mesmo do vault)
+- sendType: SEQUENTIALLY
 
 ## Riscos
 

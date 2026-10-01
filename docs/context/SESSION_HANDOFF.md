@@ -1,5 +1,28 @@
 # SESSION_HANDOFF
 
+## 2026-10-01 — Asaas em producao + pagina de ferramentas externas
+
+**Asaas producao:**
+- Coolify agora com ASAAS_URL=https://api.asaas.com/v3 e chave prod
+- Webhook criado via API (id a4c71e56): barbearia.itbooster.com.br/api/webhook/asaas
+- Eventos: PAYMENT_CONFIRMED, RECEIVED, OVERDUE, CREATED, UPDATED, REFUNDED, DELETED
+- authToken do vault configurado no webhook
+- Deploy disparado (zfw3kyngeabzmewobj8za05n)
+
+**Pagina de ferramentas (commit 842cc8c):**
+- /configuracoes/ferramentas com links para Coolify, Asaas, SimplesZap, Hub IA, VPS, GitHub
+- Organizado por categoria, visivel apenas para o dono
+- Adicionado no menu lateral (Sistema > Configuracoes > Ferramentas)
+
+**Pendencias restantes:**
+- TV Samsung (TLS, sugerido Fire TV Stick)
+- Meta relampago recepcao (aguarda aprovacao)
+- Graficos nos paineis
+- Remover NEXT_PUBLIC_DEMO_LOGINS antes da entrega final
+- Mapear combos de servico em producao (tabela vazia)
+
+---
+
 ## 2026-09-30 — COB: cobranca automatica Asaas para assinaturas
 
 **O que entrou (codigo pronto, falta API key do Rodrigo):**
