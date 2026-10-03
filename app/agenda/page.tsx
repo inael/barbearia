@@ -299,12 +299,10 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
               <label className="flex flex-col gap-1 text-xs font-medium">Início
                 <input name="inicio" type="datetime-local" required aria-label="Início" data-testid="age-inicio" className={input} />
               </label>
-              {papel === "dono" && (
-                <label className="flex items-center gap-1.5 text-xs font-medium">
-                  <input type="checkbox" name="forcar" value="1" aria-label="Forcar encaixe" data-testid="age-forcar" className="accent-emerald-700" />
-                  Encaixe
-                </label>
-              )}
+              <label className="flex items-center gap-1.5 text-xs font-medium">
+                <input type="checkbox" name="forcar" value="1" aria-label="Forcar encaixe" data-testid="age-forcar" className="accent-emerald-700" />
+                Encaixe
+              </label>
               <button type="submit" className={btn}>Agendar</button>
             </form>
           )}
