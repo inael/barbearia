@@ -11,6 +11,7 @@ import {
   inativarServico,
   listarServicos,
   criarCombo,
+  editarCombo,
   inativarCombo,
   listarCombos,
   servicosDoCombo,
@@ -85,6 +86,21 @@ async function novoCombo(formData: FormData) {
   });
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Combo cadastrado.")}`);
+}
+
+async function salvarCombo(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const preco = reaisParaCentavosPositivo(String(formData.get("preco") || ""));
+  if (preco === null) redirect(`${ROTA}?erro=${encodeURIComponent(RECADO_VALOR_INVALIDO)}`);
+  await editarCombo(getDb(), Number(formData.get("id")), {
+    nome: String(formData.get("nome") || ""),
+    precoCentavos: preco,
+    duracaoMin: Number(formData.get("duracao")),
+    inclui: String(formData.get("inclui") || ""),
+  });
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Combo atualizado.")}`);
 }
 
 async function vincularServicos(formData: FormData) {
@@ -226,11 +242,22 @@ export default async function CadastroServicosPage({ searchParams }: { searchPar
           <div className="grid gap-2 sm:grid-cols-2">
             {combos.map((c) => (
               <div key={c.id} data-combo={c.nome} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-semibold">{c.nome}</span>
-                  <span className="font-bold">{brl(c.precoCentavos)}</span>
-                </div>
-                <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">{c.inclui}</p>
+                <form action={salvarCombo} className="flex flex-wrap items-end gap-2">
+                  <input type="hidden" name="id" value={c.id} />
+                  <label className="flex flex-col gap-1 text-xs">Nome
+                    <input name="nome" defaultValue={c.nome} aria-label={`Nome de ${c.nome}`} className={input} />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs">Preço (R$)
+                    <input name="preco" defaultValue={(c.precoCentavos / 100).toFixed(2).replace(".", ",")} inputMode="decimal" aria-label={`Preço de ${c.nome}`} className={`${input} w-28`} />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs">Duração (min)
+                    <input name="duracao" type="number" min={1} defaultValue={c.duracaoMin} aria-label={`Duração de ${c.nome}`} className={`${input} w-24`} />
+                  </label>
+                  <label className="flex flex-col gap-1 text-xs">Inclui
+                    <input name="inclui" defaultValue={c.inclui} aria-label={`Inclui de ${c.nome}`} className={`${input} w-64`} />
+                  </label>
+                  <button type="submit" className={btnGhost}>Salvar</button>
+                </form>
                 <form action={vincularServicos} className="mt-2">
                   <input type="hidden" name="comboId" value={c.id} />
                   <details className="text-xs">
