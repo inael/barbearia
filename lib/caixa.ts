@@ -34,9 +34,9 @@ export function aplicarDesconto(precoCentavos: number, pct: number): number {
   return Math.round((precoCentavos * (100 - pct)) / 100);
 }
 
-/** Lançamento de um item (CRT): normal cobra do cliente; cortesia e serviço-do-barbeiro não. */
-export type Lancamento = "normal" | "cortesia" | "servico_barbeiro";
-export const LANCAMENTOS: Lancamento[] = ["normal", "cortesia", "servico_barbeiro"];
+/** Lançamento de um item (CRT): normal cobra do cliente; cortesia, assinatura e serviço-do-barbeiro não. */
+export type Lancamento = "normal" | "cortesia" | "assinatura" | "servico_barbeiro";
+export const LANCAMENTOS: Lancamento[] = ["normal", "cortesia", "assinatura", "servico_barbeiro"];
 
 function exigirLancamento(lancamento: string, permitidos: Lancamento[]): Lancamento {
   if (!(permitidos as string[]).includes(lancamento)) throw new Error("lançamento inválido");
@@ -504,9 +504,7 @@ export async function comissaoDoPeriodo(
   let cortAvulsos = 0, cortCombos = 0, cortDivididos = 0, cortProdutos = 0;
   for (const r of rows) {
     if (r.lancamento === "servico_barbeiro") continue;
-    const cortesia = r.lancamento === "cortesia";
-    // DCC: comissao sobre o que entrou no caixa. Cortesia nao foi cobrada, entao nao
-    // tem desconto a abater e segue pela regra propria dela (CRT-009).
+    const cortesia = r.lancamento === "cortesia" || r.lancamento === "assinatura";
     const reais = (cortesia ? r.valor : valorLiquidoDoItem(r.valor, fatores.get(r.comandaId))) / 100;
     if (r.tipo === "produto") {
       if (cortesia) cortProdutos += reais;
@@ -594,10 +592,9 @@ export async function comissaoRecepcaoDoPeriodo(
   let divididosCasa = 0;
   for (const r of rows) {
     if (r.lancamento === "servico_barbeiro") continue;
-    // DCC: a mesma regra do barbeiro, sobre o que entrou no caixa. Hidratacao e por
-    // unidade, entao o desconto nao muda a contagem.
+    const cortesia = r.lancamento === "cortesia" || r.lancamento === "assinatura";
     const reais =
-      (r.lancamento === "cortesia" ? r.valor : valorLiquidoDoItem(r.valor, fatores.get(r.comandaId))) / 100;
+      (cortesia ? r.valor : valorLiquidoDoItem(r.valor, fatores.get(r.comandaId))) / 100;
     if (r.tipo === "servico" && r.slug && isServicoDividido(r.slug)) divididosCasa += reais;
     if (r.profissionalId !== profissionalId) continue;
     if (r.tipo === "produto") produtos += reais;

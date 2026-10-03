@@ -66,15 +66,15 @@ async function agendar(formData: FormData) {
   const servicoId = Number(formData.get("servicoId"));
   const profRaw = String(formData.get("profissionalId") ?? "");
   const inicioStr = String(formData.get("inicio") || "");
+  const forcar = formData.get("forcar") === "1";
   if (!clienteId || !servicoId || !inicioStr) {
     redirect(`${ROTA}?erro=${encodeURIComponent("preencha todos os campos")}`);
   }
   try {
     if (profRaw === "") {
-      // RF7: sem preferência → o rodízio escala o barbeiro
       await criarAgendamentoSemPreferencia(getDb(), { clienteId, servicoId, inicio: new Date(inicioStr) });
     } else {
-      await criarAgendamento(getDb(), { clienteId, servicoId, profissionalId: Number(profRaw), inicio: new Date(inicioStr) });
+      await criarAgendamento(getDb(), { clienteId, servicoId, profissionalId: Number(profRaw), inicio: new Date(inicioStr), forcar });
     }
   } catch (e) {
     redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao agendar")}`);
@@ -299,6 +299,12 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
               <label className="flex flex-col gap-1 text-xs font-medium">Início
                 <input name="inicio" type="datetime-local" required aria-label="Início" data-testid="age-inicio" className={input} />
               </label>
+              {papel === "dono" && (
+                <label className="flex items-center gap-1.5 text-xs font-medium">
+                  <input type="checkbox" name="forcar" value="1" aria-label="Forcar encaixe" data-testid="age-forcar" className="accent-emerald-700" />
+                  Encaixe
+                </label>
+              )}
               <button type="submit" className={btn}>Agendar</button>
             </form>
           )}

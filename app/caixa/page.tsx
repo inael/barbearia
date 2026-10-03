@@ -278,6 +278,9 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                   {i.lancamento === "cortesia" ? (
                     <span data-testid="badge-cortesia" className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">cortesia</span>
                   ) : null}
+                  {i.lancamento === "assinatura" ? (
+                    <span data-testid="badge-assinatura" className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">assinatura</span>
+                  ) : null}
                   {i.lancamento === "servico_barbeiro" ? (
                     <span data-testid="badge-barbeiro" className="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">do barbeiro</span>
                   ) : null}
@@ -305,6 +308,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                 <select name="profissionalId" aria-label="Profissional do serviço" data-testid="cx-servico-prof" className={input}>{profOptions}</select>
                 <select name="lancamento" aria-label="Lançamento do serviço" data-testid="cx-servico-lancamento" className={input}>
                   <option value="normal">Cobrar do cliente</option>
+                  <option value="assinatura">Assinatura (assinante nao paga)</option>
                   <option value="cortesia">Cortesia (casa paga)</option>
                   <option value="servico_barbeiro">Serviço do barbeiro (vira vale)</option>
                 </select>
@@ -317,6 +321,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                 <select name="profissionalId" aria-label="Profissional do combo" className={input}>{profOptions}</select>
                 <select name="lancamento" aria-label="Lançamento do combo" className={input}>
                   <option value="normal">Cobrar do cliente</option>
+                  <option value="assinatura">Assinatura (assinante nao paga)</option>
                   <option value="cortesia">Cortesia (casa paga)</option>
                   <option value="servico_barbeiro">Serviço do barbeiro (vira vale)</option>
                 </select>
@@ -425,7 +430,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                           <li key={i.id} className="flex gap-2">
                             <span className="min-w-0 flex-1 truncate">
                               {i.descricao}
-                              {i.lancamento === "cortesia" ? " (cortesia)" : i.lancamento === "servico_barbeiro" ? " (serviço do barbeiro)" : ""}
+                              {i.lancamento === "cortesia" ? " (cortesia)" : i.lancamento === "assinatura" ? " (assinatura)" : i.lancamento === "servico_barbeiro" ? " (serviço do barbeiro)" : ""}
                             </span>
                             <span>{brl(i.valorCentavos)}</span>
                           </li>

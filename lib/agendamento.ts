@@ -40,6 +40,7 @@ export interface DadosAgendamento {
   servicoId: number;
   profissionalId: number;
   inicio: Date;
+  forcar?: boolean;
 }
 
 /**
@@ -64,12 +65,14 @@ export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<num
     throw new Error("horario bloqueado");
   }
 
-  const ativos = await db
-    .select({ inicio: schema.agendamentos.inicio, fim: schema.agendamentos.fim })
-    .from(schema.agendamentos)
-    .where(and(eq(schema.agendamentos.profissionalId, d.profissionalId), ne(schema.agendamentos.status, "cancelado")));
-  if (haConflito(ativos.map((a) => ({ inicio: a.inicio.getTime(), fim: a.fim.getTime() })), novo)) {
-    throw new Error("horario ocupado");
+  if (!d.forcar) {
+    const ativos = await db
+      .select({ inicio: schema.agendamentos.inicio, fim: schema.agendamentos.fim })
+      .from(schema.agendamentos)
+      .where(and(eq(schema.agendamentos.profissionalId, d.profissionalId), ne(schema.agendamentos.status, "cancelado")));
+    if (haConflito(ativos.map((a) => ({ inicio: a.inicio.getTime(), fim: a.fim.getTime() })), novo)) {
+      throw new Error("horario ocupado");
+    }
   }
 
   const [row] = await db

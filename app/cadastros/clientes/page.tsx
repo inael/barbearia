@@ -65,7 +65,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 const btnGhost =
   "rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900";
 
-export default async function CadastroClientesPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
+export default async function CadastroClientesPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string; q?: string }> }) {
   const sp = await searchParams;
   const session = await auth();
   const papel = session?.user?.papel;
@@ -80,7 +80,8 @@ export default async function CadastroClientesPage({ searchParams }: { searchPar
     );
   }
 
-  const clientes = await listarClientes(getDb());
+  const filtro = sp?.q?.trim() || "";
+  const clientes = await listarClientes(getDb(), filtro || undefined);
 
   return (
     <main className={wrap}>
@@ -108,7 +109,24 @@ export default async function CadastroClientesPage({ searchParams }: { searchPar
         </section>
 
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-semibold">Clientes ({clientes.length})</h2>
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold">Clientes ({clientes.length})</h2>
+            <form action={ROTA} method="GET" className="flex items-center gap-2">
+              <input
+                name="q"
+                type="search"
+                placeholder="Buscar por nome..."
+                defaultValue={filtro}
+                aria-label="Buscar cliente por nome"
+                data-testid="cli-busca"
+                className={input}
+              />
+              <button type="submit" className={btnGhost}>Buscar</button>
+              {filtro && (
+                <a href={ROTA} className="text-xs text-neutral-500 underline hover:text-neutral-800">Limpar</a>
+              )}
+            </form>
+          </div>
           <div className="flex flex-col gap-2">
             {clientes.map((c) => (
               <div key={c.id} data-cliente={c.nome} className="flex flex-wrap items-end gap-2 rounded-lg border border-neutral-200 bg-white p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
