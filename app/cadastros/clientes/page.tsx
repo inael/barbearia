@@ -115,9 +115,9 @@ export default async function CadastroClientesPage({ searchParams }: { searchPar
               <input
                 name="q"
                 type="search"
-                placeholder="Buscar por nome..."
+                placeholder="Buscar por nome ou telefone..."
                 defaultValue={filtro}
-                aria-label="Buscar cliente por nome"
+                aria-label="Buscar cliente por nome ou telefone"
                 data-testid="cli-busca"
                 className={input}
               />

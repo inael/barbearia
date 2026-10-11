@@ -136,7 +136,10 @@ async function enviarMidia(formData: FormData) {
     redirect(`${ROTA}?erro=${encodeURIComponent(msg)}`);
   }
   revalidatePath(ROTA);
-  redirect(`${ROTA}?ok=${encodeURIComponent("Mídia enviada para a playlist.")}`);
+  const avisoFormato = /video\/(quicktime|x-matroska)/i.test(arquivo.type)
+    ? " Aviso: este formato pode nao funcionar na TV Samsung. Prefira MP4 (H.264)."
+    : "";
+  redirect(`${ROTA}?ok=${encodeURIComponent("Midia enviada para a playlist." + avisoFormato)}`);
 }
 
 export default async function AdminTvPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string }> }) {
@@ -343,7 +346,7 @@ export default async function AdminTvPage({ searchParams }: { searchParams: Prom
                     <span className="text-xs font-semibold">Enviar foto ou vídeo do computador</span>
                     <input type="hidden" name="telaId" value={t.id} />
                     <input name="arquivo" type="file" accept="image/*,video/*" aria-label={`Upload para ${t.nome}`} data-testid={`tv-upload-${t.id}`} className="text-xs" />
-                    <span className="text-xs text-neutral-500" data-testid="tv-limite">imagem ou vídeo, até {LIMITE_BYTES / 1024 / 1024} MB</span>
+                    <span className="text-xs text-neutral-500" data-testid="tv-limite">imagem ou video, ate {LIMITE_BYTES / 1024 / 1024} MB. Videos devem ser MP4 (H.264) para funcionar na TV.</span>
                     <button type="submit" className="self-start rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
                       Enviar mídia
                     </button>

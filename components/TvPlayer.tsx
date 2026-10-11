@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { tipoDaMidia, idDoYoutube, urlEmbedYoutube } from "@/lib/midia";
 
 /**
@@ -42,8 +42,14 @@ function Giro({ graus, children }: { graus: number; children: React.ReactNode })
   );
 }
 
-function Midia({ url }: { url: string }) {
+function Midia({ url, onErro }: { url: string; onErro?: () => void }) {
+  const [erro, setErro] = useState(false);
   const tipo = tipoDaMidia(url);
+
+  const aoErro = useCallback(() => {
+    setErro(true);
+    onErro?.();
+  }, [onErro]);
 
   if (tipo === "youtube") {
     const id = idDoYoutube(url)!;
@@ -65,8 +71,15 @@ function Midia({ url }: { url: string }) {
   }
 
   if (tipo === "video") {
+    if (erro) {
+      return (
+        <div data-testid="tv-item" data-tipo="erro-video" className="flex h-full w-full flex-col items-center justify-center gap-2 text-neutral-400">
+          <p className="text-lg">Video nao suportado</p>
+          <p className="text-sm">Formato incompativel com esta TV. Envie em MP4 (H.264).</p>
+        </div>
+      );
+    }
     return (
-      // muted é obrigatório: sem isso o navegador bloqueia o autoplay
       <video
         data-testid="tv-item"
         data-tipo="video"
@@ -75,6 +88,8 @@ function Midia({ url }: { url: string }) {
         muted
         loop
         playsInline
+        preload="auto"
+        onError={aoErro}
         className="h-full w-full object-contain"
       />
     );
@@ -167,7 +182,7 @@ export default function TvPlayer({
   return (
     <div className="flex h-screen w-screen items-center justify-center overflow-hidden bg-black">
       <Giro graus={atual?.rotacao ?? 0}>
-        <Midia url={atual.url} />
+        <Midia key={atual.url} url={atual.url} />
       </Giro>
     </div>
   );

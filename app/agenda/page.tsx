@@ -77,7 +77,11 @@ async function agendar(formData: FormData) {
       await criarAgendamento(getDb(), { clienteId, servicoId, profissionalId: Number(profRaw), inicio: new Date(inicioStr), forcar });
     }
   } catch (e) {
-    redirect(`${ROTA}?erro=${encodeURIComponent(e instanceof Error ? e.message : "erro ao agendar")}`);
+    const msg = e instanceof Error ? e.message : "erro ao agendar";
+    const hint = msg === "horario ocupado"
+      ? "Horario ocupado. Para fazer encaixe, marque a opcao 'Encaixe' antes de agendar."
+      : msg;
+    redirect(`${ROTA}?erro=${encodeURIComponent(hint)}`);
   }
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Agendamento criado.")}`);

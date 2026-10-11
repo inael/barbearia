@@ -1,5 +1,5 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { asc, eq, ilike } from "drizzle-orm";
+import { asc, eq, ilike, or } from "drizzle-orm";
 import * as schema from "./db/schema";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -69,11 +69,22 @@ export async function editarCliente(db: DB, id: number, d: { nome: string; telef
   await db.update(schema.clientes).set({ nome: d.nome.trim(), telefone: tel }).where(eq(schema.clientes.id, id));
 }
 
-/** Lista clientes, ordenados por nome. Filtro opcional por nome (ILIKE). */
+/** Lista clientes, ordenados por nome. Filtro opcional por nome OU telefone (ILIKE). */
 export async function listarClientes(db: DB, filtro?: string): Promise<schema.Cliente[]> {
   let q = db.select().from(schema.clientes).orderBy(asc(schema.clientes.nome)).$dynamic();
   if (filtro && filtro.trim()) {
-    q = q.where(ilike(schema.clientes.nome, `%${filtro.trim()}%`));
+    const f = filtro.trim();
+    const soDigitos = f.replace(/\D/g, "");
+    if (soDigitos.length >= 3) {
+      q = q.where(
+        or(
+          ilike(schema.clientes.nome, `%${f}%`),
+          ilike(schema.clientes.telefone, `%${soDigitos}%`),
+        ),
+      );
+    } else {
+      q = q.where(ilike(schema.clientes.nome, `%${f}%`));
+    }
   }
   return q;
 }

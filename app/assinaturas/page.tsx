@@ -404,9 +404,13 @@ export default async function AssinaturasPage({ searchParams }: { searchParams: 
                     ) : null}
                   </div>
 
-                  {temAsaas && gerenciar && a.status !== "cancelada" ? (
+                  {gerenciar && a.status !== "cancelada" ? (
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {a.asaasSubscriptionId ? (
+                      {!temAsaas ? (
+                        <span data-testid={`asaas-nao-configurado-${a.id}`} className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                          Cobranca automatica indisponivel (ASAAS_URL e ASAAS_API_KEY nao configurados)
+                        </span>
+                      ) : a.asaasSubscriptionId ? (
                         <>
                           <span data-testid={`asaas-ativo-${a.id}`} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
                             Cobranca Asaas ativa
