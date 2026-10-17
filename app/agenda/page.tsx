@@ -8,6 +8,7 @@ import { listarServicos } from "@/lib/catalogo";
 import { listarProfissionais } from "@/lib/profissionais";
 import { criarAgendamento, criarAgendamentoSemPreferencia, cancelarAgendamento, listarAgendamentos } from "@/lib/agendamento";
 import { janelaDoDia, listarHorarios, listarFeriados, toISODate } from "@/lib/horarios";
+import { mapearAssinantesAtivos } from "@/lib/assinaturas";
 import { montarGradeDia } from "@/lib/agenda-grade-dia";
 import { abrirComandaDoAgendamento, situacaoDosAgendamentos, marcarFalta } from "@/lib/comanda-na-agenda";
 import Link from "next/link";
@@ -118,13 +119,18 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   }
 
   const db = getDb();
-  const [clientes, servicos, profissionais, horarios, feriados] = await Promise.all([
+  const [clientesRaw, servicos, profissionais, horarios, feriados, assinantes] = await Promise.all([
     listarClientes(db),
     listarServicos(db),
     listarProfissionais(db),
     listarHorarios(db),
     listarFeriados(db),
+    mapearAssinantesAtivos(db),
   ]);
+  const clientes = clientesRaw.map((c) => ({
+    ...c,
+    planoNome: assinantes.get(c.id) ?? null,
+  }));
   const de = new Date();
   de.setHours(0, 0, 0, 0);
   const ate = new Date(de.getTime() + 366 * 24 * 60 * 60 * 1000);
@@ -303,9 +309,12 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
               <label className="flex flex-col gap-1 text-xs font-medium">Início
                 <input name="inicio" type="datetime-local" required aria-label="Início" data-testid="age-inicio" className={input} />
               </label>
-              <label className="flex items-center gap-1.5 text-xs font-medium">
-                <input type="checkbox" name="forcar" value="1" aria-label="Forcar encaixe" data-testid="age-forcar" className="accent-emerald-700" />
-                Encaixe
+              <label className="flex flex-col gap-0.5 rounded-lg border border-dashed border-amber-400 bg-amber-50 px-2 py-1.5 text-xs font-medium dark:border-amber-700 dark:bg-amber-950">
+                <span className="flex items-center gap-1.5">
+                  <input type="checkbox" name="forcar" value="1" aria-label="Forcar encaixe" data-testid="age-forcar" className="accent-amber-600" />
+                  Encaixe
+                </span>
+                <span className="font-normal text-amber-700 dark:text-amber-400">Marque para agendar mesmo com horario ocupado</span>
               </label>
               <button type="submit" className={btn}>Agendar</button>
             </form>

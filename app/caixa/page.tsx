@@ -29,6 +29,7 @@ import {
 import { reaisParaCentavosPositivo, RECADO_VALOR_INVALIDO } from "@/lib/dinheiro";
 import { emitirNota } from "@/lib/nf";
 import { cobrarComanda, getAsaasClient } from "@/lib/pagamento/asaas";
+import { mapearAssinantesAtivos } from "@/lib/assinaturas";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
 import BuscaCliente from "@/components/BuscaCliente";
@@ -177,14 +178,19 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
   }
 
   const db = getDb();
-  const [clientes, servicos, combos, produtos, profissionais, abertas] = await Promise.all([
+  const [clientesRaw, servicos, combos, produtos, profissionais, abertas, assinantes] = await Promise.all([
     listarClientes(db),
     listarServicos(db),
     listarCombos(db),
     listarProdutos(db),
     listarProfissionais(db),
     listarComandasAbertas(db),
+    mapearAssinantesAtivos(db),
   ]);
+  const clientes = clientesRaw.map((c) => ({
+    ...c,
+    planoNome: assinantes.get(c.id) ?? null,
+  }));
   const de = new Date();
   de.setHours(0, 0, 0, 0);
   const ate = new Date(de.getTime() + 24 * 60 * 60 * 1000);

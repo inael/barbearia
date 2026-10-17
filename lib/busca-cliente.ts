@@ -11,6 +11,7 @@ export interface ClienteBuscavel {
   id: number;
   nome: string;
   telefone: string | null;
+  planoNome?: string | null;
 }
 
 /** Máximo de sugestões exibidas. Lista longa demais volta a ser rolagem. */
@@ -72,5 +73,6 @@ export function buscarClientes(
 
 /** Rótulo da sugestão. Leva o telefone porque dois "João Silva" são comuns. */
 export function rotuloCliente(c: ClienteBuscavel): string {
-  return c.telefone ? `${c.nome} — ${c.telefone}` : c.nome;
+  const base = c.telefone ? `${c.nome} - ${c.telefone}` : c.nome;
+  return c.planoNome ? `${base} [${c.planoNome}]` : base;
 }

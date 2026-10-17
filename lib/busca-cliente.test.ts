@@ -53,7 +53,13 @@ describe("BCL — achar cliente digitando", () => {
   });
 
   it("o rótulo leva o telefone, porque dois João Silva são comuns", () => {
-    expect(rotuloCliente(base[3])).toBe("João Silva — (61) 97777-0003");
+    expect(rotuloCliente(base[3])).toBe("João Silva - (61) 97777-0003");
     expect(rotuloCliente(base[4])).toBe("Gustavo Rocha");
+  });
+
+  it("o rótulo mostra o plano do assinante", () => {
+    expect(rotuloCliente({ ...base[3], planoNome: "Premium" })).toBe("João Silva - (61) 97777-0003 [Premium]");
+    expect(rotuloCliente({ ...base[4], planoNome: "Flex" })).toBe("Gustavo Rocha [Flex]");
+    expect(rotuloCliente({ ...base[0], planoNome: null })).toBe("José da Silva - (61) 98147-1095");
   });
 });

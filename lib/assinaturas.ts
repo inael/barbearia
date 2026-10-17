@@ -97,6 +97,21 @@ export async function assinaturaEmAtraso(db: DB, clienteId: number): Promise<boo
   return rows.some((r) => r.status === "atraso");
 }
 
+/** Mapa clienteId -> nome do plano para todos os assinantes ativos. */
+export async function mapearAssinantesAtivos(db: DB): Promise<Map<number, string>> {
+  const rows = await db
+    .select({
+      clienteId: schema.assinaturas.clienteId,
+      planoNome: schema.planos.nome,
+    })
+    .from(schema.assinaturas)
+    .innerJoin(schema.planos, eq(schema.assinaturas.planoId, schema.planos.id))
+    .where(eq(schema.assinaturas.status, "ativa"));
+  const mapa = new Map<number, string>();
+  for (const r of rows) mapa.set(r.clienteId, r.planoNome);
+  return mapa;
+}
+
 /** CRUD-005: edita um plano (preço/descontos/dias). Vale para as próximas cobranças. */
 export async function editarPlano(db: DB, id: number, d: DadosPlano): Promise<void> {
   if (!d.nome?.trim()) throw new Error("nome obrigatório");
