@@ -1,29 +1,44 @@
 # PROJECT_STATE
 
-## O que é
-SaaS de gestão de barbearia + atendente de IA no WhatsApp, para o cliente Rodrigo Santos (Faith Barbearia). Abertura: outubro/2026.
+## O que e
+SaaS de gestao de barbearia + atendente de IA no WhatsApp, para o cliente Rodrigo Santos (Faith Barbearia, Brasilia/DF).
 
-## Onde estamos (2026-08-13)
-- **DEAL FECHADO**, contrato enviado e **1ª parcela do carnê PAGA** (R$ 340 em 11/08). Carnê Asaas 10x R$ 340, todo dia 11 (id `c7a23c35-...`); restam 9x agendadas + permuta (1 ano de corte + 12 pinturas de barba).
-- **Construção em andamento.** Scaffold Next.js 16 + constituição + regras de dinheiro testadas (`comissao`, `pote`, `rodizio`, 26 testes verdes).
-- **App real no ar:** painel do catálogo (lê o Postgres) + **Simulador de Comissão & Pote** (`/comissao`, usa o motor testado, cálculo no navegador). Deploy validado em **http://179.198.113.115.sslip.io**.
+## Cliente
+- **Rodrigo Santos** - dono da Faith Barbearia
+- WhatsApp: +55 61 8147-1095
+- Email Asaas: rodrigo.ss1996@hotmail.com
+- Contrato: 10x R$340 (carne Asaas, vencimento dia 11)
+  - Parcela 1: PAGA (11/08)
+  - Parcelas 2-3: EM ATRASO (R$680)
+  - Parcelas 4-10: a vencer
+- Permuta inclusa: 1 ano de corte + 12 pinturas de barba
 
-## Stack (decidida e em uso)
-- **Next.js 16 (App Router) full-stack**, TypeScript, Tailwind v4 + shadcn/ui + Recharts.
-- **Drizzle + PostgreSQL** (Postgres na VPS). **Vitest** para as regras de dinheiro.
-- Auth **Logto** (RBAC). Integrações: **SimplesZap** (WhatsApp), **UseTokia/DeepSeek** (IA), **Asaas** (assinaturas).
-- (Substituiu a ideia antiga de Fastify/Supabase/Vercel: agora e Next.js full-stack numa VPS unica com Coolify.)
+## Stack
+- **Next.js 16** (App Router), TypeScript, Tailwind v4 + shadcn/ui + lucide-react
+- **Drizzle ORM + PostgreSQL 16** (na VPS do cliente)
+- **Auth.js** self-hosted (JWT + scrypt), 3 papeis: dono, recepcao, barbeiro
+- Integracoes: SimplesZap (WhatsApp), UseTokia/DeepSeek (IA), Asaas (cobranca), Garage (storage TV)
 
-## Infra (viva)
-- **VPS:** Hostinger KVM 1, Ubuntu 24.04, 1 vCPU / 3.8 GB / 48 GB. IP `179.198.113.115`. Docker pre-instalado.
-- **Coolify** v4.1.2 (painel `http://179.198.113.115:8000`). Deploy por API. Projeto/app criados.
-- Credenciais no vault (`~/.claude/credentials/services.env`, prefixo `BARBEARIA_`).
-- Build na VPS leva ~2,5 min. Mitigacao futura p/ 1 vCPU: buildar fora e so puxar a imagem.
+## Infra - VPS DO CLIENTE (nao e IT Booster)
+- **IP:** 179.198.113.115 (Hostinger KVM 1, 1 vCPU / 3.8 GB / 48 GB)
+- **Coolify** v4.1.2 em `http://179.198.113.115:8000`
+- **Dominio:** barbearia.itbooster.com.br (cert Let's Encrypt)
+- **SSH:** chave ed25519 (`~/.ssh/faith_barbearia_vps`), root por chave
+- **Postgres 5432:** fechado para internet (SEC-04), acesso via tunel SSH
+- **A VPS IT Booster (72.61.135.214) NAO tem nada deste projeto**
+
+## Estado (2026-10-20)
+- **44 features, 212 testes passando**, produto funcional completo
+- **Deploy QUEBRADO** - pushes ao GitHub nao auto-deployam no Coolify
+- Ultimo deploy confirmado: antes de 11/10
+- Commits nao deployados: `8a7f989` (11/10), `a5c02b9` (17/10)
+- Rodrigo reportou que os fixes nao chegaram (18/10)
 
 ## Papeis (RBAC)
-Dono (acesso total), Recepcionista (agenda, caixa, estoque, cadastro), Barbeiro (so a propria agenda + numeros).
+- Dono: acesso total
+- Recepcionista: agenda, caixa, estoque, cadastro
+- Barbeiro: so a propria agenda + numeros
 
-## Proximo
-1. **Auth Logto + shell do painel.** PRE-REQUISITO MANUAL: registrar o app `barbearia` no console Logto (nao ha `BARBEARIA_LOGTO_*` no vault; criacao via Management API precisa de um M2M token que ainda nao temos). Depois: middleware, RBAC (dono/recepcao/barbeiro), rotas protegidas.
-2. Modulo Agenda (grade + rodizio) -> atendente IA (SimplesZap + UseTokia).
-3. Infra pre-go-live: fechar porta publica 5432, auto-deploy no push (webhook Coolify), dominio real + HTTPS, firewall/fail2ban.
+## Credenciais
+Todas no vault `~/.claude/credentials/services.env`, prefixo `BARBEARIA_`.
+Variaveis de ambiente do Coolify detalhadas em `ACTIVE_PLAN.md`.

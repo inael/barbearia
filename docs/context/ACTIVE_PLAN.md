@@ -1,78 +1,113 @@
-# ACTIVE_PLAN — COB: cobranca automatica Asaas para assinaturas
+# ACTIVE_PLAN - Destravar deploy + fixes do Rodrigo
 
-> Plano anterior (MEN: mensalidade manual) esta cumprido e no ar.
-> Este plano integra o Asaas para cobranca recorrente das assinaturas.
+> Handoff para novo desenvolvedor (2026-10-20).
+> Plano anterior (COB: cobranca automatica Asaas) esta cumprido em codigo.
 
-## Diagnostico
+## Problema imediato: deploy quebrado
 
-O modulo de mensalidade (MEN) funciona, mas e 100% manual: a recepcao recebe
-no balcao e marca no sistema. O Rodrigo criou conta no Asaas
-(rodrigo.ss1996@hotmail.com) para automatizar: o Asaas gera PIX mensal, o
-cliente paga, e o sistema registra sozinho.
+O Coolify na VPS do Rodrigo (179.198.113.115) NAO esta fazendo auto-deploy.
+Os commits `8a7f989` (11/10) e `a5c02b9` (17/10) foram pushados ao GitHub
+mas o site continua na versao anterior. Rodrigo confirmou em 18/10.
 
-O codigo antigo tinha `processarCobrancaAssinatura` (webhook) que so mudava o
-status (ativa/atraso) sem registrar mensalidade, e ninguem chamava.
+### Passos para resolver
 
-## Plano
+1. Acessar Coolify: `http://179.198.113.115:8000`
+   - Login: `faithbarbearia2024@gmail.com` / `F@ithB@rb3@r1@`
+2. Ir no app (`cxr38w7p8ywp5vqpiqzmv45r`) e verificar:
+   - Se o webhook do GitHub esta ativo
+   - Se ha erro de build nos logs
+   - Se o branch esta apontando para `master`
+3. Fazer deploy manual se necessario (botao "Deploy" ou via API)
+4. Validar: abrir `barbearia.itbooster.com.br`, logar como dono, ir na
+   agenda e verificar se o checkbox de encaixe tem borda amber
 
-1. **Schema** — `clientes.asaas_customer_id` e `assinaturas.asaas_subscription_id`
-   (text nullable) para vincular aos IDs do Asaas.
-2. **lib/pagamento/asaas-assinaturas.ts** — novo modulo:
-   - `garantirCustomerAsaas(db, clienteId)` — busca por CPF ou cria no Asaas
-   - `criarAssinaturaAsaas(db, assinaturaId, vencimento)` — cria subscription PIX mensal
-   - `cancelarAssinaturaAsaas(db, assinaturaId)` — cancela no Asaas e limpa o vinculo
-   - `asaasConfigurado()` — true se ASAAS_URL + ASAAS_API_KEY estao no ambiente
-3. **lib/cobranca.ts** — novo `processarPagamentoAssinatura(db, dados)`:
-   - PAYMENT_CONFIRMED/RECEIVED: encontra assinatura por subscriptionId, registra
-     mensalidade automaticamente (competencia do vencimento), marca ativa
-   - PAYMENT_OVERDUE: marca atraso
-   - Idempotente (unique index de mensalidade protege)
-4. **Webhook** — `app/api/webhook/asaas/route.ts` expandido:
-   - Se `payment.subscription` presente: rota para assinatura
-   - Senao: rota para comanda (como antes)
-5. **UI** — `app/assinaturas/page.tsx`:
-   - Se Asaas configurado e dono: mostra controles por assinante
-   - Com CPF: botao "Ativar cobranca Asaas" + date picker do 1o vencimento
-   - Sem CPF: aviso "CPF necessario"
-   - Com subscriptionId: badge "Cobranca Asaas ativa" + "Cancelar cobranca"
-6. **Env** — corrigido `.env.example`: ASAAS_API_BASE -> ASAAS_URL (era inconsistente)
+### Via API (alternativa):
 
-## Status
+```bash
+curl -X POST "http://179.198.113.115:8000/api/v1/applications/cxr38w7p8ywp5vqpiqzmv45r/restart" \
+  -H "Authorization: Bearer 2|1vq68tpTIGnq3YInWdLBorJ91n0itUjBE2PLDv6a5d26d6c2"
+```
 
-- [x] Schema (colunas novas)
-- [x] lib/pagamento/asaas-assinaturas.ts
-- [x] lib/cobranca.ts (processarPagamentoAssinatura)
-- [x] Webhook expandido
-- [x] UI com controles Asaas
-- [x] .env.example corrigido
-- [x] Testes unitarios (2 novos, 211 total verdes)
-- [x] Testes integracao (6 novos, Docker necessario para rodar)
-- [x] Rodrigo gerar API key no painel Asaas
-- [x] Configurar ASAAS_URL + ASAAS_API_KEY no ambiente de producao (Coolify)
-- [x] Configurar webhook no painel Asaas apontando para barbearia.itbooster.com.br/api/webhook/asaas
-- [x] Aplicar schema no banco do cliente (sessao anterior, colunas novas ja no banco)
-- [x] Deploy (Coolify restart zfw3kyngeabzmewobj8za05n com env prod)
-- [x] Pagina de ferramentas externas (commit 842cc8c)
+## Variaveis de ambiente do Coolify (producao)
 
-## Webhook Asaas (configurado via API)
+Estas sao as env vars que devem estar configuradas no app do Coolify.
+Se alguma faltar, o app pode quebrar ou a feature nao funciona.
 
-- ID: a4c71e56-872d-456c-acb5-a0768c02c8e7
-- URL: https://barbearia.itbooster.com.br/api/webhook/asaas
-- Eventos: PAYMENT_CONFIRMED, RECEIVED, OVERDUE, CREATED, UPDATED, REFUNDED, DELETED
-- authToken configurado (mesmo do vault)
-- sendType: SEQUENTIALLY
+### Obrigatorias (app nao roda sem elas)
+
+| Variavel | Onde encontrar |
+|----------|---------------|
+| `DATABASE_URL` | vault `BARBEARIA_DB_URL_INTERNAL` |
+| `AUTH_SECRET` | vault `BARBEARIA_PROD_AUTH_SECRET` |
+| `AUTH_TRUST_HOST` | valor fixo: `true` |
+| `TZ` | valor fixo: `America/Sao_Paulo` |
+| `NODE_ENV` | valor fixo: `production` |
+
+### Asaas (cobranca PIX + webhook)
+
+| Variavel | Onde encontrar |
+|----------|---------------|
+| `ASAAS_URL` | valor fixo: `https://api.asaas.com/v3` |
+| `ASAAS_API_KEY` | vault `BARBEARIA_ASAAS_API_KEY_PROD` |
+| `ASAAS_WEBHOOK_TOKEN` | vault `BARBEARIA_ASAAS_WEBHOOK_TOKEN` |
+
+### WhatsApp (SimplesZap) - instancia NAO conectada
+
+| Variavel | Onde encontrar |
+|----------|---------------|
+| `SIMPLESZAP_API_BASE` | vault `BARBEARIA_SIMPLESZAP_URL` |
+| `SIMPLESZAP_API_KEY` | vault `BARBEARIA_SIMPLESZAP_TOKEN_SISTEMA` |
+| `SIMPLESZAP_INSTANCE_ID` | vazio - precisa conectar instancia via QR |
+
+### Hub de IA (LiteLLM/UseTokia)
+
+| Variavel | Onde encontrar |
+|----------|---------------|
+| `HUB_IA_URL` | valor fixo: `https://litellm.toolpad.cloud` |
+| `HUB_IA_KEY` | vault, chave da barbearia no LiteLLM |
+| `HUB_IA_MODEL` | valor fixo: `deepseek/deepseek-chat` |
+
+### Storage de midia (Garage, na VPS do Rodrigo)
+
+| Variavel | Onde encontrar |
+|----------|---------------|
+| `GARAGE_ENDPOINT` | valor fixo: `http://localhost:3902` |
+| `GARAGE_KEY_ID` | vault `BARBEARIA_GARAGE_KEY_ID` |
+| `GARAGE_SECRET` | vault `BARBEARIA_GARAGE_SECRET` |
+| `GARAGE_BUCKET` | valor fixo: `midia-tv` |
+
+### Scheduler de lembretes
+
+| Variavel | Onde encontrar |
+|----------|---------------|
+| `TAREFAS_SECRET` | vault `BARBEARIA_TAREFAS_SECRET` |
+
+### NUNCA setar em producao
+
+- `NEXT_PUBLIC_DEMO_LOGINS` - expoe senhas demo na URL publica. Remover na entrega final.
+
+## Fixes ja no codigo (aguardando deploy)
+
+1. **Encaixe destacado** - checkbox com borda amber + texto explicativo
+2. **Assinante na busca** - rotulo `[NomePlano]` na agenda e caixa
+3. 212 testes passando, tsc limpo
+
+## Backlog completo
+
+Ver `SESSION_HANDOFF.md` secao 2026-10-20 para lista completa de pendencias.
+
+## Infra - IMPORTANTE
+
+- A VPS e do RODRIGO (179.198.113.115), NAO da IT Booster (72.61.135.214)
+- O Asaas do app e a conta do RODRIGO (rodrigo.ss1996@hotmail.com), NAO da IT Booster
+- O banco, storage e deploy estao todos na VPS do Rodrigo
+- SSH por chave: `~/.ssh/faith_barbearia_vps` (ed25519)
+- Porta 5432 publica foi fechada (SEC-04), acesso ao banco exige tunel SSH
 
 ## Riscos
 
-- **API key vazia bloqueia tudo.** O codigo retorna erro claro se ASAAS_URL ou
-  ASAAS_API_KEY faltam. Nenhum botao aparece na UI sem as env vars.
-- **Cliente sem CPF nao pode ter cobranca.** O Asaas exige CPF para criar customer.
-  A UI mostra "CPF necessario" nesses casos.
-- **Webhook duplicado.** A unique index de mensalidade (assinaturaId + competencia)
-  impede duplicata. O catch silencioso no processarPagamentoAssinatura trata isso.
-
-## Validacao
-
-- tsc --noEmit: limpo
-- vitest run: 42 arquivos, 211 testes, todos verdes
-- Testes de integracao (6 novos): escritos, Docker necessario para rodar
+- **Deploy nao sai:** se o Coolify nao deployar, nenhuma correcao chega ao
+  Rodrigo. Prioridade maxima.
+- **Parcelas em atraso:** R$680 (parcelas 2+3). Rodrigo nao respondeu.
+- **NEXT_PUBLIC_DEMO_LOGINS=1 em prod:** qualquer pessoa que acessar ve
+  senhas demo. Remover antes da entrega final.

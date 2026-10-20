@@ -1,5 +1,99 @@
 # SESSION_HANDOFF
 
+## 2026-10-20 — Handoff para novo desenvolvedor
+
+**Contexto:** o Inael esta passando a continuidade deste projeto para outro
+dev. Este documento e o briefing completo.
+
+### Arquitetura e infra
+
+- **Repo:** `inael/barbearia` (GitHub, branch `master`)
+- **Stack:** Next.js 16 (App Router), TypeScript, Tailwind v4, Drizzle ORM, PostgreSQL 16
+- **Auth:** Auth.js self-hosted (JWT + scrypt), 3 papeis: dono, recepcao, barbeiro
+- **VPS do CLIENTE (NAO e a VPS IT Booster):**
+  - IP: `179.198.113.115` (Hostinger KVM 1, 1 vCPU / 3.8 GB / 48 GB)
+  - SSH: chave ed25519 (`~/.ssh/faith_barbearia_vps`), root por chave (senha desabilitada)
+  - Coolify v4.1.2 no painel `http://179.198.113.115:8000`
+  - Coolify API token: ver `BARBEARIA_COOLIFY_API_TOKEN` no vault
+  - App UUID: `cxr38w7p8ywp5vqpiqzmv45r`
+  - DB UUID: `tud3ivhyb95ubzdexu85delt` (postgres:16 interno ao Docker)
+- **Dominio:** `barbearia.itbooster.com.br` (cert Let's Encrypt via Coolify/Traefik)
+- **IMPORTANTE:** a VPS IT Booster (`72.61.135.214` / `srv1078017`) NAO tem nada
+  da barbearia. Todo deploy, banco e storage estao na VPS do Rodrigo.
+
+### Deploy QUEBRADO (problema principal)
+
+O Coolify **nao esta fazendo auto-deploy** nos pushes ao GitHub. Os commits
+`8a7f989` (11/10) e `a5c02b9` (17/10) foram pushados mas NAO deployaram.
+O Rodrigo confirmou em 18/10 que o site continua igual ao anterior.
+
+**Acoes necessarias:**
+1. Acessar o painel Coolify (`http://179.198.113.115:8000`, login
+   no vault: `BARBEARIA_COOLIFY_ADMIN_EMAIL` / `BARBEARIA_COOLIFY_ADMIN_PASS`)
+2. Verificar se o webhook do GitHub esta configurado no app
+3. Se nao estiver, fazer deploy manual (API ou botao no painel)
+4. Ou disparar via API: `POST {COOLIFY_API_BASE}/applications/{APP_UUID}/restart`
+   com header `Authorization: Bearer {COOLIFY_API_TOKEN}`
+
+### Codigo pronto NAO deployado (commit a5c02b9)
+
+Dois fixes que o Rodrigo pediu em audios de 13/10:
+
+1. **Encaixe destacado na agenda** (`app/agenda/page.tsx`)
+   - Checkbox com borda amber tracejada + texto explicativo
+   - Antes era invisivel, Rodrigo nao encontrava
+
+2. **Assinante visivel na busca de cliente** (`lib/busca-cliente.ts`, `lib/assinaturas.ts`,
+   `app/agenda/page.tsx`, `app/caixa/page.tsx`)
+   - `mapearAssinantesAtivos()` faz JOIN assinaturas+planos em batch
+   - Rotulo mostra `[NomePlano]` ao lado do nome (ex: "Joao Silva - (61) 9... [Premium]")
+   - Funciona na agenda e no caixa
+
+**Testes:** 212 passando (42 arquivos), tsc limpo.
+
+### Financeiro
+
+- **Carne Asaas:** 10x R$340, vencimento todo dia 11
+  - Parcela 1: PAGA (11/08)
+  - Parcelas 2 e 3: EM ATRASO (R$680 total)
+  - Parcelas 4-10: a vencer
+  - Customer ID: `cus_000193072715`
+  - Installment ID: `c7a23c35-a683-459b-9e6c-b6b5e2e9c25f`
+- Rodrigo NAO respondeu sobre pagamento (cobramos em 17/10)
+
+### Comunicacao com o Rodrigo
+
+- WhatsApp dele: +55 61 8147-1095 (salvo como "BARBEARIA FAITH")
+- No WAHA da IT Booster: chatId `38345937793261@lid`, sessao
+  `simpleszap_it-booster-principal_11af7fb5`
+- Ele tambem manda mensagens no WhatsApp PESSOAL do Inael (sessao desconectada)
+- **REGRA:** JAMAIS enviar mensagem ao cliente sem aprovacao do Inael primeiro
+
+### Pendencias tecnicas (backlog)
+
+1. **Deploy** — destravar Coolify (prioridade maxima)
+2. **TV Samsung** — TLS 1.0/1.1 insuficiente, sugerido Fire TV Stick
+3. **Graficos nos paineis** — Rodrigo pediu, nao implementado
+4. **Remover NEXT_PUBLIC_DEMO_LOGINS** — antes da entrega final
+5. **Combo conta na meta** — exige relacao combo->servicos (CSM feito, verificar)
+6. **Meta relampago recepcao** — escopo novo, aguarda aprovacao
+7. **Cobranca automatica Asaas** — codigo pronto, depende da conta Asaas do Rodrigo
+8. **SimplesZap do Rodrigo** — instancia nao conectada (QR pendente)
+9. **NFS-e** — Rodrigo nao tem CNPJ MEI, NF e so rascunho local
+10. **Scheduler de lembretes** — logica pronta, falta cron/tarefa agendada no Coolify
+
+### Credenciais
+
+Todas no vault `~/.claude/credentials/services.env`, prefixo `BARBEARIA_`.
+As variaveis de ambiente do Coolify (producao) sao listadas abaixo no ACTIVE_PLAN.
+
+### Logins de teste (producao, enquanto DEMO_LOGINS=1)
+
+Senhas demo estao no codigo: `lib/demo-logins.ts`. NAO sao segredos do vault
+(sao publicas enquanto DEMO_LOGINS=1 estiver ligado).
+
+---
+
 ## 2026-10-01 — Asaas em producao + pagina de ferramentas externas
 
 **Asaas producao:**
