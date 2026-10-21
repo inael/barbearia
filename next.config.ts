@@ -9,6 +9,14 @@ import type { NextConfig } from "next";
 const TETO_CORPO = "64mb";
 
 const nextConfig: NextConfig = {
+  /**
+   * Atalho de login demo: SEMPRE definido no build (vazio quando desligado).
+   * Env NEXT_PUBLIC_ ausente não é inlinada; o `=== "1"` ficava para o runtime e a
+   * lista com as senhas demo ia para o JS público (visto em produção, 21/10).
+   */
+  env: {
+    NEXT_PUBLIC_DEMO_LOGINS: process.env.NEXT_PUBLIC_DEMO_LOGINS ?? "",
+  },
   experimental: {
     serverActions: {
       /**
