@@ -31,7 +31,8 @@ interface Usuario {
 }
 
 // Trocador de usuário do rodapé: só no modo demo (some ao desligar a env).
-const PERFIS_DEMO = perfisDemo(process.env.NEXT_PUBLIC_DEMO_LOGINS);
+// Comparação literal para o build descartar a lista de senhas (ver app/login/page.tsx).
+const PERFIS_DEMO = process.env.NEXT_PUBLIC_DEMO_LOGINS === "1" ? perfisDemo("1") : [];
 
 const SUPORTE_URL =
   "https://wa.me/556191196730?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20o%20sistema%20da%20Faith%20Barbearia";

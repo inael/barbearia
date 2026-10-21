@@ -8,7 +8,9 @@ import { perfisDemo } from "@/lib/demo-logins";
 // Atalho de teste (UXS-013/014): botões que preenchem e-mail/senha de um papel.
 // Só existe quando NEXT_PUBLIC_DEMO_LOGINS=1. TEMPORÁRIO — ligado em produção só
 // durante os testes iniciais com o Rodrigo; desligar a env remove tudo isso.
-const DEMO_LOGINS = perfisDemo(process.env.NEXT_PUBLIC_DEMO_LOGINS);
+// A comparação fica AQUI (literal, resolvida no build) para o bundler descartar a
+// lista com as senhas; dentro de perfisDemo() ela ia para o JS público mesmo desligada.
+const DEMO_LOGINS = process.env.NEXT_PUBLIC_DEMO_LOGINS === "1" ? perfisDemo("1") : [];
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
