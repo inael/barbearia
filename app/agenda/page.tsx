@@ -6,7 +6,7 @@ import { podeAcessar } from "@/lib/auth/rbac";
 import { listarClientes } from "@/lib/clientes";
 import { listarServicos } from "@/lib/catalogo";
 import { listarProfissionais } from "@/lib/profissionais";
-import { criarAgendamento, criarAgendamentoSemPreferencia, cancelarAgendamento, listarAgendamentos } from "@/lib/agendamento";
+import { criarAgendamento, criarAgendamentoSemPreferencia, cancelarAgendamento, editarAgendamento, listarAgendamentos } from "@/lib/agendamento";
 import { janelaDoDia, listarHorarios, listarFeriados, toISODate } from "@/lib/horarios";
 import { mapearAssinantesAtivos } from "@/lib/assinaturas";
 import { montarGradeDia } from "@/lib/agenda-grade-dia";
@@ -14,7 +14,7 @@ import { abrirComandaDoAgendamento, situacaoDosAgendamentos, marcarFalta } from 
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import Aviso from "@/components/Aviso";
-import BuscaCliente from "@/components/BuscaCliente";
+import CamposAgendamento from "@/components/CamposAgendamento";
 
 export const dynamic = "force-dynamic";
 const ROTA = "/agenda";
@@ -88,6 +88,42 @@ async function agendar(formData: FormData) {
   redirect(`${ROTA}?ok=${encodeURIComponent("Agendamento criado.")}`);
 }
 
+async function salvarEdicao(formData: FormData) {
+  "use server";
+  if (!(await autorizado())) return;
+  const id = Number(formData.get("id"));
+  const clienteId = Number(formData.get("clienteId"));
+  const servicoId = Number(formData.get("servicoId"));
+  const profissionalId = Number(formData.get("profissionalId"));
+  const inicioStr = String(formData.get("inicio") || "");
+  if (!id || !clienteId || !servicoId || !profissionalId || !inicioStr) {
+    redirect(`${ROTA}?editar=${id}&erro=${encodeURIComponent("preencha todos os campos")}`);
+  }
+  try {
+    await editarAgendamento(getDb(), id, {
+      clienteId,
+      servicoId,
+      profissionalId,
+      inicio: new Date(inicioStr),
+      forcar: formData.get("forcar") === "1",
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "erro ao editar";
+    const hint = msg === "horario ocupado"
+      ? "Horario ocupado. Para fazer encaixe, marque a opcao 'Encaixe' antes de salvar."
+      : msg;
+    redirect(`${ROTA}?editar=${id}&erro=${encodeURIComponent(hint)}`);
+  }
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Agendamento alterado.")}`);
+}
+
+/** Valor de <input type="datetime-local"> no fuso do servidor (TZ=America/Sao_Paulo). */
+const paraCampoDataHora = (d: Date) => {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
 async function cancelar(formData: FormData) {
   "use server";
   if (!(await autorizado())) return;
@@ -103,7 +139,7 @@ const btn = "rounded-lg bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-wh
 
 const fmt = (d: Date) => d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
-export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string; dia?: string }> }) {
+export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ ok?: string; erro?: string; dia?: string; editar?: string }> }) {
   const session = await auth();
   const papel = session?.user?.papel;
   const sp = await searchParams;
@@ -151,6 +187,9 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   );
   const situacao = await situacaoDosAgendamentos(db, agsDoDia.map((a) => a.id));
   const podeCaixa = Boolean(papel && podeAcessar(papel, "caixa"));
+  // P5: ?editar=ID abre o formulário preenchido com o agendamento
+  const emEdicao = sp.editar ? agenda.find((a) => a.id === Number(sp.editar)) ?? null : null;
+  const clienteEmEdicao = emEdicao ? clientes.find((c) => c.id === emEdicao.clienteId) ?? null : null;
 
   return (
     <main className={wrap}>
@@ -206,59 +245,63 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                       <td className="px-2 py-1.5 font-medium text-neutral-500">{linha.rotulo}</td>
                       {linha.celulas.map((c) => (
                         <td key={c.profissionalId} className="px-2 py-1.5">
-                          {c.ocupado ? (
-                            (() => {
-                              const sit = c.ocupado.agendamentoId ? situacao.get(c.ocupado.agendamentoId) : undefined;
-                              const atendido = sit?.status === "atendido";
-                              const faltou = sit?.status === "faltou";
-                              const cor = atendido
-                                ? "bg-neutral-100 text-neutral-500 line-through"
-                                : faltou
-                                  ? "bg-amber-100 text-amber-800"
-                                  : c.ocupado.comeca
-                                    ? "bg-emerald-100 font-medium text-emerald-900"
-                                    : "bg-emerald-50 text-emerald-700";
-                              if (!c.ocupado.comeca) {
-                                return <span className={`block rounded px-1.5 py-0.5 ${cor}`}>{"…"}</span>;
-                              }
-                              const rotulo = `${c.ocupado.clienteNome} · ${c.ocupado.servicoNome}`;
-                              return (
-                                <div className="flex flex-col gap-1">
-                                  <span className={`block rounded px-1.5 py-0.5 ${cor}`} data-agendado={c.ocupado.clienteNome}>
-                                    {rotulo}
-                                    {atendido ? " · atendido" : faltou ? " · nao veio" : sit?.comandaAberta ? " · comanda aberta" : ""}
-                                  </span>
-                                  {/* CNA: o atalho que evita ir ao caixa e procurar o cliente de novo,
-                                      que era o risco de fechar a conta do cliente errado. */}
-                                  {podeCaixa && !atendido && !faltou && c.ocupado.agendamentoId ? (
-                                    <div className="flex flex-wrap gap-1">
-                                      <form action={abrirComanda}>
-                                        <input type="hidden" name="agendamentoId" value={c.ocupado.agendamentoId} />
-                                        <button
-                                          type="submit"
-                                          data-abrir-comanda={c.ocupado.clienteNome}
-                                          className="rounded border border-emerald-700 px-1.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-50"
-                                        >
-                                          {sit?.comandaAberta ? "Ver comanda" : "Abrir comanda"}
-                                        </button>
-                                      </form>
-                                      <form action={naoVeio}>
-                                        <input type="hidden" name="agendamentoId" value={c.ocupado.agendamentoId} />
-                                        <button
-                                          type="submit"
-                                          data-nao-veio={c.ocupado.clienteNome}
-                                          className="rounded px-1.5 py-0.5 text-[11px] text-neutral-500 underline hover:text-neutral-800"
-                                        >
-                                          nao veio
-                                        </button>
-                                      </form>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              );
-                            })()
-                          ) : (
+                          {c.ocupados.length === 0 ? (
                             <span className="text-neutral-300 dark:text-neutral-700">livre</span>
+                          ) : c.ocupados.every((o) => !o.comeca) ? (
+                            <span className="block rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">{"…"}</span>
+                          ) : (
+                            // ENC-010: com encaixe dois agendamentos dividem a faixa; cada um
+                            // que COMEÇA aqui aparece com os próprios botões.
+                            <div className="flex flex-col gap-1.5">
+                              {c.ocupados.filter((o) => o.comeca).map((o) => {
+                                const sit = o.agendamentoId ? situacao.get(o.agendamentoId) : undefined;
+                                const atendido = sit?.status === "atendido";
+                                const faltou = sit?.status === "faltou";
+                                const encaixe = c.ocupados.length > 1;
+                                const cor = atendido
+                                  ? "bg-neutral-100 text-neutral-500 line-through"
+                                  : faltou
+                                    ? "bg-amber-100 text-amber-800"
+                                    : encaixe
+                                      ? "bg-amber-50 font-medium text-amber-900 ring-1 ring-amber-300"
+                                      : "bg-emerald-100 font-medium text-emerald-900";
+                                return (
+                                  <div key={o.agendamentoId ?? o.clienteNome} className="flex flex-col gap-1">
+                                    <span className={`block rounded px-1.5 py-0.5 ${cor}`} data-agendado={o.clienteNome}>
+                                      {`${o.clienteNome} · ${o.servicoNome}`}
+                                      {encaixe ? " · encaixe" : ""}
+                                      {atendido ? " · atendido" : faltou ? " · nao veio" : sit?.comandaAberta ? " · comanda aberta" : ""}
+                                    </span>
+                                    {/* CNA: o atalho que evita ir ao caixa e procurar o cliente de novo,
+                                        que era o risco de fechar a conta do cliente errado. */}
+                                    {podeCaixa && !atendido && !faltou && o.agendamentoId ? (
+                                      <div className="flex flex-wrap gap-1">
+                                        <form action={abrirComanda}>
+                                          <input type="hidden" name="agendamentoId" value={o.agendamentoId} />
+                                          <button
+                                            type="submit"
+                                            data-abrir-comanda={o.clienteNome}
+                                            className="rounded border border-emerald-700 px-1.5 py-0.5 text-[11px] font-medium text-emerald-800 hover:bg-emerald-50"
+                                          >
+                                            {sit?.comandaAberta ? "Ver comanda" : "Abrir comanda"}
+                                          </button>
+                                        </form>
+                                        <form action={naoVeio}>
+                                          <input type="hidden" name="agendamentoId" value={o.agendamentoId} />
+                                          <button
+                                            type="submit"
+                                            data-nao-veio={o.clienteNome}
+                                            className="rounded px-1.5 py-0.5 text-[11px] text-neutral-500 underline hover:text-neutral-800"
+                                          >
+                                            nao veio
+                                          </button>
+                                        </form>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           )}
                         </td>
                       ))}
@@ -270,8 +313,8 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           )}
         </section>
 
-        <section className="mt-6">
-          <h2 className="mb-3 text-lg font-semibold">Novo agendamento</h2>
+        <section className="mt-6 scroll-mt-4" id="agendar">
+          <h2 className="mb-3 text-lg font-semibold">{emEdicao ? "Editar agendamento" : "Novo agendamento"}</h2>
           {clientes.length === 0 ? (
             <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900" data-testid="agenda-vazia">
               <p className="text-sm font-medium">Pra agendar, primeiro cadastre um cliente.</p>
@@ -284,30 +327,53 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
               </Link>
             </div>
           ) : (
-            <form action={agendar} className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-              <BuscaCliente
+            <form
+              action={emEdicao ? salvarEdicao : agendar}
+              key={emEdicao?.id ?? "novo"}
+              data-testid={emEdicao ? "age-form-edicao" : "age-form"}
+              className={`flex flex-wrap items-end gap-3 rounded-xl border bg-white p-4 dark:bg-neutral-900 ${
+                emEdicao ? "border-sky-400 ring-1 ring-sky-200" : "border-neutral-200 dark:border-neutral-800"
+              }`}
+            >
+              {emEdicao ? (
+                <>
+                  <input type="hidden" name="id" value={emEdicao.id} />
+                  <p className="basis-full text-sm font-medium text-sky-900">
+                    Editando o agendamento de {emEdicao.clienteNome} ({fmt(emEdicao.inicio)}). Corrija o que estiver errado e salve.
+                  </p>
+                </>
+              ) : null}
+              <CamposAgendamento
                 clientes={clientes}
-                label="Cliente"
-                testId="age-cliente"
-                permitirBalcao={false}
+                servicos={servicos.map((s) => ({ id: s.id, nome: s.nome }))}
+                clienteInicial={clienteEmEdicao}
+                servicoInicial={emEdicao?.servicoId}
               />
-              <label className="flex flex-col gap-1 text-xs font-medium">Serviço
-                <select name="servicoId" required aria-label="Serviço" data-testid="age-servico" className={input}>
-                  {servicos.map((s) => (
-                    <option key={s.id} value={s.id}>{s.nome}</option>
-                  ))}
-                </select>
-              </label>
               <label className="flex flex-col gap-1 text-xs font-medium">Profissional
-                <select name="profissionalId" aria-label="Profissional" data-testid="age-profissional" className={input}>
-                  <option value="">Sem preferência (rodízio)</option>
+                <select
+                  name="profissionalId"
+                  aria-label="Profissional"
+                  data-testid="age-profissional"
+                  defaultValue={emEdicao ? String(emEdicao.profissionalId) : ""}
+                  required={Boolean(emEdicao)}
+                  className={input}
+                >
+                  {emEdicao ? null : <option value="">Sem preferência (rodízio)</option>}
                   {profissionais.map((p) => (
                     <option key={p.id} value={p.id}>{p.nome}</option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-xs font-medium">Início
-                <input name="inicio" type="datetime-local" required aria-label="Início" data-testid="age-inicio" className={input} />
+                <input
+                  name="inicio"
+                  type="datetime-local"
+                  required
+                  aria-label="Início"
+                  data-testid="age-inicio"
+                  defaultValue={emEdicao ? paraCampoDataHora(emEdicao.inicio) : undefined}
+                  className={input}
+                />
               </label>
               <label className="flex flex-col gap-0.5 rounded-lg border border-dashed border-amber-400 bg-amber-50 px-2 py-1.5 text-xs font-medium dark:border-amber-700 dark:bg-amber-950">
                 <span className="flex items-center gap-1.5">
@@ -316,7 +382,12 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                 </span>
                 <span className="font-normal text-amber-700 dark:text-amber-400">Marque para agendar mesmo com horario ocupado</span>
               </label>
-              <button type="submit" className={btn}>Agendar</button>
+              <button type="submit" className={btn}>{emEdicao ? "Salvar alteração" : "Agendar"}</button>
+              {emEdicao ? (
+                <Link href={ROTA} className="text-sm text-neutral-600 underline hover:text-neutral-900" data-testid="age-cancelar-edicao">
+                  Desistir da edição
+                </Link>
+              ) : null}
             </form>
           )}
         </section>
@@ -333,7 +404,14 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                   <span>{a.clienteNome}</span>
                   <span className="text-neutral-600">{a.servicoNome}</span>
                   <span className="text-neutral-600">com {a.profissionalNome}</span>
-                  <form action={cancelar} className="ml-auto">
+                  <Link
+                    href={`${ROTA}?editar=${a.id}#agendar`}
+                    data-editar={a.clienteNome}
+                    className="ml-auto text-xs font-medium text-sky-800 underline hover:text-sky-950"
+                  >
+                    Editar
+                  </Link>
+                  <form action={cancelar}>
                     <input type="hidden" name="id" value={a.id} />
                     <button type="submit" className="text-xs text-red-700 underline hover:text-red-900 dark:text-red-400">Cancelar</button>
                   </form>

@@ -15,15 +15,25 @@ export default function BuscaCliente({
   permitirBalcao = true,
   label = "Cliente",
   testId = "busca-cliente",
+  inicial = null,
+  onEscolher,
 }: {
   clientes: ClienteBuscavel[];
   name?: string;
   permitirBalcao?: boolean;
   label?: string;
   testId?: string;
+  /** Cliente já escolhido ao abrir (edição de agendamento). */
+  inicial?: ClienteBuscavel | null;
+  /** Avisa quem está em volta (ex.: serviços da assinatura dependem do cliente). */
+  onEscolher?: (c: ClienteBuscavel | null) => void;
 }) {
-  const [termo, setTermo] = useState("");
-  const [escolhido, setEscolhido] = useState<ClienteBuscavel | null>(null);
+  const [termo, setTermo] = useState(inicial ? rotuloCliente(inicial) : "");
+  const [escolhido, setEscolhidoEstado] = useState<ClienteBuscavel | null>(inicial);
+  const setEscolhido = (c: ClienteBuscavel | null) => {
+    setEscolhidoEstado(c);
+    onEscolher?.(c);
+  };
   const [aberto, setAberto] = useState(false);
   const [destaque, setDestaque] = useState(0);
   const listaId = useId();

@@ -44,17 +44,18 @@ export interface DadosAgendamento {
 }
 
 /**
- * Cria um agendamento. fim = inicio + duração do barbeiro (R1). Rejeita se o horário
- * cai em bloqueio (R2) do barbeiro ou sobrepõe outro agendamento ativo dele.
+ * Valida o horário de um agendamento e devolve o fim. fim = inicio + duração do
+ * barbeiro (R1). Rejeita se cai em bloqueio (R2) ou sobrepõe outro agendamento ativo
+ * dele, a menos que seja encaixe (`forcar`). `ignorarId` é o próprio agendamento numa
+ * edição: sem isso ele conflitaria consigo mesmo ao trocar só o serviço.
  */
-export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<number> {
+async function validarHorario(db: DB, d: DadosAgendamento, ignorarId?: number): Promise<Date> {
   if (Number.isNaN(d.inicio.getTime())) throw new Error("data invalida");
   if (await assinaturaEmAtraso(db, d.clienteId)) throw new Error("assinatura em atraso: regularize para agendar");
   const dur = await resolverDuracao(db, d.profissionalId, d.servicoId);
   if (dur == null) throw new Error("servico inexistente");
   const inicioMs = d.inicio.getTime();
   const fimMs = inicioMs + dur * 60_000;
-  const fim = new Date(fimMs);
   const novo = { inicio: inicioMs, fim: fimMs };
 
   const bloqueios = await db
@@ -66,20 +67,46 @@ export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<num
   }
 
   if (!d.forcar) {
+    const conds = [eq(schema.agendamentos.profissionalId, d.profissionalId), ne(schema.agendamentos.status, "cancelado")];
+    if (ignorarId != null) conds.push(ne(schema.agendamentos.id, ignorarId));
     const ativos = await db
       .select({ inicio: schema.agendamentos.inicio, fim: schema.agendamentos.fim })
       .from(schema.agendamentos)
-      .where(and(eq(schema.agendamentos.profissionalId, d.profissionalId), ne(schema.agendamentos.status, "cancelado")));
+      .where(and(...conds));
     if (haConflito(ativos.map((a) => ({ inicio: a.inicio.getTime(), fim: a.fim.getTime() })), novo)) {
       throw new Error("horario ocupado");
     }
   }
+  return new Date(fimMs);
+}
 
+/** Cria um agendamento (regras de horário em `validarHorario`). */
+export async function criarAgendamento(db: DB, d: DadosAgendamento): Promise<number> {
+  const fim = await validarHorario(db, d);
   const [row] = await db
     .insert(schema.agendamentos)
     .values({ clienteId: d.clienteId, servicoId: d.servicoId, profissionalId: d.profissionalId, inicio: d.inicio, fim, status: "agendado" })
     .returning({ id: schema.agendamentos.id });
   return row.id;
+}
+
+/**
+ * P5 (Rodrigo, 16/10 e 22/10): corrige cliente, serviço, barbeiro ou horário de um
+ * agendamento em vez de cancelar e marcar de novo. Mesmas regras da criação; só edita
+ * o que ainda está "agendado" (atendido/faltou já é histórico do caixa).
+ */
+export async function editarAgendamento(db: DB, id: number, d: DadosAgendamento): Promise<void> {
+  const [atual] = await db
+    .select({ status: schema.agendamentos.status })
+    .from(schema.agendamentos)
+    .where(eq(schema.agendamentos.id, id));
+  if (!atual) throw new Error("agendamento nao encontrado");
+  if (atual.status !== "agendado") throw new Error("so da para editar agendamento que ainda nao foi atendido");
+  const fim = await validarHorario(db, d, id);
+  await db
+    .update(schema.agendamentos)
+    .set({ clienteId: d.clienteId, servicoId: d.servicoId, profissionalId: d.profissionalId, inicio: d.inicio, fim })
+    .where(eq(schema.agendamentos.id, id));
 }
 
 /**

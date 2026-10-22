@@ -22,14 +22,23 @@ export interface AgendamentoGrade {
   agendamentoId?: number;
 }
 
+export interface OcupacaoGrade {
+  clienteNome: string;
+  servicoNome: string;
+  comeca: boolean;
+  agendamentoId?: number;
+}
+
 export interface CelulaGrade {
   profissionalId: number;
-  ocupado: {
-    clienteNome: string;
-    servicoNome: string;
-    comeca: boolean;
-    agendamentoId?: number;
-  } | null;
+  /** Primeiro agendamento da faixa (atalho; null = livre). */
+  ocupado: OcupacaoGrade | null;
+  /**
+   * TODOS os agendamentos do barbeiro na faixa, por ordem de início.
+   * ENC-010: com encaixe há dois ao mesmo tempo; guardar só o primeiro escondia o
+   * encaixe na grade e o Rodrigo não conseguia abrir a comanda dele (22/10).
+   */
+  ocupados: OcupacaoGrade[];
 }
 
 export interface LinhaGrade {
@@ -89,20 +98,16 @@ export function montarGradeDia(
     const fimMs = dia.getTime() + fim * 60_000;
 
     const celulas: CelulaGrade[] = profissionais.map((p) => {
-      const ag = agendamentos.find(
-        (a) => a.profissionalId === p.id && a.inicio.getTime() < fimMs && iniMs < a.fim.getTime(),
-      );
-      return {
-        profissionalId: p.id,
-        ocupado: ag
-          ? {
-              clienteNome: ag.clienteNome,
-              servicoNome: ag.servicoNome,
-              comeca: ag.inicio.getTime() >= iniMs && ag.inicio.getTime() < fimMs,
-              agendamentoId: ag.agendamentoId,
-            }
-          : null,
-      };
+      const ocupados: OcupacaoGrade[] = agendamentos
+        .filter((a) => a.profissionalId === p.id && a.inicio.getTime() < fimMs && iniMs < a.fim.getTime())
+        .sort((x, y) => x.inicio.getTime() - y.inicio.getTime())
+        .map((ag) => ({
+          clienteNome: ag.clienteNome,
+          servicoNome: ag.servicoNome,
+          comeca: ag.inicio.getTime() >= iniMs && ag.inicio.getTime() < fimMs,
+          agendamentoId: ag.agendamentoId,
+        }));
+      return { profissionalId: p.id, ocupado: ocupados[0] ?? null, ocupados };
     });
 
     linhas.push({ slotMin: ini, fimMin: fim, rotulo: rotuloDe(ini), ancora: ancoras.has(ini), celulas });

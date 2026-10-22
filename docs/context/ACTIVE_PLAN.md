@@ -1,5 +1,45 @@
 # ACTIVE_PLAN - Destravar deploy + fixes do Rodrigo
 
+## (22/10) Pedidos do Rodrigo (fotos + texto de 22/10) — EM ANDAMENTO
+
+1. **Login:** ele usava o atalho "Entrar como" (removido em 21/10 por seguranca). Nao e codigo:
+   entregar a ele e-mail + senha nova da conta de dono. Sem mudanca.
+2. **Minha grade (barbeiro):** abrir so com o dia (sem escolher servico) e mostrar a linha do
+   tempo: agendados (hora, cliente, servico) + faixas livres + bloqueios.
+   Arquivos: `app/minha-agenda/grade/page.tsx`, `lib/linha-do-tempo.ts` (novo, puro).
+3. **Editar agendamento (P5):** `editarAgendamento()` em `lib/agendamento.ts` (recalcula fim,
+   checa bloqueio/conflito ignorando ele mesmo, respeita encaixe); botao "Editar" na lista
+   da agenda abre o formulario preenchido. Arquivos: `lib/agendamento.ts`, `app/agenda/page.tsx`,
+   `components/BuscaCliente.tsx` (cliente inicial).
+4. **Encaixe some da grade:** `montarGradeDia` guardava so o 1o agendamento da celula.
+   Passa a guardar todos (`ocupados[]`); a celula mostra cada um que comeca ali.
+   Arquivos: `lib/agenda-grade-dia.ts`, `app/agenda/page.tsx`.
+5. **Servicos de assinatura (P4):** assinante escolhido -> o select de servico mostra no topo
+   "Pela assinatura (Plano)" com os servicos do plano. Servicos cobertos saem do nome do plano
+   ("Flex — Corte/barba/pezinho/sobrancelha"), sem mudar schema. O desconto continua no caixa
+   como hoje. Arquivos: `lib/servicos-do-plano.ts` (novo), `components/CamposAgendamento.tsx` (novo).
+
+**Riscos:** grade com encaixe (testes de grade existentes); edicao nao pode quebrar a regra
+de conflito; e2e GRD-002 muda (sem select de servico).
+**Validacao:** testes unitarios novos (grade com sobreposicao, linha do tempo, servicos do plano,
+edicao com conflito), lint+typecheck, e2e da agenda/grade contra build local, deploy via API
+do Coolify e conferencia em producao.
+
+## (20/10 noite) Templates premium da Faith — padrao dos projetos do Nilton
+
+Objetivo: ~115 paginas HTML de "templates premium" (5 opcoes por tema, com tela de
+exemplo, regras, pros/contras, "como responder"), igual Ariel/Growleria/Julia.
+
+- Gerador: `docs/design/templates-premium/` (`base.py` = molde + componentes,
+  `paginas/*.py` = uma pagina por arquivo, `gen.py` = gera as pastas).
+- Numeracao: Front-end F01–F60, Back-end B01–B30, Mobile M01–M25 (codigo() em base.py).
+- Saida: `OneDrive\Desktop\PDFs\Software Engineer (Projetos)\IT Booster - Projetos\Faith Barbearia - Premium\`
+  (`Faith - Front-end`, `Faith - Back-end`, `Faith - Mobile` + PDF).
+- Paginas-modelo feitas: Front v16 Agenda do dia, Back v72 Fluxo editar/encaixe,
+  Mobile v93 Agenda do barbeiro. Aguardando aprovacao do Nilton antes do resto.
+- Riscos: volume (115 paginas) -> producao em lotes paralelos sobre o mesmo kit;
+  validacao = gerar tudo + captura de cada pagina para revisar quebra de layout.
+
 > Handoff para novo desenvolvedor (2026-10-20).
 > Plano anterior (COB: cobranca automatica Asaas) esta cumprido em codigo.
 

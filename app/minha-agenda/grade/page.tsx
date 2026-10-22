@@ -1,33 +1,23 @@
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db";
 import { podeAcessar } from "@/lib/auth/rbac";
-import { listarDuracoesEfetivas, slotsDoBarbeiro } from "@/lib/agenda";
-import { janelaDoDia, listarHorarios, listarFeriados } from "@/lib/horarios";
+import { listarBloqueios } from "@/lib/agenda";
+import { listarAgendamentos } from "@/lib/agendamento";
+import { janelaDoDia, listarHorarios, listarFeriados, toISODate } from "@/lib/horarios";
+import { linhaDoTempo } from "@/lib/linha-do-tempo";
 
 export const dynamic = "force-dynamic";
 
-// AHL: horarios livres de 5 em 5 minutos, decisao do Rodrigo em 11/09. Com passo de
-// 30 o sistema so oferecia hora cheia e meia, e quem tem corte de 40 minutos perdia as
-// brechas. Ele quer isso fino tambem porque o atendente por IA encaixa cliente nos vaos.
-const PASSO_MIN = 5;
-
-/** Agrupa horarios livres por hora, preservando a ordem. */
-function agruparPorHora(slots: Date[]): [string, Date[]][] {
-  const mapa = new Map<string, Date[]>();
-  for (const s of slots) {
-    const hora = String(s.getHours()).padStart(2, "0");
-    const atual = mapa.get(hora);
-    if (atual) atual.push(s);
-    else mapa.set(hora, [s]);
-  }
-  return [...mapa.entries()];
-}
+// Rodrigo (22/10): a grade pedia um serviço antes de mostrar qualquer coisa e só
+// mostrava horários vagos. Agora abre direto no dia (hoje por padrão) e mostra, em
+// ordem, os clientes marcados e as faixas livres entre eles.
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const duracao = (min: number) => (min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? String(min % 60).padStart(2, "0") : ""}` : `${min} min`);
 
 export default async function GradePage({
   searchParams,
 }: {
-  searchParams: Promise<{ servico?: string; dia?: string }>;
+  searchParams: Promise<{ dia?: string }>;
 }) {
   const session = await auth();
   const papel = session?.user?.papel;
@@ -56,48 +46,35 @@ export default async function GradePage({
   }
 
   const db = getDb();
-  const servicos = await listarDuracoesEfetivas(db, pid);
   const sp = await searchParams;
-  const servicoId = sp.servico ? Number(sp.servico) : null;
-  const dia = sp.dia && /^\d{4}-\d{2}-\d{2}$/.test(sp.dia) ? sp.dia : "";
+  const dia = sp.dia && /^\d{4}-\d{2}-\d{2}$/.test(sp.dia) ? sp.dia : toISODate(new Date());
+  const inicioDia = new Date(`${dia}T00:00:00`);
+  const fimDia = new Date(inicioDia.getTime() + 24 * 60 * 60 * 1000);
 
-  let slots: Date[] | null = null;
-  let fechadoNoDia = false;
-  if (servicoId && dia) {
-    const [config, feriados] = await Promise.all([listarHorarios(db), listarFeriados(db)]);
-    const janela = janelaDoDia(config, feriados.map((f) => f.data), new Date(`${dia}T00:00:00`));
-    if (!janela) {
-      fechadoNoDia = true;
-    } else {
-      const inicio = new Date(`${dia}T${hhmm(janela.abreMin)}:00`);
-      const fim = new Date(`${dia}T${hhmm(janela.fechaMin)}:00`);
-      if (!Number.isNaN(inicio.getTime())) {
-        slots = await slotsDoBarbeiro(db, pid, servicoId, inicio, fim, PASSO_MIN);
-      }
-    }
-  }
-  const fmtHora = (d: Date) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const [config, feriados, ags, bloqueios] = await Promise.all([
+    listarHorarios(db),
+    listarFeriados(db),
+    listarAgendamentos(db, inicioDia, fimDia, pid),
+    listarBloqueios(db, pid),
+  ]);
+  const janela = janelaDoDia(config, feriados.map((f) => f.data), inicioDia);
+  const itens = linhaDoTempo(
+    janela,
+    inicioDia,
+    ags,
+    bloqueios.filter((b) => b.inicio < fimDia && b.fim > inicioDia),
+  );
+  const marcados = itens.filter((i) => i.tipo === "agendado").length;
 
   return (
     <main className={wrap}>
       <div className="mx-auto max-w-2xl px-5 py-10">
         <h1 className="text-2xl font-bold tracking-tight">Minha grade</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Horários livres (dentro do horário de funcionamento), já descontando a sua duração, os bloqueios e os agendamentos.
+          Seus clientes marcados e os horários livres do dia, em ordem.
         </p>
 
         <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-            Serviço
-            <select name="servico" defaultValue={servicoId ?? ""} aria-label="Serviço" className={inputCls}>
-              <option value="">Escolha…</option>
-              {servicos.map((s) => (
-                <option key={s.servicoId} value={s.servicoId}>
-                  {s.nome} ({s.efetivaMin} min)
-                </option>
-              ))}
-            </select>
-          </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-neutral-700 dark:text-neutral-300">
             Dia
             <input name="dia" type="date" defaultValue={dia} required aria-label="Dia" className={inputCls} />
@@ -107,36 +84,42 @@ export default async function GradePage({
           </button>
         </form>
 
-        {fechadoNoDia ? (
+        {!janela ? (
           <p className="mt-8 text-sm text-neutral-600">Fechado nesse dia (feriado ou sem expediente).</p>
-        ) : slots ? (
-          <div data-testid="slots" className="mt-8">
-            {slots.length === 0 ? (
-              <p className="text-sm text-neutral-600">Sem horários livres nesse dia.</p>
-            ) : (
-              // AHL: com passo de 5 minutos sao ~140 horarios num dia. Soltos viram
-              // parede; agrupados por hora continuam escanaveis.
-              <div className="flex flex-col gap-3">
-                {agruparPorHora(slots).map(([hora, doGrupo]) => (
-                  <div key={hora} className="flex flex-wrap items-center gap-2">
-                    <span className="w-12 shrink-0 text-sm font-semibold text-neutral-500">{hora}h</span>
-                    <ul className="flex flex-wrap gap-2">
-                      {doGrupo.map((s, i) => (
-                        <li
-                          key={i}
-                          data-slot
-                          className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-sm dark:border-neutral-800 dark:bg-neutral-900"
-                        >
-                          {fmtHora(s)}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
+        ) : (
+          <div data-testid="linha-do-tempo" className="mt-8">
+            <p className="mb-3 text-sm text-neutral-600" data-testid="resumo-dia">
+              {marcados === 0 ? "Nenhum cliente marcado nesse dia." : `${marcados} cliente${marcados > 1 ? "s" : ""} marcado${marcados > 1 ? "s" : ""}.`}
+            </p>
+            <ol className="flex flex-col gap-2">
+              {itens.map((i, n) => (
+                <li
+                  key={n}
+                  data-item={i.tipo}
+                  className={`flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-lg border px-3 py-2 text-sm ${
+                    i.tipo === "agendado"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-950"
+                      : i.tipo === "bloqueado"
+                        ? "border-neutral-300 bg-neutral-100 text-neutral-600"
+                        : "border-dashed border-neutral-300 bg-white text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900"
+                  }`}
+                >
+                  <span className="w-28 shrink-0 font-semibold tabular-nums">{hhmm(i.iniMin)} – {hhmm(i.fimMin)}</span>
+                  {i.tipo === "agendado" ? (
+                    <>
+                      <span className="font-medium" data-cliente={i.clienteNome}>{i.clienteNome}</span>
+                      <span className="text-emerald-800">{i.servicoNome}</span>
+                    </>
+                  ) : i.tipo === "bloqueado" ? (
+                    <span>Bloqueado{i.motivo ? ` · ${i.motivo}` : ""}</span>
+                  ) : (
+                    <span>Livre · {duracao(i.fimMin - i.iniMin)}</span>
+                  )}
+                </li>
+              ))}
+            </ol>
           </div>
-        ) : null}
+        )}
       </div>
     </main>
   );

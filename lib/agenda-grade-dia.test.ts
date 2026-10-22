@@ -94,4 +94,25 @@ describe("GRD2 — grade do dia (puro)", () => {
       expect(grade[i].fimMin, `buraco entre ${grade[i].rotulo} e ${grade[i + 1].rotulo}`).toBe(grade[i + 1].slotMin);
     }
   });
+  it("ENC-010 encaixe: dois agendamentos sobrepostos do mesmo barbeiro aparecem os dois", () => {
+    // Caso do Rodrigo (22/10): barba 12:50 e corte por encaixe 13:00, os dois com ele.
+    // A grade guardava só o primeiro; o encaixe virava "…" e não dava para abrir comanda.
+    const profs = [{ id: 1 }];
+    const ags = [
+      { profissionalId: 1, clienteNome: "Inael", servicoNome: "Barba", inicio: h(8, 50), fim: h(9, 20), agendamentoId: 10 },
+      { profissionalId: 1, clienteNome: "Kaue", servicoNome: "Corte", inicio: h(9), fim: h(9, 40), agendamentoId: 11 },
+    ];
+    const grade = montarGradeDia(janela, dia, profs, ags);
+    const linha = (r: string) => grade.find((l) => l.rotulo === r)!.celulas[0];
+
+    expect(linha("08:50").ocupados.map((o) => [o.clienteNome, o.comeca])).toEqual([["Inael", true]]);
+    // às 09:00 os dois ocupam o barbeiro, e o do encaixe COMEÇA ali
+    expect(linha("09:00").ocupados.map((o) => [o.clienteNome, o.comeca])).toEqual([
+      ["Inael", false],
+      ["Kaue", true],
+    ]);
+    expect(linha("09:00").ocupados.find((o) => o.comeca)?.agendamentoId).toBe(11);
+    expect(linha("09:20").ocupados.map((o) => o.clienteNome)).toEqual(["Kaue"]);
+    expect(linha("09:40").ocupados).toEqual([]);
+  });
 });
